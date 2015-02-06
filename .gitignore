@@ -26,3 +26,20 @@
 *.exe
 *.out
 *.app
+
+# Vim swap files
+*.swp
+
+# Folders
+bin/
+obj/
+
+# Code block files
+tours.depend
+tours.layout
+
+# Test graphs
+graph-unittests.txt
+test-graph.txt
+test-graph-in.txt
+test-graph-out.txt
