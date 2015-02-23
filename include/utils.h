@@ -27,4 +27,15 @@ string &rtrim(string &rS);
 string &trim(string &rS);
 
 
+//
+// stoi and to_string workaround
+// (Thanks to: http://www.cplusplus.com/forum/beginner/120836/)
+// (And to: http://stackoverflow.com/questions/12975341/to-string-is-not-a-member-of-std-says-so-g)
+//
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+int stoi(const string& str, size_t* pos = 0, int base = 10);
+
+string to_string(int n);
+#endif // defined
+
 #endif // UTILS_H

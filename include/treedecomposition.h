@@ -12,42 +12,42 @@ class Bag : public Vertex
     friend class TreeDecomposition;
 
     public:
-        const shared_ptr<Bag> getParent() { return this->pParent; }
-        const vector<shared_ptr<Vertex>> getVertices() { return this->vertices; }
+        const Bag* getParent() { return this->pParent; }
+        //const vector<unique_ptr<Vertex>> getVertices() { return this->vertices; }
 
         Bag(int vid, int x, int y);
         virtual ~Bag();
 
-        void SetParentsRecursive(shared_ptr<Bag> pParent);
+        void SetParentsRecursive(Bag* pParent, bool adjustCoordinates=false);
 
     private:
-        shared_ptr<Bag> pParent;
-        vector<shared_ptr<Vertex>> vertices;
+        Bag* pParent;
+        vector<Vertex*> vertices;
 };
 
 
 class TreeDecomposition : public Graph
 {
     public:
-        const shared_ptr<Bag> getRoot() { return this->pRoot; }
-        const shared_ptr<Graph> getOriginalGraph() { return this->pOriginalGraph; }
+        const Bag* getRoot() { return this->pRoot; }
+        const Graph* getOriginalGraph() { return this->pOriginalGraph.get(); }
 
-        TreeDecomposition(shared_ptr<Graph> originalGraph);
+        TreeDecomposition(Graph* originalGraph);
         virtual ~TreeDecomposition();
 
         virtual bool ReadFileLine(int& rState, string line) override;
         virtual string ToFileString() const override;
 
-        bool CreateRoot();
-        bool CreateRoot(shared_ptr<Bag> pRoot);
+        bool CreateRoot(bool adjustCoordinates=false);
+        bool CreateRoot(Bag* pRoot, bool adjustCoordinates=false);
 
-        static shared_ptr<TreeDecomposition> MinimumDegree(shared_ptr<Graph> pGraph);
+        void MinimumDegree();
 
     private:
-        shared_ptr<Bag> pRoot;
-        shared_ptr<Graph> pOriginalGraph;
+        Bag* pRoot;
+        unique_ptr<Graph> pOriginalGraph;
 
-        void permutationToTreeDecomposition(const vector<int>& vertexList, unsigned int recursionIdx, vector<int>& rEdgeList);
+        void permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList);
 };
 
 #endif // TREEDECOMPOSITION_H

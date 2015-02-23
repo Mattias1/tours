@@ -7,7 +7,7 @@ using namespace std;
 //  Graph
 //
 Graph::Graph()
-    :vertices(vector<shared_ptr<Vertex>>())
+    :vertices(vector<unique_ptr<Vertex>>())
 { }
 
 Graph::~Graph()
@@ -41,13 +41,13 @@ bool Graph::ReadFileLine(int& rState, string line) {
     // Add vertices, edges, bags or bag edges
     if (rState == 1) {
         // Add the vertex to the graph
-        this->vertices.push_back(shared_ptr<Vertex>(new Vertex(std::stoi(l[0]), std::stoi(l[1]), std::stoi(l[2]))));
+        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]), stoi(l[1]), stoi(l[2]))));
         return true;
     }
     if (rState == 2) {
         // Add the edge to the edgelist of it's endpoints
-        shared_ptr<Vertex> pA = this->vertices[stoi(l[0])];
-        shared_ptr<Vertex> pB = this->vertices[stoi(l[1])];
+        Vertex* pA = this->vertices[stoi(l[0])].get();
+        Vertex* pB = this->vertices[stoi(l[1])].get();
         /* int cost = 1;
            if (l.size() > 2)
                cost = stoi(l[2]);
@@ -67,21 +67,48 @@ string Graph::ToFileString() const {
 
     s += "NODE_COORD_SECTION\n";
     for (unsigned int i=0; i<this->vertices.size(); ++i) {
-        shared_ptr<Vertex> pV = this->vertices[i];
+        Vertex* pV = this->vertices[i].get();
         s += to_string(pV->vid) + " " + to_string(pV->x) + " " + to_string(pV->y) + "\n";
     }
 
     s += "EDGE_SECTION\n";
     for (unsigned int i=0; i<this->vertices.size(); ++i) {
-        shared_ptr<Vertex> pV = this->vertices[i];
+        Vertex* pV = this->vertices[i].get();
         for (unsigned int j=0; j<pV->edges.size(); ++j) {
-            shared_ptr<Edge> pE = pV->edges[j];
+            Edge* pE = pV->edges[j].get();
             if (pV->vid < pE->Other(*pV)->vid)
                 s += to_string(pE->pA->vid) + " " + to_string(pE->pB->vid) + " " + to_string(pE->Cost) + "\n";
         }
     }
 
     return s;
+}
+
+unique_ptr<Graph> Graph::DeepCopy() {
+    // Create a deep copy of the graph (on the stack)
+    unique_ptr<Graph> pGraph = unique_ptr<Graph>(new Graph());
+    pGraph->name = this->name + " (copy)";
+
+    // Add all vertices
+    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+        const Vertex& v = *this->vertices[i];
+        pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y)) );
+    }
+
+    // Add all edges
+    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+        const Vertex& v = *this->vertices[i];
+        Vertex* pA = pGraph->vertices[i].get();
+        for (unsigned int j=0; j<v.edges.size(); ++j) {
+            Vertex* pB = pGraph->vertices[ v.edges[j]->Other(v)->vid ].get();
+            shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
+            pA->edges.push_back(pE);
+            pB->edges.push_back(pE);
+        }
+    }
+
+    // This'll probably be optimized by the compiler to just copy once (this creation) and not again at the return call.
+    return move(pGraph);
 }
 
 //
@@ -97,10 +124,18 @@ Vertex::Vertex(int vid, int x, int y)
 Vertex::~Vertex()
 { }
 
+bool Vertex::IsConnectedTo(Vertex* other) {
+    // Return whether or not this vertex is connected to another vertex
+    for (unsigned int i=0; i<this->edges.size(); ++i)
+        if (this->edges[i]->Other(*this) == other)
+            return true;
+    return false;
+}
+
 //
 //  Edge
 //
-Edge::Edge(shared_ptr<Vertex> pA, shared_ptr<Vertex> pB)
+Edge::Edge(Vertex* pA, Vertex* pB)
     :pA(pA),
     pB(pB)
 {
@@ -111,7 +146,7 @@ Edge::Edge(shared_ptr<Vertex> pA, shared_ptr<Vertex> pB)
 Edge::~Edge()
 { }
 
-shared_ptr<Vertex> Edge::Other(const Vertex& v) {
+Vertex* Edge::Other(const Vertex& v) {
     if (v.vid == this->pA->vid)
         return this->pB;
     else if (v.vid == this->pB->vid)

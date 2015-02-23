@@ -5,6 +5,7 @@
 #include <cctype>
 #include <locale>
 #include <sstream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -45,3 +46,31 @@ string &trim(string &rS) {
     // trim from both ends
     return ltrim(rtrim(rS));
 }
+
+//
+// stoi and to_string workaround
+//
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+int stoi(const string& str, size_t* pos, int base) {
+    // String to int
+    const char* begin = str.c_str() ;
+    char* end = nullptr ;
+    long value = std::strtol( begin, &end, base ) ;
+
+    if( errno == ERANGE || value > std::numeric_limits<int>::max() )
+        throw std::out_of_range( "stoi: out ofrange" ) ;
+    if( end == str.c_str() )
+        throw std::invalid_argument( "stoi: invalid argument" ) ;
+
+    if(pos) *pos = end - begin ;
+
+    return value ;
+}
+
+string to_string(int n) {
+    // int to string
+    std::ostringstream stm;
+    stm << n;
+    return stm.str();
+}
+#endif // defined

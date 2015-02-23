@@ -33,12 +33,319 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add directory="test-C" />
 		</Compiler>
 		<Unit filename="include/graph.h" />
+		<Unit filename="include/lkh-include/Delaunay.h" />
+		<Unit filename="include/lkh-include/GainType.h" />
+		<Unit filename="include/lkh-include/Genetic.h" />
+		<Unit filename="include/lkh-include/GeoConversion.h" />
+		<Unit filename="include/lkh-include/Hashing.h" />
+		<Unit filename="include/lkh-include/Heap.h" />
+		<Unit filename="include/lkh-include/LKH.h" />
+		<Unit filename="include/lkh-include/Segment.h" />
+		<Unit filename="include/lkh-include/Sequence.h" />
 		<Unit filename="include/treedecomposition.h" />
 		<Unit filename="include/utils.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/graph.cpp" />
+		<Unit filename="src/lkh-src/Activate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/AddCandidate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/AddExtraCandidates.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/AddTourCandidates.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/AdjustCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/AllocateStructures.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Ascent.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Best2OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Best3OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Best4OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Best5OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/BestKOptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Between.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Between_SL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Between_SSL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/BridgeGain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/BuildKDTree.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/C.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/CandidateReport.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ChooseInitialTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Connect.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/CreateCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/CreateDelaunayCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/CreateQuadrantCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Delaunay.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Distance.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Distance_SPECIAL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ERXT.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Excludable.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Exclude.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/FindTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Flip.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Flip_SL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Flip_SSL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Forbidden.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/FreeStructures.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Gain23.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/GenerateCandidates.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Genetic.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/GeoConversion.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/GetTime.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/GreedyTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Hashing.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Heap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/IsCandidate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/IsCommonEdge.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/IsPossibleCandidate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/KSwapKick.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/LKHmain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/LinKernighan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Make2OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Make3OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Make4OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Make5OptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/MakeKOptMove.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/MergeBetterTourWithBestTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/MergeWithTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Minimum1TreeCost.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/MinimumSpanningTree.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/NormalizeNodeList.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/NormalizeSegmentList.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/OrderCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/PatchCycles.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/PrintParameters.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Random.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ReadCandidates.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ReadLine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ReadParameters.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ReadPenalties.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ReadProblem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/RecordBestTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/RecordBetterTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/RemoveFirstActive.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/ResetCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/RestoreTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SFCTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SegmentSize.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Sequence.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveCompressedSubproblem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveDelaunaySubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveKCenterSubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveKMeansSubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveKarpSubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveRoheSubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveSFCSubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveSubproblem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveSubproblemBorderProblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SolveTourSegmentSubproblems.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/Statistics.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/StoreTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/SymmetrizeCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/TrimCandidateSet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/WriteCandidates.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/WritePenalties.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/WriteTour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/eprintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/fscanint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/printff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lkh-src/qsort.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/treedecomposition.cpp" />
 		<Unit filename="src/utils.cpp" />
 		<Extensions>

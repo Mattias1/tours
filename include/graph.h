@@ -10,24 +10,24 @@ using namespace std;
 
 // Forward declaration, because edge is going to need vertices (but only using (smart) pointers)
 class Vertex;
-// Header file declaration of small compare function, because it's also used in the treedecomposition file
+// Header file declaration of small compare function, because it's also used in the tree decomposition file
 bool comp(const string& line, const string& firstPart);
 
-// Import in this order, as they all depend on eachother.
+// Import in this order, as they all depend on each other.
 class Edge
 {
     friend class Graph;
     friend class Vertex;
 
     public:
-        shared_ptr<Vertex> pA;
-        shared_ptr<Vertex> pB;
+        Vertex* pA;
+        Vertex* pB;
         int Cost;
 
-        Edge(shared_ptr<Vertex> pA, shared_ptr<Vertex> pB);
+        Edge(Vertex* pA, Vertex* pB);
         virtual ~Edge();
 
-        shared_ptr<Vertex> Other(const Vertex& v);
+        Vertex* Other(const Vertex& v);
 
     private:
         void updateEuclideanCost();
@@ -50,6 +50,8 @@ class Vertex
         Vertex(int vid, int x, int y);
         virtual ~Vertex();
 
+        bool IsConnectedTo(Vertex* other);
+
     private:
         int vid, x, y;
         vector<shared_ptr<Edge>> edges;
@@ -62,13 +64,15 @@ class Graph
 
     public:
         string name;
-        vector<shared_ptr<Vertex>> vertices;
+        vector<unique_ptr<Vertex>> vertices;
 
         Graph();
         virtual ~Graph();
 
         virtual bool ReadFileLine(int& rState, string line);
         virtual string ToFileString() const;
+
+        virtual unique_ptr<Graph> DeepCopy();
 };
 
 #endif // GRAPH_H
