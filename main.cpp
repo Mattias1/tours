@@ -43,19 +43,21 @@ int mainWrapperTest(vector<string> args) {
     int argc = args.size();
     if (argc <= 0)
         return 1337;
-    vector<shared_ptr<char>> argv;
+    vector<unique_ptr<char>> argvMemoryManager;
+    vector<char*> argv;
     for (unsigned int i=0; i<args.size(); ++i) {
-        shared_ptr<char> pStr = shared_ptr<char>(new char[args[i].size() + 1]);
+        unique_ptr<char> pStr = unique_ptr<char>(new char[args[i].size() + 1]);
         for (unsigned int j=0; j<args[i].size() + 1; ++j) {
             pStr.get()[j] = args[i].c_str()[j];
         }
-        argv.push_back(pStr);
+        argv.push_back(pStr.get());
+        argvMemoryManager.push_back(move(pStr));
     }
 
     // Use the C style char array array
-    //return mainWrapper(argc, &argv[0]);
+    return mainWrapper(argc, &argv[0]);
     //return test(40);
-    return 42;
+    //return 42;
 }
 
 int main()

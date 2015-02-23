@@ -85,7 +85,7 @@ string Graph::ToFileString() const {
 }
 
 unique_ptr<Graph> Graph::DeepCopy() {
-    // Create a deep copy of the graph (on the stack)
+    // Create a deep copy of the graph
     unique_ptr<Graph> pGraph = unique_ptr<Graph>(new Graph());
     pGraph->name = this->name + " (copy)";
 
