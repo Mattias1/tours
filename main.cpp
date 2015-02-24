@@ -8,8 +8,15 @@
 #include "treedecomposition.h"
 
 #include "LKH.h"
+#include "test.h"
 
 using namespace std;
+
+// The header for the renamed main function (and a test function) ~Matty
+extern "C" {
+    int main_lkh(int argc, char *argv[]);
+    int test(int nr);
+}
 
 //
 //  File I/O
@@ -38,7 +45,7 @@ void graphsToFile(const Graph& graph, const TreeDecomposition& treeDecomposition
 //
 //  The main function
 //
-int mainWrapperTest(vector<string> args) {
+int mainWrapper(vector<string> args) {
     // Convert the args string vector to a c style char array array
     int argc = args.size();
     if (argc <= 0)
@@ -55,17 +62,16 @@ int mainWrapperTest(vector<string> args) {
     }
 
     // Use the C style char array array
-    return mainWrapper(argc, &argv[0]);
-    //return test(40);
-    //return 42;
+    return main_lkh(argc, &argv[0]);
+    // return test(40);
 }
 
 int main()
 {
     // Test KLH C code calls
-    vector<string> lkhArgs = { "pr2392.par" };
-    int result = mainWrapperTest(lkhArgs);
-    cout << result << endl;
+    vector<string> lkhArgs = { "", "tsp-files/pr2392.par" }; // The first argument is the programs name, though the empty string should be fine.
+    int result = mainWrapper(lkhArgs);
+    cout << "LKH main result: " << result << endl;
 
     // Test if the from file and to file functions work - and compute a new tree decomposition
     Graph* pG = new Graph();
@@ -79,8 +85,5 @@ int main()
 
     graphsToFile(*pG, *pTD, "test-graph-out.txt");
     cout << "Done graph to file" << endl;
-
-    // Hi there world
-    cout << endl << "Hello world!" << endl;
     return 0;
 }
