@@ -46,6 +46,9 @@ void tourFromFile(Graph& rGraph, string path) {
         // We are in the tour section part
         vids.push_back(stoi(line));
     }
+    // Complete the cycle
+    vids.push_back(vids[0]);
+    // Now let the graph add its edges
     rGraph.CreateTourFromFile(vids);
 }
 

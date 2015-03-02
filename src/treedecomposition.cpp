@@ -18,6 +18,7 @@ TreeDecomposition::~TreeDecomposition()
 
 bool TreeDecomposition::ReadFileLine(int& rState, string line) {
     // Handle one line of a file (note that the in place editing of the string in trim is a good thing).
+    int startVid = 1; // TODO, THINK OF THIS ONE
     vector <string> l = split(trim(line), ' ');
     // Important file parameters
     if (comp(line, "NAME : ")) {
@@ -39,10 +40,10 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
 
     // Add vertices, edges, bags or bag edges
     if (rState == 3) {
-        unique_ptr<Bag> pBag = unique_ptr<Bag>(new Bag(stoi(l[0]), stoi(l[1]), stoi(l[2])));
+        unique_ptr<Bag> pBag = unique_ptr<Bag>(new Bag(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2])));
         for (unsigned int i=3; i<l.size(); ++i) {
             // Add a specific vertex to a bag.
-            pBag->vertices.push_back( this->pOriginalGraph->vertices[stoi(l[i])].get() );
+            pBag->vertices.push_back( this->pOriginalGraph->vertices[stoi(l[i]) - startVid].get() );
         }
         // Add the bag to the tree
         this->vertices.push_back(move(pBag));
@@ -50,8 +51,8 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
     }
     if (rState == 4) {
         // Add the edge to the edgelist of it's endpoints
-        Vertex* pA = this->vertices[stoi(l[0])].get();
-        Vertex* pB = this->vertices[stoi(l[1])].get();
+        Vertex* pA = this->vertices[stoi(l[0]) - startVid].get();
+        Vertex* pB = this->vertices[stoi(l[1]) - startVid].get();
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
@@ -63,14 +64,15 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
 
 string TreeDecomposition::ToFileString() const {
     // This is supposed to be placed after the normal graph.ToFileString method.
+    int startVid = 1;
     if (this->vertices.size() == 0)
         return "";
     string s = "BAG_COORD_SECTION\n";
     for (unsigned int i=0; i<this->vertices.size(); ++i) {
         Bag* pBag = dynamic_cast<Bag*>(this->vertices[i].get());
-        s += to_string(pBag->vid) + " " + to_string(pBag->x) + " " + to_string(pBag->y);
+        s += to_string(pBag->vid + startVid) + " " + to_string(pBag->x) + " " + to_string(pBag->y);
         for (unsigned int j=0; j<pBag->vertices.size(); ++j) {
-            s += " " + to_string(pBag->vertices[j]->vid);
+            s += " " + to_string(pBag->vertices[j]->vid + startVid);
         }
         s += "\n";
     }
@@ -80,7 +82,7 @@ string TreeDecomposition::ToFileString() const {
         for (unsigned int j=0; j<pBag->edges.size(); ++j) {
             shared_ptr<Edge> pE = pBag->edges[j];
             if (pBag->vid < pE->Other(*pBag)->vid)
-                s += to_string(pE->pA->vid) + " " + to_string(pE->pB->vid) + "\n";
+                s += to_string(pE->pA->vid + startVid) + " " + to_string(pE->pB->vid + startVid) + "\n";
         }
     }
     return s;
