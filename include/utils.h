@@ -28,6 +28,13 @@ string &trim(string &rS);
 
 
 //
+// Check if string is an integer number
+// (Thank you SO: http://stackoverflow.com/questions/4654636/how-to-determine-if-a-string-is-a-number-with-c)
+//
+bool isInt(const string& s, bool allowNegative=false);
+
+
+//
 // stoi and to_string workaround
 // (Thanks to: http://www.cplusplus.com/forum/beginner/120836/)
 // (And to: http://stackoverflow.com/questions/12975341/to-string-is-not-a-member-of-std-says-so-g)

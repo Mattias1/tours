@@ -84,6 +84,11 @@ string Graph::ToFileString() const {
     return s;
 }
 
+bool CreateTourFromFile(const vector<int>& vids) {
+    // TODO
+    return false;
+}
+
 unique_ptr<Graph> Graph::DeepCopy() {
     // Create a deep copy of the graph
     unique_ptr<Graph> pGraph = unique_ptr<Graph>(new Graph());

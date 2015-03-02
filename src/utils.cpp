@@ -48,6 +48,19 @@ string &trim(string &rS) {
 }
 
 //
+// Check if string is an integer number
+//
+bool isInt(const string& s, bool allowNegative)
+{
+    string::const_iterator it = s.begin();
+    if (allowNegative && *it == '-')
+        ++it;
+    while (it != s.end() && isdigit(*it))
+        ++it;
+    return !s.empty() && it == s.end();
+}
+
+//
 // stoi and to_string workaround
 //
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)

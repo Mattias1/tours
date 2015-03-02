@@ -71,6 +71,7 @@ class Graph
 
         virtual bool ReadFileLine(int& rState, string line);
         virtual string ToFileString() const;
+        bool CreateTourFromFile(const vector<int>& vids);
 
         virtual unique_ptr<Graph> DeepCopy();
 };
