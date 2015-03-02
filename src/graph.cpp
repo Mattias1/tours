@@ -88,11 +88,15 @@ string Graph::ToFileString() const {
 
 bool CreateTourFromFile(const vector<int>& vids) {
     // Add all edges from the cycle
-    int startVid = 1; // TODO, THINK OF THIS ONE!!!!!!!!
+    int startVid = 1;
     for (unsigned int i=0; i<vids.size() - 1; ++i) {
-
+        Vertex* pA = this->vertices[vids[i] - startVid].get();
+        Vertex* pB = this->vertices[vids[i + 1] - startVid].get();
+        shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
+        pA->edges.push_back(pE);
+        pB->edges.push_back(pE);
     }
-    return false;
+    return true;
 }
 
 unique_ptr<Graph> Graph::DeepCopy() {
