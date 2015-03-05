@@ -1,6 +1,7 @@
 #include "graph.h"
 
 #include "utils.h"
+#include <iostream>
 using namespace std;
 
 //
@@ -42,7 +43,7 @@ bool Graph::ReadFileLine(int& rState, string line) {
     // Add vertices, edges, bags or bag edges
     if (rState == 1) {
         // Add the vertex to the graph
-        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0] - startVid), stoi(l[1]), stoi(l[2]))));
+        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2]))));
         return true;
     }
     if (rState == 2) {
@@ -86,17 +87,27 @@ string Graph::ToFileString() const {
     return s;
 }
 
-bool CreateTourFromFile(const vector<int>& vids) {
+bool Graph::AddTourFromFile(const vector<unsigned int>& vids) {
     // Add all edges from the cycle
     int startVid = 1;
+    bool result = false;
     for (unsigned int i=0; i<vids.size() - 1; ++i) {
+        // Assert that the vertices exist
+        if (vids[i] - startVid >= this->vertices.size() || vids[i + 1] - startVid >= this->vertices.size()) {
+            cout << "ERROR, the vertex requested by the AddTourFromFile doesn't exist - " << vids[i] - startVid << ", " << vids[i + 1] - startVid << endl;
+            return false;
+        }
+        // Add the actual edge (if it's not there already).
         Vertex* pA = this->vertices[vids[i] - startVid].get();
         Vertex* pB = this->vertices[vids[i + 1] - startVid].get();
+        if (pA->IsConnectedTo(pB))
+            continue;
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
+        result = true;
     }
-    return true;
+    return result;
 }
 
 unique_ptr<Graph> Graph::DeepCopy() {
@@ -140,7 +151,9 @@ Vertex::~Vertex()
 { }
 
 bool Vertex::IsConnectedTo(Vertex* other) {
-    // Return whether or not this vertex is connected to another vertex
+    // Return whether or not this vertex is connected to another vertex (a vertex is considered to be connected to himself)
+    if (this == other)
+        return true;
     for (unsigned int i=0; i<this->edges.size(); ++i)
         if (this->edges[i]->Other(*this) == other)
             return true;

@@ -123,6 +123,21 @@ void TreeDecomposition::MinimumDegree() {
     // Create a tree decomposition (with wrong vids)
     this->permutationToTreeDecomposition(vertexList, edgeList);
 
+    // DEBUG DEBUG DEBUG
+    cout << "edgeList: ";
+    for (unsigned int i=0; i<edgeList.size(); ++i) {
+        cout << edgeList[i] << ", ";
+    }
+    cout << endl;
+
+    cout << "bag list: ";
+    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+        cout << this->vertices[i]->vid << ", ";
+    }
+    cout << endl;
+    // So.... vertices are 0, 1, ..., 5 and edges contain {5, 6}..... hmmmmz
+    // END DEBUG
+
     // Add edges
     Vertex* pA;
     Vertex* pB;
@@ -134,6 +149,9 @@ void TreeDecomposition::MinimumDegree() {
             if (pBag->vid == edgeList[i + 1])
                 pB = pBag;
         }
+        if (pA == pB)
+            // So what happends here is that it doesn't find either pA or pB, so it just uses the old one - which happends to be equal... not so funny.
+            cout << "AAAAAAAAAAAAAAAAAAAAAAAAAHHH!!!!" << endl;
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
@@ -148,46 +166,6 @@ void TreeDecomposition::MinimumDegree() {
     this->CreateRoot(true);
 }
 
-/*void TreeDecomposition::permutationToTreeDecompositionORIGINAL(const vector<int>& vertexList, unsigned int recursionIdx, vector<int>& rEdgeList) {
-    // Algorithm 2 from the paper titled "tw computations upper bounds" by B & K 2010.
-    // vertexList:   The vid's sorted in order of smallest degree,
-    // recursionIdx: The current vertexList should be [recIdx:], for performance reasons the list is passed intact as const reference - default: 0,
-    // rEdgeList:    This list will be filled with int-pairs that should become the edges in the final tree decomposition
-    //               (but the bags might not be created yet) - default: [].
-    // Note: correct the vid's from each bag later (once the edges in the edge list are added)
-    Vertex* pV = this->pOriginalGraph->vertices[vertexList[recursionIdx]].get();
-    unique_ptr<Bag> pTheBag = unique_ptr<Bag>(new Bag(pV->vid, 240, 60 + 120 * recursionIdx));
-    Bag* pBag = pTheBag.get();
-    this->vertices.push_back(move(pTheBag));
-
-    // Base case
-    if (vertexList.size() - 1 == recursionIdx) {
-        pBag->vertices.push_back(pV);
-        return;
-    }
-
-    // Normal case (recurse)
-    this->permutationToTreeDecomposition(vertexList, recursionIdx + 1, rEdgeList);
-
-    // Add the neighbourhood (in vertexList) of pV to the bag
-    pBag->vertices.push_back(pV);
-    for (unsigned int i=recursionIdx + 1; i<vertexList.size(); ++i)
-        for (unsigned int j=0; j<pV->edges.size(); ++j)
-            if (pV->edges[j]->Other(*pV)->vid == vertexList[i]) {
-                // We found a vertex that is both a neighbour of pV and still in the vertex list - so add it
-                pBag->vertices.push_back(pV->edges[j]->Other(*pV));
-                break;
-            }
-    // And find the right edge
-    for (unsigned int i=recursionIdx + 1; i<vertexList.size(); ++i)
-        for (unsigned int j=0; j<pV->edges.size(); ++j)
-            if (pV->edges[j]->Other(*pV)->vid == vertexList[i]) {
-                // We found the (future?) bag that our new bag should connect to - save it to add the edge later
-                rEdgeList.push_back(pV->vid);
-                rEdgeList.push_back(vertexList[i]);
-                return;
-            }
-}*/
 void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList) {
     // vertexList:   The vid's sorted in order of smallest degree,
     // rEdgeList:    This list will be filled with int-pairs that should become the edges in the final tree decomposition
@@ -195,12 +173,14 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
     // Note: correct the vid's from each bag later; once the edges in the edge list are added
     unique_ptr<Graph> pGraphCopy = this->pOriginalGraph->DeepCopy();
 
-    for (unsigned int i = 0; i<vertexList.size(); ++i) {
+    // Skip the last two bags, because LKH will give us complete tours anyway, we're never going to need those.
+    unsigned int skipAmount = 2;
+
+    for (unsigned int i = 0; i<vertexList.size() - skipAmount; ++i) {
         Vertex* pV = this->pOriginalGraph->vertices[vertexList[i]].get();
         Vertex* pVCopy = pGraphCopy->vertices[pV->vid].get();
         unique_ptr<Bag> pUniqueBag = unique_ptr<Bag>(new Bag(pV->vid, 240, 60 + 120 * i));
         Bag* pBag = pUniqueBag.get();
-        this->vertices.push_back(move(pUniqueBag));
 
         // Add the neighbourhood (in vertexList) of pV to the bag
         pBag->vertices.push_back(pV);
@@ -211,6 +191,9 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
                     pBag->vertices.push_back(this->pOriginalGraph->vertices[ pVCopy->edges[k]->Other(*pVCopy)->vid ].get());
                     break;
                 }
+
+        // Only use this bag if there are at least two vertices inside (otherwise it's a bit useless - and the DP can't handle this :P)
+        this->vertices.push_back(move(pUniqueBag));
 
         // Clique-ify the neighbourhood of this vertex.
         for (unsigned int a=0; a<pBag->vertices.size(); ++a) {
@@ -226,8 +209,8 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
             }
         }
 
-        // And find the right edge for in the tree decomposition
-        for (unsigned int j=i + 1; j<vertexList.size(); ++j)
+        // And find the right edge for in the tree decomposition (an edge to the first next neighbour of v in the vertex list)
+        for (unsigned int j=i + 1; j<vertexList.size() - skipAmount; ++j)
             for (unsigned int k=0; k<pVCopy->edges.size(); ++k)
                 if (pVCopy->edges[k]->Other(*pVCopy)->vid == vertexList[j]) {
                     // We found the (future?) bag that our new bag should connect to - save it to add the edge later
@@ -257,6 +240,10 @@ void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
     // Update all bags recursively
     int diameter = 120;
     this->pParent = pParent;
+    if (pParent != nullptr)
+        cout << "this vid: " << this->vid << ", parent vid: " << pParent->vid << endl;
+    else
+        cout << "this vid: " << this->vid << ", parent vid: nullptr" << endl;
     for (unsigned int i=0; i<this->edges.size(); ++i) {
         Bag* pBag = dynamic_cast<Bag*>(this->edges[i]->Other(*this));
         if (this->pParent == pBag)
@@ -264,6 +251,7 @@ void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
         if (adjustCoordinates) {
             pBag->y = this->y + diameter;
             pBag->x = this->x + (i - this->edges.size() / 2) * diameter;
+            cout << " vid: " << pBag->vid << ", x: " << pBag->x << ", y: " << pBag->y << endl;
         }
         pBag->SetParentsRecursive(this, adjustCoordinates);
     }

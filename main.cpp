@@ -6,10 +6,7 @@
 
 #include "graph.h"
 #include "treedecomposition.h"
-
-#include "LKH.h"
-#include "test.h"
-
+#include "utils.h"
 using namespace std;
 
 // The header for the renamed main function (and a test function) ~Matty
@@ -29,27 +26,32 @@ void graphsFromFile(Graph& rGraph, TreeDecomposition& rTreeDecomposition, string
     }
 }
 
-void tourFromFile(Graph& rGraph, string path) {
+bool tourFromFile(Graph& rGraph, string path) {
     // Read tour integers from file
     ifstream in(path);
-    bool safetyFirst = false; // Make sure it is an actual tour file, that doesn't have integers lying around not part of the tour...
-    vector<int> vids;
+    bool inTourSection = false; // Make sure it is an actual tour file, that doesn't have integers lying around not part of the tour...
+    vector<unsigned int> vids;
     for (string line; getline(in, line); ) {
-        // Loop untill I reach the tour section
+        // Loop and ignore everything until I reach the tour section (and make sure I stay in there)
         if (comp(line, "TOUR_SECTION")) {
-            safetyFirst = true;
-        }
-        if (!safetyFirst)
+            inTourSection = true;
             continue;
-        if (!isInt(line))
-            return;
+        }
+        if (!inTourSection) {
+            continue;
+        }
+        if (!isInt(line)) {
+            if (line != "-1")
+                cout << "ERROR IN TOUR FILE - line: " << line << " - (main.cpp - tourFromFile)" << endl;
+            break;
+        }
         // We are in the tour section part
         vids.push_back(stoi(line));
     }
     // Complete the cycle
     vids.push_back(vids[0]);
     // Now let the graph add its edges
-    rGraph.CreateTourFromFile(vids);
+    return rGraph.AddTourFromFile(vids);
 }
 
 void graphsToFile(const Graph& graph, const TreeDecomposition& treeDecomposition, string path) {
@@ -88,17 +90,28 @@ int mainWrapper(vector<string> args) {
 
 int main()
 {
-    // Test KLH C code calls
-    vector<string> lkhArgs = { "", "tsp-files/test.par" }; // The first argument is the programs name, though the empty string should be fine.
-    int result = mainWrapper(lkhArgs);
-    cout << "LKH main result: " << result << endl;
-
     // Test if the from file and to file functions work - and compute a new tree decomposition
     Graph* pG = new Graph();
     unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
 
     graphsFromFile(*pG, *pTD, "test-graph-in.txt");
-    cout << "Done graph from file" << endl;
+    cout << "Done graph from file" << endl << "----------------------------" << endl;
+
+    // Test LKH C code calls
+    int runs = 5;
+    int mergedTours = 0;
+    vector<string> lkhArgs = { "", "tsp-files/test.par" }; // The first argument is the programs name, though the empty string should be fine.
+    for (int r=0; r<runs; ++r) {
+        mainWrapper(lkhArgs);
+        if (tourFromFile(*pG, "tsp-files/test.tour")) {
+            cout << "Added new tour" << endl;
+            ++mergedTours;
+        }
+        else {
+            cout << "LKH found identical tour" << endl;
+        }
+    }
+    cout << "----------------------------" << endl << "Done KLH; merged " << mergedTours << " tours" << endl;
 
     pTD->MinimumDegree();
     cout << "Done minimum degree heuristic" << endl;
