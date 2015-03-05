@@ -38,6 +38,8 @@ class TreeDecomposition : public Graph
         virtual bool ReadFileLine(int& rState, string line) override;
         virtual string ToFileString() const override;
 
+        int GetTreeWidth();
+
         bool CreateRoot(bool adjustCoordinates=false);
         bool CreateRoot(Bag* pRoot, bool adjustCoordinates=false);
 

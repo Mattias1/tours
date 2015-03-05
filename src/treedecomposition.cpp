@@ -88,6 +88,17 @@ string TreeDecomposition::ToFileString() const {
     return s;
 }
 
+int TreeDecomposition::GetTreeWidth() {
+    // Return the tree width of this tree decomposition
+    unsigned int result = 0;
+    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+        Bag* pBag = dynamic_cast<Bag*>(this->vertices[i].get());
+        if (pBag->vertices.size() > result)
+            result = pBag->vertices.size();
+    }
+    return result - 1;
+}
+
 bool TreeDecomposition::CreateRoot(bool adjustCoordinates) {
     if (this->vertices.size() <= 0)
         return false;

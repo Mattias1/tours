@@ -114,7 +114,7 @@ int main()
     cout << "----------------------------" << endl << "Done KLH; merged " << mergedTours << " tours" << endl;
 
     pTD->MinimumDegree();
-    cout << "Done minimum degree heuristic" << endl;
+    cout << "Done minimum degree heuristic (tree width: " << pTD->GetTreeWidth() << ")" << endl;
 
     graphsToFile(*pG, *pTD, "test-graph-out.txt");
     cout << "Done graph to file" << endl;
