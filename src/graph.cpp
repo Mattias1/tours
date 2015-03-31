@@ -28,6 +28,11 @@ bool Graph::ReadFileLine(int& rState, string line) {
         this->name = l[2];
         return true;
     }
+    if (comp(line, "EOF")) {
+        rState = 0;
+        return true;
+    }
+
     // Vertices and edges
     if (comp(line, "NODE_COORD_SECTION")) {
         rState = 1;
@@ -40,13 +45,20 @@ bool Graph::ReadFileLine(int& rState, string line) {
     if (comp(line, "BAG_COORD_SECTION") || comp(line, "BAG_EDGE_SECTION")) {
         return false;
     }
+
     // Add vertices, edges, bags or bag edges
     if (rState == 1) {
+        // Just to be sure
+        if (l.size() != 3)
+            cout << "ERROR: The Graph ReadFileLine expects a vertex, but it doesn't get three strings in the first place." << endl;
         // Add the vertex to the graph
         this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2]))));
         return true;
     }
     if (rState == 2) {
+        // Just to be sure
+        if (l.size() < 2 || l.size() > 3)
+            cout << "ERROR: The Graph ReadFileLine expects an edge, but it doesn't get two or three strings in the first place." << endl;
         // Add the edge to the edgelist of it's endpoints
         Vertex* pA = this->vertices[stoi(l[0]) - startVid].get();
         Vertex* pB = this->vertices[stoi(l[1]) - startVid].get();
@@ -110,7 +122,7 @@ bool Graph::AddTourFromFile(const vector<unsigned int>& vids) {
     return result;
 }
 
-unique_ptr<Graph> Graph::DeepCopy() {
+unique_ptr<Graph> Graph::DeepCopy() const {
     // Create a deep copy of the graph
     unique_ptr<Graph> pGraph = unique_ptr<Graph>(new Graph());
     pGraph->name = this->name + " (copy)";
@@ -150,7 +162,7 @@ Vertex::Vertex(int vid, int x, int y)
 Vertex::~Vertex()
 { }
 
-bool Vertex::IsConnectedTo(Vertex* other) {
+bool Vertex::IsConnectedTo(Vertex* other) const {
     // Return whether or not this vertex is connected to another vertex (a vertex is considered to be connected to himself)
     if (this == other)
         return true;
@@ -174,7 +186,7 @@ Edge::Edge(Vertex* pA, Vertex* pB)
 Edge::~Edge()
 { }
 
-Vertex* Edge::Other(const Vertex& v) {
+Vertex* Edge::Other(const Vertex& v) const {
     if (v.vid == this->pA->vid)
         return this->pB;
     else if (v.vid == this->pB->vid)
@@ -183,8 +195,17 @@ Vertex* Edge::Other(const Vertex& v) {
         return nullptr;
 }
 
+bool Edge::IsIncidentTo(Vertex* pV) const {
+    return this->pA == pV || this->pB == pV;
+}
+
 void Edge::updateEuclideanCost() {
     int x = this->pA->x - this->pB->x;
     int y = this->pA->y - this->pB->y;
     this->Cost = sqrt(x*x + y*y);
+}
+
+ostream &operator<<(ostream &os, const Edge& edge) {
+    return os << edge.pA->vid << "-" << edge.pB->vid;
+    // return os << "(" << edge.pA->vid; << ", " << edge.pB->vid << ")";
 }

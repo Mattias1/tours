@@ -12,25 +12,27 @@ class Bag : public Vertex
     friend class TreeDecomposition;
 
     public:
-        const Bag* getParent() { return this->pParent; }
-        //const vector<unique_ptr<Vertex>> getVertices() { return this->vertices; }
+        const Bag* getParent() const { return this->pParent; }
+        vector<Vertex*> vertices;
 
         Bag(int vid, int x, int y);
         virtual ~Bag();
+
+        bool ContainsVertex(Vertex* pV) const;
+        bool ContainsEdge(Edge* pE) const;
 
         void SetParentsRecursive(Bag* pParent, bool adjustCoordinates=false);
 
     private:
         Bag* pParent;
-        vector<Vertex*> vertices;
 };
 
 
 class TreeDecomposition : public Graph
 {
     public:
-        const Bag* getRoot() { return this->pRoot; }
-        const Graph* getOriginalGraph() { return this->pOriginalGraph.get(); }
+        const Bag* getRoot() const { return this->pRoot; }
+        const Graph* getOriginalGraph() const { return this->pOriginalGraph.get(); }
 
         TreeDecomposition(Graph* originalGraph);
         virtual ~TreeDecomposition();
@@ -38,7 +40,7 @@ class TreeDecomposition : public Graph
         virtual bool ReadFileLine(int& rState, string line) override;
         virtual string ToFileString() const override;
 
-        int GetTreeWidth();
+        int GetTreeWidth() const;
 
         bool CreateRoot(bool adjustCoordinates=false);
         bool CreateRoot(Bag* pRoot, bool adjustCoordinates=false);

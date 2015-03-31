@@ -35,6 +35,7 @@
 			<Add option="-fexceptions" />
 			<Add directory="test-C" />
 		</Compiler>
+		<Unit filename="include/dp_tsp.h" />
 		<Unit filename="include/graph.h" />
 		<Unit filename="include/lkh-include/Delaunay.h" />
 		<Unit filename="include/lkh-include/GainType.h" />
@@ -48,6 +49,7 @@
 		<Unit filename="include/treedecomposition.h" />
 		<Unit filename="include/utils.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/dp_tsp.cpp" />
 		<Unit filename="src/graph.cpp" />
 		<Unit filename="src/lkh-src/Activate.c">
 			<Option compilerVar="CC" />

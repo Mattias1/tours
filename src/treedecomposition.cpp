@@ -25,6 +25,11 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
         this->name = l[2];
         return true;
     }
+    if (comp(line, "EOF")) {
+        rState = 0;
+        return false;
+    }
+
     // Vertices and edges
     if (comp(line, "NODE_COORD_SECTION") || comp(line, "EDGE_SECTION")) {
         return false;
@@ -40,6 +45,9 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
 
     // Add vertices, edges, bags or bag edges
     if (rState == 3) {
+        // Just to be sure
+        if (l.size() != 3)
+            cout << "ERROR: The TD ReadFileLine expects a bag, but it doesn't get two or three strings in the first place." << endl;
         unique_ptr<Bag> pBag = unique_ptr<Bag>(new Bag(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2])));
         for (unsigned int i=3; i<l.size(); ++i) {
             // Add a specific vertex to a bag.
@@ -50,6 +58,9 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
         return true;
     }
     if (rState == 4) {
+        // Just to be sure
+        if (l.size() < 2 || l.size() > 3)
+            cout << "ERROR: The TD ReadFileLine expects an edge, but it doesn't get two or three strings in the first place." << endl;
         // Add the edge to the edgelist of it's endpoints
         Vertex* pA = this->vertices[stoi(l[0]) - startVid].get();
         Vertex* pB = this->vertices[stoi(l[1]) - startVid].get();
@@ -88,7 +99,7 @@ string TreeDecomposition::ToFileString() const {
     return s;
 }
 
-int TreeDecomposition::GetTreeWidth() {
+int TreeDecomposition::GetTreeWidth() const {
     // Return the tree width of this tree decomposition
     unsigned int result = 0;
     for (unsigned int i=0; i<this->vertices.size(); ++i) {
@@ -134,21 +145,6 @@ void TreeDecomposition::MinimumDegree() {
     // Create a tree decomposition (with wrong vids)
     this->permutationToTreeDecomposition(vertexList, edgeList);
 
-    // DEBUG DEBUG DEBUG
-    cout << "edgeList: ";
-    for (unsigned int i=0; i<edgeList.size(); ++i) {
-        cout << edgeList[i] << ", ";
-    }
-    cout << endl;
-
-    cout << "bag list: ";
-    for (unsigned int i=0; i<this->vertices.size(); ++i) {
-        cout << this->vertices[i]->vid << ", ";
-    }
-    cout << endl;
-    // So.... vertices are 0, 1, ..., 5 and edges contain {5, 6}..... hmmmmz
-    // END DEBUG
-
     // Add edges
     Vertex* pA;
     Vertex* pB;
@@ -162,7 +158,7 @@ void TreeDecomposition::MinimumDegree() {
         }
         if (pA == pB)
             // So what happends here is that it doesn't find either pA or pB, so it just uses the old one - which happends to be equal... not so funny.
-            cout << "AAAAAAAAAAAAAAAAAAAAAAAAAHHH!!!!" << endl;
+            cout << "AAAAAAAAAAAAAAAAAAAAAAAAAHHH!!!! (error in Minimum Degree Heuristic: pA == pB)" << endl;
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
@@ -247,14 +243,35 @@ Bag::Bag(int vid, int x, int y)
 Bag::~Bag()
 { }
 
+bool Bag::ContainsVertex(Vertex* pV) const {
+    for (unsigned int i=0; i<this->vertices.size(); ++i)
+        if (this->vertices[i] == pV)
+            return true;
+    return false;
+}
+
+bool Bag::ContainsEdge(Edge* pE) const {
+    // A bag 'contains an edge' if it contains both endpoints.
+    bool a = false, b = false;
+    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+        if (this->vertices[i] == pE->pA) {
+            if (b)
+                return true;
+            a = true;
+        }
+        else if (this->vertices[i] == pE->pB) {
+            if (a)
+                return true;
+            b = true;
+        }
+    }
+    return false;
+}
+
 void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
     // Update all bags recursively
     int diameter = 120;
     this->pParent = pParent;
-    if (pParent != nullptr)
-        cout << "this vid: " << this->vid << ", parent vid: " << pParent->vid << endl;
-    else
-        cout << "this vid: " << this->vid << ", parent vid: nullptr" << endl;
     for (unsigned int i=0; i<this->edges.size(); ++i) {
         Bag* pBag = dynamic_cast<Bag*>(this->edges[i]->Other(*this));
         if (this->pParent == pBag)
@@ -262,7 +279,6 @@ void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
         if (adjustCoordinates) {
             pBag->y = this->y + diameter;
             pBag->x = this->x + (i - this->edges.size() / 2) * diameter;
-            cout << " vid: " << pBag->vid << ", x: " << pBag->x << ", y: " << pBag->y << endl;
         }
         pBag->SetParentsRecursive(this, adjustCoordinates);
     }

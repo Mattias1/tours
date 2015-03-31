@@ -1,9 +1,28 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "graph.h"
 #include <string>
 #include <vector>
 using namespace std;
+
+
+//
+// Copy int-vector references
+//
+vector<int> duplicate(const vector<int>& lst);
+vector<vector<int>> duplicate(const vector<vector<int>>& lst);
+vector<Edge*> duplicate(const vector<Edge*>& lst);
+
+//
+// Flatten a vector of int-vectors
+//
+vector<int> flatten(const vector<vector<int>>& lst);
+
+//
+// Push back an entire list
+//
+void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd);
 
 
 //
@@ -11,8 +30,16 @@ using namespace std;
 // (Thank you SO: http://stackoverflow.com/questions/236129/split-a-string-in-c)
 //
 vector<string> &split(const string &s, char delim, vector<string> &elems);
-
 vector<string> split(const string &s, char delim);
+
+vector<int> &splitInt(const string &s, char delim, vector<int> &elems);
+vector<int> splitInt(const string &s, char delim);
+
+//
+// String join method
+// (Thank you SO: http://stackoverflow.com/questions/1430757/c-vector-to-string)
+//
+string join(const vector<int>& v, char delim);
 
 
 //

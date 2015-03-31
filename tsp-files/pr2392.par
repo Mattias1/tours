@@ -1,6 +1,14 @@
+# Original paramters
 PROBLEM_FILE = tsp-files/pr2392.tsp
 OPTIMUM = 378032
 MOVE_TYPE = 5
 PATCHING_C = 3
 PATCHING_A = 2
-RUNS = 10
+
+# Parameters added by Matty
+# RUNS = 1
+# TOUR_FILE = tsp-files/pr2392.tour
+# TRACE_LEVEL = 0
+
+# This one will make KLH run a lot worse (I hope)
+# MAX_TRIALS = 1

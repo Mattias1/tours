@@ -27,11 +27,15 @@ class Edge
         Edge(Vertex* pA, Vertex* pB);
         virtual ~Edge();
 
-        Vertex* Other(const Vertex& v);
+        Vertex* Other(const Vertex& v) const;
+
+        bool IsIncidentTo(Vertex* pV) const;
 
     private:
         void updateEuclideanCost();
 };
+
+ostream &operator<<(ostream &os, const Edge& edge);
 
 
 class Vertex
@@ -42,19 +46,13 @@ class Vertex
     friend class Bag;
 
     public:
-        int getX() { return this->x; }
-        int getY() { return this->y; }
-        int getVid() { return this->vid; }
-        const vector<shared_ptr<Edge>>& getEdges() { return this->edges; }
+        int vid, x, y;
+        vector<shared_ptr<Edge>> edges;
 
         Vertex(int vid, int x, int y);
         virtual ~Vertex();
 
-        bool IsConnectedTo(Vertex* other);
-
-    private:
-        int vid, x, y;
-        vector<shared_ptr<Edge>> edges;
+        bool IsConnectedTo(Vertex* other) const;
 };
 
 
@@ -73,7 +71,7 @@ class Graph
         virtual string ToFileString() const;
         bool AddTourFromFile(const vector<unsigned int>& vids);
 
-        virtual unique_ptr<Graph> DeepCopy();
+        virtual unique_ptr<Graph> DeepCopy() const;
 };
 
 #endif // GRAPH_H

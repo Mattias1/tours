@@ -9,6 +9,51 @@
 
 using namespace std;
 
+
+//
+// Copy int-vector references
+//
+vector<int> duplicate(const vector<int>& lst) {
+    // Deep copy (which in this case is the same as a shallow copy)
+    vector<int> result(lst.size());
+    for (unsigned int i=0; i<lst.size(); ++i)
+        result[i] = lst[i];
+    return result;
+}
+vector<vector<int>> duplicate(const vector<vector<int>>& lst) {
+    // Deep copy
+    vector<vector<int>> result(lst.size());
+    for (unsigned int i=0; i<lst.size(); ++i)
+        result[i] = duplicate(lst[i]);
+    return result;
+}
+vector<Edge*> duplicate(const vector<Edge*>& lst) {
+    // Deep copy (which in this case is the same as a shallow copy)
+    vector<Edge*> result(lst.size());
+    for (unsigned int i=0; i<lst.size(); ++i)
+        result[i] = lst[i];
+    return result;
+}
+
+//
+// Flatten a vector of int-vectors
+//
+vector<int> flatten(const vector<vector<int>>& lst) {
+    vector<int> result; // Possible optimization: add in the correct size (the actual size in memory of the lst?)
+    for (unsigned int i=0; i<lst.size(); ++i)
+        for (unsigned int j=0; j<lst[i].size(); ++j)
+            result.push_back(lst[i][j]);
+    return result;
+}
+
+//
+// Push back an entire list
+//
+void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd) {
+    for (unsigned int i=0; i<listToAdd.size(); ++i)
+        pOriginalList->push_back(listToAdd[i]);
+}
+
 //
 // String split methods
 //
@@ -20,11 +65,37 @@ vector<string> &split(const string &s, char delim, vector<string> &elems) {
     }
     return elems;
 }
-
 vector<string> split(const string &s, char delim) {
     vector<string> elems;
     split(s, delim, elems);
     return elems;
+}
+
+vector<int> &splitInt(const string &s, char delim, vector<int> &elems) {
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(stoi(item));
+    }
+    return elems;
+}
+vector<int> splitInt(const string& s, char delim) {
+    vector<int> elems;
+    splitInt(s, delim, elems);
+    return elems;
+}
+
+//
+// String join method
+//
+string join(const vector<int>& v, char delim) {
+    stringstream ss;
+    for(size_t i = 0; i < v.size(); ++i) {
+        if(i != 0)
+            ss << delim;
+        ss << v[i];
+    }
+    return ss.str();
 }
 
 //

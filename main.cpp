@@ -90,33 +90,49 @@ int mainWrapper(vector<string> args) {
 
 int main()
 {
-    // Test if the from file and to file functions work - and compute a new tree decomposition
-    Graph* pG = new Graph();
-    unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
+    // The main entrypoint for this application. Here we load the graph (they should only contain vertices),
+    // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
 
-    graphsFromFile(*pG, *pTD, "test-graph-in.txt");
-    cout << "Done graph from file" << endl << "----------------------------" << endl;
+    // The names of the tsp-problems we want to solve
+    vector<string> FILES = { "pr2392" };
+    // The number of LKH runs
+    int LKH_RUNS = 5;
 
-    // Test LKH C code calls
-    int runs = 5;
-    int mergedTours = 0;
-    vector<string> lkhArgs = { "", "tsp-files/test.par" }; // The first argument is the programs name, though the empty string should be fine.
-    for (int r=0; r<runs; ++r) {
-        mainWrapper(lkhArgs);
-        if (tourFromFile(*pG, "tsp-files/test.tour")) {
-            cout << "Added new tour" << endl;
-            ++mergedTours;
+    // Get the tour for each of the files
+    for (unsigned int i=0; i<FILES.size(); ++i) {
+        string file = "tsp-files/" + FILES[i];
+
+        // Load the graph
+        Graph* pG = new Graph();
+        unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
+
+        graphsFromFile(*pG, *pTD, file + ".tsp");
+        cout << "Done graph from file" << endl << "----------------------------" << endl;
+
+        // Run LKH and merge tours
+        int mergedTours = 0;
+        vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
+        for (int r=0; r<LKH_RUNS; ++r) {
+            mainWrapper(lkhArgs);
+            if (tourFromFile(*pG, file + ".tour")) {
+                cout << "Added new tour" << endl;
+                ++mergedTours;
+            }
+            else {
+                cout << "LKH found identical tour" << endl;
+            }
         }
-        else {
-            cout << "LKH found identical tour" << endl;
-        }
+        cout << "----------------------------" << endl << "Done LKH; merged " << mergedTours << " tours" << endl;
+
+        // Create the tree decomposition
+        pTD->MinimumDegree();
+        cout << "Done minimum degree heuristic (treewidth: " << pTD->GetTreeWidth() << ")" << endl;
+
+        // Run the DP
+
+        // Write a graph to file.... not sure why I want to do that, but ok???
+        graphsToFile(*pG, *pTD, "test-graph-out.txt");
+        cout << "Done graph to file" << endl << "----------------------------" << endl << endl;
     }
-    cout << "----------------------------" << endl << "Done KLH; merged " << mergedTours << " tours" << endl;
-
-    pTD->MinimumDegree();
-    cout << "Done minimum degree heuristic (tree width: " << pTD->GetTreeWidth() << ")" << endl;
-
-    graphsToFile(*pG, *pTD, "test-graph-out.txt");
-    cout << "Done graph to file" << endl;
     return 0;
 }
