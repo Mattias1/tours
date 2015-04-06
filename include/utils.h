@@ -48,9 +48,7 @@ string join(const vector<int>& v, char delim);
 // Note: looks like they edit the string in place
 //
 string &ltrim(string &rS);
-
 string &rtrim(string &rS);
-
 string &trim(string &rS);
 
 
@@ -59,6 +57,15 @@ string &trim(string &rS);
 // (Thank you SO: http://stackoverflow.com/questions/4654636/how-to-determine-if-a-string-is-a-number-with-c)
 //
 bool isInt(const string& s, bool allowNegative=false);
+
+
+//
+// Some debug helpers
+//
+string dbg(const string& s, unsigned int i);
+string dbg(const vector<int>& v);
+string dbg(const vector<vector<int>>& v);
+string dbg(const vector<Edge*>& edges);
 
 
 //

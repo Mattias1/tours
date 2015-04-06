@@ -49,6 +49,8 @@ int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>&
     // The smallest value such that all vertices below Xi have degree 2 and vertices in Xi have degrees defined by S
     // bool debug = false;
     // if debug: print("A({} {}, X{}): {}".format(toDegrees(S), toEndpoints(S), Xi.vid, "?"))
+
+    // If we know the value already, just look it up.
     const auto& iter = rHashlists[Xi.vid]->find(S);
     if (iter != rHashlists[Xi.vid]->end())
         // if debug: print('lookup return: {}'.format(Xi.a[S]))
@@ -79,8 +81,7 @@ int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>&
         childEndpoints[i] = vector<int>();
         childDegrees[i] = vector<int>(degrees.size(), 0);
     }
-    (*rHashlists[Xi.vid])[S] = tspRecurse(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints); // the one with tspChildEval as sub-function
-    // ^^ Crashes because out of range exception
+    (*rHashlists[Xi.vid])[S] = tspRecurse(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
     // if debug: print('calculation return: {}'.format(Xi.a[S]))
     return rHashlists[Xi.vid]->at(S);
 }
@@ -117,7 +118,7 @@ vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map
 int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList) {
     // This method is the base case for the calculate tsp recurse method.
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
-    // bool debug = false;
+    // bool debug = true;
 
     // Check: all bags (except the root) are not allowed to be a cycle.
     if (rEndpoints.size() == 0 and Xi.getParent() != nullptr)
@@ -203,8 +204,12 @@ int tspRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    // bool debug = false;
-    // if debug: print('{}{}{}     (X{}: {}, {})   {}|{}'.format('  ' * i, rChildDegrees, '  ' * (len(Xi.vertices) + 8 - i), Xi.vid, i, j, rTargetDegrees, rEndpoints))
+    bool debug = true;
+    if (debug) {
+        cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 10 - i);
+        cout << "(X" << Xi.vid << ": " << i << ", " << j << ")     " << dbg(rTargetDegrees) << "|" << dbg(rEndpoints) << endl;
+    }
+
     // Final base case.
     if (i >= Xi.vertices.size())
         return tspChildEvaluation(graph, rHashlists, Xi, edges, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints); // BaseF

@@ -106,13 +106,11 @@ string &ltrim(string &rS) {
     rS.erase(rS.begin(), find_if(rS.begin(), rS.end(), not1(ptr_fun<int, int>(isspace))));
     return rS;
 }
-
 string &rtrim(string &rS) {
     // trim from end
     rS.erase(find_if(rS.rbegin(), rS.rend(), not1(ptr_fun<int, int>(isspace))).base(), rS.end());
     return rS;
 }
-
 string &trim(string &rS) {
     // trim from both ends
     return ltrim(rtrim(rS));
@@ -130,6 +128,53 @@ bool isInt(const string& s, bool allowNegative)
         ++it;
     return !s.empty() && it == s.end();
 }
+
+
+//
+// Some debug helpers
+//
+string dbg(const string& s, unsigned int i) {
+    // Output i times s
+    string result = "";
+    for (unsigned int z=0; z<i; ++z)
+        result += s;
+    return result;
+}
+string dbg(const vector<int>& v) {
+    // Output the int vector
+    string result = "[";
+    for (unsigned int i=0; i<v.size(); ++i) {
+        result += to_string(v[i]);
+        if (i != v.size() - 1)
+            result += ",";
+    }
+    return result + "]";
+}
+string dbg(const vector<vector<int>>& v) {
+    // Output the vector of int vectors
+    string result = "[";
+    for (unsigned int i=0; i<v.size(); ++i) {
+        for (unsigned int j=0; j<v[i].size(); ++j) {
+            result += to_string(v[i][j]);
+            if (j != v[i].size() - 1)
+                result += ",";
+        }
+        if (i != v.size() - 1)
+            result += " - ";
+    }
+    return result + "]";
+}
+string dbg(const vector<Edge*>& edges) {
+    // Output the edges
+    string result = "[";
+    for (unsigned int i=0; i<edges.size(); ++i) {
+        result += to_string(edges[i]->pA->vid) + "-" + to_string(edges[i]->pB->vid);
+        if (i != edges.size() - 1)
+            result += ",";
+    }
+    return result + "]";
+}
+
 
 //
 // stoi and to_string workaround
