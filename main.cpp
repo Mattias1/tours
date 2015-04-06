@@ -159,9 +159,13 @@ int main()
         pTD->MinimumDegree();
         cout << "Done minimum degree heuristic (treewidth: " << pTD->GetTreeWidth() << ")" << endl;
 
+        // Write the final graph with decomposition to file
+        graphsToFile(*pG, *pTD, file + "_final.txt");
+        cout << "Done final graph to file" << endl;
+
         // Run the DP
         tspDP(*pTD);
-        cout << "Done DP for TSP" << endl << "----------------------------" << endl << endl;
+        cout << "Done DP for TSP" << endl << "----------------------------" << endl;
     }
     return 0;
 }

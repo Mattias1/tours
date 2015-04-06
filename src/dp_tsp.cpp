@@ -383,7 +383,10 @@ vector<int> toDegrees(const string& S) {
 
 vector<int> toEndpoints(const string& S) {
     // From a string representation to a list of edges
-    return splitInt(split(S, '|')[1], ',');
+    vector<string> tempSplit = split(S, '|');
+    if (tempSplit.size() < 2)
+        return vector<int>();
+    return splitInt(tempSplit[1], ',');
 }
 
 string fromDegreesEndpoints(const vector<int>& degrees, const vector<int>& endpoints) {
