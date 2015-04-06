@@ -7,10 +7,14 @@
 #include "graph.h"
 #include "treedecomposition.h"
 #include "utils.h"
+
 using namespace std;
 
 // The header for the renamed main function (and a test function) ~Matty
-extern "C" int main_lkh(int argc, char *argv[]);
+extern "C" {
+    int main_lkh(int argc, char *argv[]);
+    #include "LKH.h"
+}
 
 //
 //  File I/O
@@ -32,6 +36,7 @@ bool tourFromFile(Graph& rGraph, string path) {
     bool inTourSection = false; // Make sure it is an actual tour file, that doesn't have integers lying around not part of the tour...
     vector<unsigned int> vids;
     for (string line; getline(in, line); ) {
+        line = trim(line);
         // Loop and ignore everything until I reach the tour section (and make sure I stay in there)
         if (comp(line, "TOUR_SECTION")) {
             inTourSection = true;
@@ -49,7 +54,7 @@ bool tourFromFile(Graph& rGraph, string path) {
         vids.push_back(stoi(line));
     }
     // Complete the cycle
-    vids.push_back(vids[0]);
+    vids.push_back(vids[0]); // This seems to be the problem...
     // Now let the graph add its edges
     return rGraph.AddTourFromFile(vids);
 }
@@ -65,7 +70,7 @@ void graphsToFile(const Graph& graph, const TreeDecomposition& treeDecomposition
 }
 
 //
-//  The main function
+//  Some wrappers around LKH functions
 //
 int mainWrapper(vector<string> args) {
     // The wrapper for the (renamed) main function of LKH.
@@ -88,6 +93,24 @@ int mainWrapper(vector<string> args) {
     return main_lkh(argc, &argv[0]);
 }
 
+void runWrapper() {
+    // A wrapper for an LKH run after it's been initialized in the main function
+    // Not the most beautiful of solutions, but this hopefully will stop the program from randomly crashing
+    // All code in here is copy pasted from somewhere in main_lkh, and then modified a bit
+
+    // Find the tour and it's cost
+    int Cost = FindTour();
+
+    // Record the tour (write to file, I hope)
+    RecordBetterTour();
+    RecordBestTour();
+    WriteTour(OutputTourFileName, BestTour, Cost);
+    WriteTour(TourFileName, BestTour, Cost);
+}
+
+//
+// The main function
+//
 int main()
 {
     // The main entrypoint for this application. Here we load the graph (they should only contain vertices),
@@ -110,10 +133,15 @@ int main()
         cout << "Done graph from file" << endl << "----------------------------" << endl;
 
         // Run LKH and merge tours
-        int mergedTours = 0;
+        int mergedTours = 1;
         vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
-        for (int r=0; r<LKH_RUNS; ++r) {
-            mainWrapper(lkhArgs);
+        mainWrapper(lkhArgs);
+        if (!tourFromFile(*pG, file + ".tour")) {
+            cout << "ERROR: The first tour is not added, whut?" << endl;
+        }
+        for (int r=1; r<LKH_RUNS; ++r) {
+            runWrapper();
+            cout << "TEST 1 - DEBUG" << endl; // TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG
             if (tourFromFile(*pG, file + ".tour")) {
                 cout << "Added new tour" << endl;
                 ++mergedTours;
