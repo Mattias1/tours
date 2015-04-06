@@ -45,7 +45,7 @@ vector<Edge*> tspDP(const TreeDecomposition& TD) {
     return vector<Edge*>();
 }
 
-int tspTable(const Graph& graph,vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const string& S, const Bag& Xi) {
+int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const string& S, const Bag& Xi) {
     // The smallest value such that all vertices below Xi have degree 2 and vertices in Xi have degrees defined by S
     // bool debug = false;
     // if debug: print("A({} {}, X{}): {}".format(toDegrees(S), toEndpoints(S), Xi.vid, "?"))
@@ -74,12 +74,13 @@ int tspTable(const Graph& graph,vector<unique_ptr<unordered_map<string, int>>>& 
     vector<int> degrees = toDegrees(S);
     vector<int> endpoints = toEndpoints(S);
     vector<vector<int>> childEndpoints = vector<vector<int>>(Xi.edges.size());
-    vector<vector<int>> childDegrees = vector<vector<int>>(Xi.edges.size()); //                                             TODO TODO TODO: is vector<vector<...>> a good idea? because the vector inside may grow in size...
+    vector<vector<int>> childDegrees = vector<vector<int>>(Xi.edges.size()); //                   TODO TODO TODO: is vector<vector<...>> a good idea? because the vector inside may grow in size...
     for (unsigned int i=0; i<Xi.edges.size(); ++i) {
         childEndpoints[i] = vector<int>();
         childDegrees[i] = vector<int>(degrees.size(), 0);
     }
-    rHashlists[Xi.vid]->at(S) = tspRecurse(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints); // the one with tspChildEval as sub-function
+    (*rHashlists[Xi.vid])[S] = tspRecurse(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints); // the one with tspChildEval as sub-function
+    // ^^ Crashes because out of range exception
     // if debug: print('calculation return: {}'.format(Xi.a[S]))
     return rHashlists[Xi.vid]->at(S);
 }
@@ -357,8 +358,10 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
         pTempEL2 = &tempEL2;                    //
         pTempEL1->push_back(pEdge);
     }
-    minimum = min(minimum, pEdge->Cost + tspEdgeSelect(minimum - pEdge->Cost, index + 1, graph, Xi, edges, deg, rEndpoints, rAllChildEndpoints, pTempEL1));
-    int val = tspEdgeSelect(minimum, index + 1, graph, Xi, edges, degrees, rEndpoints, rAllChildEndpoints, pTempEL2);
+    int val = tspEdgeSelect(minimum - pEdge->Cost, index + 1, graph, Xi, edges, deg, rEndpoints, rAllChildEndpoints, pTempEL1);
+    if (val < numeric_limits<int>::max())
+        minimum = min(minimum, pEdge->Cost + val);
+    val = tspEdgeSelect(minimum, index + 1, graph, Xi, edges, degrees, rEndpoints, rAllChildEndpoints, pTempEL2);
     if (val < minimum) {
         minimum = val;
         // So without edge is better - Append the second edge list

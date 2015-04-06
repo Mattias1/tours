@@ -7,13 +7,13 @@
 #include "graph.h"
 #include "treedecomposition.h"
 #include "utils.h"
-
+#include "dp_tsp.h"
 using namespace std;
 
-// The header for the renamed main function (and a test function) ~Matty
+// The header for the renamed main and run functions ~Matty
 extern "C" {
-    int main_lkh(int argc, char *argv[]);
     #include "LKH.h"
+    int main_lkh(int argc, char *argv[]);
 }
 
 //
@@ -99,13 +99,13 @@ void runWrapper() {
     // All code in here is copy pasted from somewhere in main_lkh, and then modified a bit
 
     // Find the tour and it's cost
-    int Cost = FindTour();
+    int cost = FindTour();
 
     // Record the tour (write to file, I hope)
     RecordBetterTour();
     RecordBestTour();
-    WriteTour(OutputTourFileName, BestTour, Cost);
-    WriteTour(TourFileName, BestTour, Cost);
+    WriteTour(OutputTourFileName, BestTour, cost);
+    WriteTour(TourFileName, BestTour, cost);
 }
 
 //
@@ -117,7 +117,7 @@ int main()
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
 
     // The names of the tsp-problems we want to solve
-    vector<string> FILES = { "pr2392" };
+    vector<string> FILES = { "test" }; // pr2392
     // The number of LKH runs
     int LKH_RUNS = 5;
 
@@ -132,18 +132,21 @@ int main()
         graphsFromFile(*pG, *pTD, file + ".tsp");
         cout << "Done graph from file" << endl << "----------------------------" << endl;
 
-        // Run LKH and merge tours
+        // Run LKH and merge the tours
         int mergedTours = 1;
         vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
         mainWrapper(lkhArgs);
         if (!tourFromFile(*pG, file + ".tour")) {
             cout << "ERROR: The first tour is not added, whut?" << endl;
+            return 1;
         }
+        graphsToFile(*pG, *pTD, file + "_0.txt");
+        cout << "Added first tour (" << file << "_0.txt)" << endl;
         for (int r=1; r<LKH_RUNS; ++r) {
             runWrapper();
-            cout << "TEST 1 - DEBUG" << endl; // TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG TODO DEBUG
             if (tourFromFile(*pG, file + ".tour")) {
-                cout << "Added new tour" << endl;
+                graphsToFile(*pG, *pTD, file + "_" + to_string(r) + ".txt");
+                cout << "Added new tour   (" << file << "_" << r << ".txt)" << endl;
                 ++mergedTours;
             }
             else {
@@ -157,10 +160,8 @@ int main()
         cout << "Done minimum degree heuristic (treewidth: " << pTD->GetTreeWidth() << ")" << endl;
 
         // Run the DP
-
-        // Write a graph to file.... not sure why I want to do that, but ok???
-        graphsToFile(*pG, *pTD, "test-graph-out.txt");
-        cout << "Done graph to file" << endl << "----------------------------" << endl << endl;
+        tspDP(*pTD);
+        cout << "Done DP for TSP" << endl << "----------------------------" << endl << endl;
     }
     return 0;
 }
