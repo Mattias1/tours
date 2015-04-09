@@ -7,7 +7,7 @@ PATCHING_A = 2
 
 # Parameters added by Matty
 RUNS = 1
-TOUR_FILE = tsp-files/pr2392.tour
+TOUR_FILE = tsp-files/temp/pr2392.tour
 TRACE_LEVEL = 0
 
 # This one will make KLH run a lot worse (I hope)

@@ -124,11 +124,22 @@ int main()
     // Get the tour for each of the files
     for (unsigned int i=0; i<FILES.size(); ++i) {
         string file = "tsp-files/" + FILES[i];
+        string tempFile = "tsp-files/temp/" + FILES[i];
 
         // Load the graph
-        Graph* pG = new Graph();
+        Graph* pG = new Graph(); // pTD will be the owner of pG.
         unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
 
+
+
+// DEBUG
+        graphsFromFile(*pG, *pTD, "tsp-files/temp/test_final.txt");
+        pTD->CreateRoot(false);
+// DEBUG
+
+
+
+/*
         graphsFromFile(*pG, *pTD, file + ".tsp");
         cout << "Done graph from file" << endl << "----------------------------" << endl;
 
@@ -136,17 +147,17 @@ int main()
         int mergedTours = 1;
         vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
         mainWrapper(lkhArgs);
-        if (!tourFromFile(*pG, file + ".tour")) {
+        if (!tourFromFile(*pG, tempFile + ".tour")) {
             cout << "ERROR: The first tour is not added, whut?" << endl;
             return 1;
         }
         graphsToFile(*pG, *pTD, file + "_0.txt");
-        cout << "Added first tour (" << file << "_0.txt)" << endl;
+        cout << "Added first tour (" << tempFile << "_0.txt)" << endl;
         for (int r=1; r<LKH_RUNS; ++r) {
             runWrapper();
-            if (tourFromFile(*pG, file + ".tour")) {
-                graphsToFile(*pG, *pTD, file + "_" + to_string(r) + ".txt");
-                cout << "Added new tour   (" << file << "_" << r << ".txt)" << endl;
+            if (tourFromFile(*pG, tempFile + ".tour")) {
+                graphsToFile(*pG, *pTD, tempFile + "_" + to_string(r) + ".txt");
+                cout << "Added new tour   (" << tempFile << "_" << r << ".txt)" << endl;
                 ++mergedTours;
             }
             else {
@@ -160,8 +171,9 @@ int main()
         cout << "Done minimum degree heuristic (treewidth: " << pTD->GetTreeWidth() << ")" << endl;
 
         // Write the final graph with decomposition to file
-        graphsToFile(*pG, *pTD, file + "_final.txt");
+        graphsToFile(*pG, *pTD, tempFile + "_final.txt");
         cout << "Done final graph to file" << endl;
+*/
 
         // Run the DP
         tspDP(*pTD);

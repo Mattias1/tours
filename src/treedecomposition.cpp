@@ -46,8 +46,8 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
     // Add vertices, edges, bags or bag edges
     if (rState == 3) {
         // Just to be sure
-        if (l.size() != 3)
-            cout << "ERROR: The TD ReadFileLine expects a bag, but it doesn't get two or three strings in the first place." << endl;
+        if (l.size() <= 3)
+            cout << "ERROR: The TD ReadFileLine expects a bag, but it doesn't even gets three strings in the first place." << endl;
         unique_ptr<Bag> pBag = unique_ptr<Bag>(new Bag(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2])));
         for (unsigned int i=3; i<l.size(); ++i) {
             // Add a specific vertex to a bag.

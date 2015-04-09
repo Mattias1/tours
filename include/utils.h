@@ -66,6 +66,7 @@ string dbg(const string& s, unsigned int i);
 string dbg(const vector<int>& v);
 string dbg(const vector<vector<int>>& v);
 string dbg(const vector<Edge*>& edges);
+string dbg(vector<Edge*>* pEdges);
 
 
 //

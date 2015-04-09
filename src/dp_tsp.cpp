@@ -76,7 +76,7 @@ int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>&
     vector<int> degrees = toDegrees(S);
     vector<int> endpoints = toEndpoints(S);
     vector<vector<int>> childEndpoints = vector<vector<int>>(Xi.edges.size());
-    vector<vector<int>> childDegrees = vector<vector<int>>(Xi.edges.size()); //                   TODO TODO TODO: is vector<vector<...>> a good idea? because the vector inside may grow in size...
+    vector<vector<int>> childDegrees = vector<vector<int>>(Xi.edges.size());
     for (unsigned int i=0; i<Xi.edges.size(); ++i) {
         childEndpoints[i] = vector<int>();
         childDegrees[i] = vector<int>(degrees.size(), 0);
@@ -107,7 +107,7 @@ vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map
     vector<int> degrees = toDegrees(S);
     vector<int> endpoints = toEndpoints(S);
     vector<vector<int>> childEndpoints = vector<vector<int>>(Xi.edges.size());
-    vector<vector<int>> childDegrees = vector<vector<int>>(Xi.edges.size()); //                                             TODO TODO TODO: is vector<vector<...>> a good idea? because the vector inside may grow in size...
+    vector<vector<int>> childDegrees = vector<vector<int>>(Xi.edges.size());
     for (unsigned int i=0; i<Xi.edges.size(); ++i) {
         childEndpoints[i] = vector<int>();
         childDegrees[i] = vector<int>(degrees.size(), 0);
@@ -118,19 +118,24 @@ vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map
 int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList) {
     // This method is the base case for the calculate tsp recurse method.
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
-    // bool debug = true;
+    bool debug = false;
 
     // Check: all bags (except the root) are not allowed to be a cycle.
-    if (rEndpoints.size() == 0 and Xi.getParent() != nullptr)
-        // if debug: print('{}All bags should be a cycle - no endpoints given'.format('  ' * len(Xi.vertices)))
+    if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
+        if (debug) {
+            cout << dbg("  ", Xi.vertices.size()) << "All bags should be a cycle - no endpoints given" << endl;
+        }
         return numeric_limits<int>::max();
+    }
 
     // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
     vector<int> allChildEndpoints = flatten(rChildEndpoints);
     int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, edges, rTargetDegrees, rEndpoints, allChildEndpoints, pResultingEdgeList);
     if (0 <= val && val < numeric_limits<int>::max()) {
-        // if debug: print('{}Local edge selection cost: {}, edges: {}, degrees: {}, endpoints: {}, edgeList: {}'.format(
-        //                               '  ' * len(Xi.vertices), val, edges, rTargetDegrees, endpoints, resultingEdgeList))
+        if (debug) {
+            cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", edges: " << dbg(edges) << ", degrees: " << dbg(rTargetDegrees);
+            cout << ", endpoints: " << dbg(rEndpoints) << ", edgeList: " << dbg(pResultingEdgeList) << endl;
+        }
         for (unsigned int k=0; k<rChildDegrees.size(); ++k) {
             const vector<int>& cds = rChildDegrees[k];
             const Bag& Xkid = *dynamic_cast<Bag*>(Xi.edges[k]->Other(Xi));
@@ -142,22 +147,24 @@ int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<strin
                         if (Xkid.vertices[p] == Xi.vertices[q])
                             kidDegrees[p] = cds[q];
                 string S = fromDegreesEndpoints(kidDegrees, rChildEndpoints[k]);
-                // if debug: print('{}child A: {}, cds: {}, degrees: {}, endpoints'.format('  ' * len(Xi.vertices),
-                //                                               val, cds, kidDegrees, childEndpoints[k]))
+                if (debug) {
+                    cout << dbg("  ", Xi.vertices.size()) << "child A: " << val << ", cds: " << dbg(cds) << ", degrees: " << dbg(kidDegrees);
+                    cout << ", endpoints: " << dbg(rChildEndpoints[k]) << endl;
+                }
                 // Add to that base cost the cost of hamiltonian paths nescessary to satisfy the degrees.
                 val += tspTable(graph, rHashlists, S, Xkid);
             }
         }
-        // if debug: print('{}Min cost for X{} with these child-degrees: {}'.format('  ' * len(Xi.vertices), Xi.vid, val))
+        if (debug) {
+            cout << dbg("  ", Xi.vertices.size()) << "Min cost for X" << Xi.vid << " with these child-degrees: " << val << endl;
+        }
     }
-    else {
-        // if debug: print('{}No local edge selection found'.format('  ' * len(Xi.vertices)))
+    else if (debug) {
+        cout << dbg("  ", Xi.vertices.size()) << "No local edge selection found" << endl;
     }
     return val;
 }
 
-// TODO: the thing that uses tspLookback should be able to deal with a nullptr.
-// TODO: worse, what if it's not a nullptr - who has ownership?
 vector<Edge*> tspLookback(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints) {
     // This method is the base case for the reconstruct tsp recurse method.
     // bool debug = false;
@@ -204,15 +211,16 @@ int tspRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = true;
+    bool debug = false;
     if (debug) {
+        // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 10 - i);
         cout << "(X" << Xi.vid << ": " << i << ", " << j << ")     " << dbg(rTargetDegrees) << "|" << dbg(rEndpoints) << endl;
     }
 
     // Final base case.
     if (i >= Xi.vertices.size())
-        return tspChildEvaluation(graph, rHashlists, Xi, edges, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints); // BaseF
+        return tspChildEvaluation(graph, rHashlists, Xi, edges, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints);
     // Base case: if we can't or didn't want to 'spend' this degree, move on
     if (rTargetDegrees[i] == 0 || j >= Xi.edges.size())
         return tspRecurse(graph, rHashlists, Xi, edges, i + 1, 0, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints);
@@ -310,8 +318,9 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
 
 // Todo: use the minimum to abort early??? (is possible for leaf case, but perhaps not for normal bag case
 int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, vector<Edge*>* pEdgeList) {
-    // bool debug = false;
     // Calculate the smallest cost to satisfy the degrees target using only using edges >= the index
+    bool debug = false;
+
     // Base case 1: the degrees are all zero, so we succeeded as we don't need to add any more edges
     bool satisfied = true;
     for (unsigned int i=0; i<degrees.size(); ++i) {
@@ -322,16 +331,23 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     }
     if (satisfied) {
         // So we have chosen all our edges and satisfied the targets - now make sure there is no cycle (unless root)
-        if (!cycleCheck(graph, rEndpoints, pEdgeList, rAllChildEndpoints))
-            // if debug: print('Edge select ({}): edges contain a cycle'.format(index))
+        if (!cycleCheck(graph, rEndpoints, pEdgeList, rAllChildEndpoints)) {
+            if (debug)
+                cout << "Edge select (" << index << "): edges contain a cycle" << endl;
             return numeric_limits<int>::max();
-        // if debug: print('Edge select ({}): no need to add edges, min value: 0'.format(index))
+        }
+        if (debug)
+            cout << "Edge select (" << index << "): no need to add edges, min value: 0" << endl;
         return 0;
     }
+
     // Base case 2: we have not succeeded yet, but there are no more edges to add, so we failed
-    if (index >= edges.size())
-        // if debug: print('Edge select ({}): no more edges to add'.format(index))
+    if (index >= edges.size()) {
+        if (debug)
+            cout << "Edge select (" << index << "): no more edges to add" << endl;
         return numeric_limits<int>::max();
+    }
+
     // Base case 3: one of the degrees is < 1, so we added too many vertices, so we failed [with side effect]
     Edge* pEdge = edges[index];
     vector<int> deg = duplicate(degrees);
@@ -339,10 +355,11 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     for (unsigned int i=0; i<deg.size(); ++i) {
         int d = deg[i];
         if (Xi.vertices[i] == pEdge->pA || Xi.vertices[i] == pEdge->pB) {
-            if (d < 0) // If it's negative it will tell us later
-                       //  - can't return right now, as we need to evaluete not taking this edge as well.
-                // if debug: print('Edge select ({}): too many edges added'.format(index))
+            if (d < 0) {    // If it's negative it will tell us later
+                if (debug)  //  - can't return right now, as we need to evaluete not taking this edge as well.
+                    cout << "Edge select (" << index << "): too many edges added" << endl;
                 return numeric_limits<int>::max();
+            }
             // While checking this base case, also compute the new degree list for the first recursion
             deg[i] -= 1;
             assertCounter += 1;
@@ -350,8 +367,10 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     }
     if (assertCounter != 0 && assertCounter != 2)
         cout << "ASSERTION ERROR - the assertCounter is not 0 or 2." << endl;
+
     // Try both to take the edge and not to take the edge
-    // if debug: print('Edge select ({}), degrees: {}'.format(index, degrees))
+    if (debug)
+        cout << "Edge select (" << index << "), degrees: " << dbg(degrees) << endl;
     vector<Edge*> tempEL1;
     vector<Edge*> tempEL2;
     vector<Edge*>* pTempEL1 = nullptr;
@@ -359,10 +378,11 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     if (pEdgeList != nullptr) {
         tempEL1 = duplicate(*pEdgeList);        // Notice the pointers to stack objects.
         tempEL2 = duplicate(tempEL1);           // They will go out of scope at the end of the function, but that's fine,
+    }
         pTempEL1 = &tempEL1;                    // we no longer need them after the edges are pushed back to pEdgeList.
         pTempEL2 = &tempEL2;                    //
         pTempEL1->push_back(pEdge);
-    }
+    //} // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
     int val = tspEdgeSelect(minimum - pEdge->Cost, index + 1, graph, Xi, edges, deg, rEndpoints, rAllChildEndpoints, pTempEL1);
     if (val < numeric_limits<int>::max())
         minimum = min(minimum, pEdge->Cost + val);
@@ -377,7 +397,8 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     else if (pEdgeList != nullptr) {
         pushBackList(pEdgeList, *pTempEL1);
     }
-    // if debug: print('Edge select ({}): min value: {}, edges: {}'.format(index, minimum, edgeList))
+    if (debug)
+        cout << "Edge select (" << index << "): min value: " << minimum << ", edges: " << dbg(pEdgeList) << endl;
     return minimum;
 }
 
@@ -399,35 +420,39 @@ string fromDegreesEndpoints(const vector<int>& degrees, const vector<int>& endpo
     return join(degrees, ',') + '|' + join(endpoints, ',');
 }
 
-bool cycleCheck(const Graph& graph, vector<int>& rEndpoints, vector<Edge*>* pEdgeList, vector<int>& rAllChildEndpoints) {
+bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>* pEdgeList, vector<int>& rAllChildEndpoints) {
     // This method returns whether or not the given edge list and all child endpoints provide a set of paths
     // satisfying the endpoints and sorts the edge list in place.
+    bool debug = false;
+
+    // Inits
     int progressCounter = -2;
     unsigned int edgeCounter = 0;
     unsigned int endpsCounter = 0;
     Vertex* pV = nullptr;
+    vector<int> endpointsClone = duplicate(endpoints);
 
     vector<Edge*> edgeList;
     if (pEdgeList == nullptr)
-        edgeList = vector<Edge*>(); // Note that pEdgeList still is null, so I should use the variable edgeList everywhere.
+        edgeList = vector<Edge*>(); // Note that pEdgeList still is null, so I should use the variable edgeList everywhere in this method.
     else
-        edgeList = *pEdgeList; // Ok, this bit of code feels weird, because now I have a 'local' variable on the heap. It should work though. I think.
-    // bool debug = false;
+        edgeList = *pEdgeList; // If I understand C++ well, this invokes the copy constructor. That'd be good.
 
-    // Special case: the root bag.
-    if (rEndpoints.size() == 0) {
+    // Special init case for the root bag.
+    if (endpointsClone.size() == 0) {
         if (rAllChildEndpoints.size() > 0) {
-            rEndpoints.push_back(rAllChildEndpoints[0]);
-            rEndpoints.push_back(rAllChildEndpoints[1]);
+            endpointsClone.push_back(rAllChildEndpoints[0]);
+            endpointsClone.push_back(rAllChildEndpoints[1]);
             endpsCounter += 2;
         }
         else if (edgeList.size() > 0) {
-            rEndpoints.push_back(edgeList[0]->pA->vid);
-            rEndpoints.push_back(edgeList[0]->pB->vid);
-            edgeCounter += 1;
+            endpointsClone.push_back(edgeList[0]->pA->vid);
+            endpointsClone.push_back(edgeList[0]->pB->vid);
+            ++edgeCounter;
         }
         else {
-            // if debug: print('ERROR: cycle check root bag has both no edges to add, nor any child endpoints')
+            if (debug)
+                cout << "ERROR: cycle check root bag has both no edges to add, nor any child endpoints" << endl;
             return false;
         }
     }
@@ -435,33 +460,43 @@ bool cycleCheck(const Graph& graph, vector<int>& rEndpoints, vector<Edge*>* pEdg
     // Normal case
     while (true) {
         // Dump the state
-        // if debug:
-            // print('cycle check dump 1:')
-            // print('  endpoints: {}'.format(endpoints))
-            // print('  edgeList: {} - {}'.format(edgeCounter, edgeList))
-            // print('  kid endpoints: {} - {}'.format(endpsCounter, rAllChildEndpoints))
-            // print('  progress: {} - v: {}\n'.format(progressCounter, -1 if not v else v.vid))
+        if (debug) {
+            cout << "cycle check dump 1:" << endl;
+            cout << "  endpoints: " << dbg(endpointsClone) << endl;
+            cout << "  edgeList: " << edgeCounter << " - " << dbg(edgeList) << endl; // TODO: apparently some of the, well, things inside the edgeList are not NULLPTR, but neither are they valid...
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            cout << "  kid endpoints: " << endpsCounter << " - " << dbg(rAllChildEndpoints) << endl;
+            cout << "  progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
+        }
 
         // If we completed the path
-        if (pV == nullptr || pV->vid == rEndpoints[progressCounter + 1]) {
+        if (pV == nullptr || pV->vid == endpointsClone[progressCounter + 1]) {
             progressCounter += 2;
-            if (static_cast<unsigned int>(progressCounter) >= rEndpoints.size()) {
-                if (edgeCounter == edgeList.size() && endpsCounter == rAllChildEndpoints.size())
+            if (static_cast<unsigned int>(progressCounter) >= endpointsClone.size()) {
+                if (edgeCounter == edgeList.size() && endpsCounter == rAllChildEndpoints.size()) {
                     return true;
-                else
-                    // if debug: print('ERROR: all endpoints are satisfied, but there are edges or endpoints left')
+                } else {
+                    if (debug)
+                        cout << "ERROR: all endpoints are satisfied, but there are edges or endpoints left" << endl;
                     return false;
+                }
             }
-            pV = graph.vertices[rEndpoints[progressCounter]].get();
+            pV = graph.vertices[endpointsClone[progressCounter]].get();
         }
 
         // Dump the state
-        // if debug:
-            // print('cycle check dump 2:')
-            // print('  endpoints: {}'.format(endpoints))
-            // print('  edgeList: {} - {}'.format(edgeCounter, edgeList))
-            // print('  kid endpoints: {} - {}'.format(endpsCounter, rAllChildEndpoints))
-            // print('  progress: {} - v: {}\n'.format(progressCounter, -1 if not v else v.vid))
+        if (debug) {
+            cout << "cycle check dump 2:" << endl;
+            cout << "  endpoints: " << dbg(endpointsClone) << endl;
+            cout << "  edgeList: " << edgeCounter << " - " << dbg(edgeList) << endl;
+            cout << "  kid endpoints: " << endpsCounter << " - " << dbg(rAllChildEndpoints) << endl;
+            cout << "  progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
+        }
 
         // Find the next vertex
         bool noBreak = true;
@@ -482,21 +517,23 @@ bool cycleCheck(const Graph& graph, vector<int>& rEndpoints, vector<Edge*>* pEdg
             }
         }
         if (noBreak) {
-            noBreak = true;
-            for (unsigned int i=0; i<edgeList.size(); ++i) {
+            // noBreak = true; // Uhh, yeah, doh, if noBreak wasn't true, we wouldn't reach this bit of code right?
+            for (unsigned int i=edgeCounter; i<edgeList.size(); ++i) {
                 if (edgeList[i]->IsIncidentTo(pV)) {
                     pV = edgeList[i]->Other(*pV);
                     Edge* pTemp = edgeList[edgeCounter];
                     edgeList[edgeCounter] = edgeList[i];
                     edgeList[i] = pTemp;
-                    edgeCounter++;
+                    ++edgeCounter;
                     noBreak = false;
                     break;
                 }
             }
             if (noBreak) {
-                // if debug: print('eps: {}, edgelist: {}, all kid eps: {}'.format(endpoints, edgeList, rAllChildEndpoints))
-                // if debug: print('ERROR, no more endpoints or edges found according to specs')
+                if (debug) {
+                    cout << "eps: " << dbg(endpointsClone) << ", edgelist: " << dbg(edgeList) << ", all kid eps: " << dbg(rAllChildEndpoints) << endl;
+                    cout << "ERROR, no more endpoints or edges found according to specs" << endl;
+                }
                 return false;
             }
         }
@@ -512,4 +549,3 @@ bool inEndpoints(const vector<int>& endpoints, int start, int end) {
             return true;
     return false;
 }
-

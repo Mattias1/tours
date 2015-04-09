@@ -168,11 +168,27 @@ string dbg(const vector<Edge*>& edges) {
     // Output the edges
     string result = "[";
     for (unsigned int i=0; i<edges.size(); ++i) {
+        // Just to be sure...
+        if (edges[i] == nullptr) {
+            result += "null";
+            continue;
+        }
+        if (edges[i]->pA == nullptr || edges[i]->pB == nullptr) {
+            result += "null?-null?";
+            continue;
+        }
+        // The original edge to string like it's supposed to be
         result += to_string(edges[i]->pA->vid) + "-" + to_string(edges[i]->pB->vid);
         if (i != edges.size() - 1)
             result += ",";
     }
     return result + "]";
+}
+string dbg(vector<Edge*>* pEdges) {
+    // Output null or the edges
+    if (pEdges == nullptr)
+        return "null";
+    return dbg(*pEdges);
 }
 
 
