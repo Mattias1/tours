@@ -1,0 +1,93 @@
+\documentclass[12pt]{article}
+
+\title{Tour merging via tree decomposition \\ \vspace{2mm} \small{A hybrid approach between
+heuristics and exact solutions for TSP and VRP.}}
+\author{Mattias Beimers - 3672565}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{algpseudocode}
+\usepackage[margin=1.5in]{geometry}
+
+\providecommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
+
+\begin{document}
+\maketitle
+
+%
+% Abstract
+%
+\begin{abstract}
+    % About TSP and VRP and what this paper does
+    This line of text is not very abstract.
+\end{abstract}
+
+
+
+%
+% The introduction
+%
+\section{Introduction}
+\label{sec:introduction}
+% TSP and VRP; desription and defenition
+One of the most well studied NP-hard problems is the Traveling Salesman Problem (TSP), where a
+merchant wants to visit a number of cities and get back at his starting point in the shortest
+possible amount of time.
+We recognize the TSP problem in many practical applications, from planning a school bus route to
+scheduling a machine to drill holes in a circuit board.
+A generalized version, where there are not one but a number of merchants or trucks visiting the
+cities from the starting point (or depot), is whidely used in the transportation sector. This
+problem is known as the Vehicle Routing Problem (VRP).
+
+Given a complete graph $G = (V, E)$, we define the TSP as finding the tour (or Hamiltonian
+circuit) with smallest total cost. For this paper we assume the cost $c_e$ of an edge $e = (v, w)$
+is the euclidean distance between $v$ and $w$.
+Given additionally a demand $d_v$ for each vertex $v$, a maximal capacity $C$ of goods per truck, a
+number $M$ of available trucks and a special vertex $v_0$ that is the depot, we can define the VRP
+as finding a set of at most $M$ tours with the least total cost. Each tour has to start and end at
+the depot and has to have a total demand of at most $C$.
+There are many variants with additional constraints or freedoms, but these are out of the scope of
+this paper.
+
+% Heuristics and Cook-Seymour
+Because the time to compute optimal solutions to these problems grows exponentially with the
+problem size, often heuristics are used to find solutions that are usually very good, but not
+nescessarily optimal.
+To get more certainty that a solution is good, or to improve the solution even more, the heuristics
+are applied multiple times, and the best solution is selected. Although this works well, Cook and
+Seymour \cite{cook-seymour} noted in their work on TSP that by discarding the other solutions,
+possibly valuable information is lost. Hence the idea emerged to merge the found tours and
+calculate the optimal solution on this reduced graph, using branch decompositions.
+
+% Our contribution
+Todo
+
+% Structure
+The paper is organised as follows: More TODOs.
+
+
+
+%
+% Conclusion
+%
+\section{Conclusion}
+\label{sec:conclusion}
+Todo
+
+
+
+%
+% Bibliography
+%
+\begin{thebibliography}{9}
+    % The most important references
+    \bibitem{cook-seymour}
+        Cook, W., & Seymour, P. (2003).
+        \emph{Tour merging via branch-decomposition.}
+        INFORMS Journal on Computing, 15(3), 233-248.
+
+\end{thebibliography}
+
+\end{document}
