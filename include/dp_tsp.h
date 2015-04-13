@@ -11,7 +11,7 @@ using namespace std;
 //
 //  All sorts of functions used to calculate the tour for the TSP problem.
 //
-vector<Edge*> tspDP(const TreeDecomposition& TD);
+vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput = true);
 
 int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const string& S, const Bag& Xi);
 vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const string& S, const Bag& Xi);

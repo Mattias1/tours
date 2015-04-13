@@ -11,8 +11,10 @@ using namespace std;
 //
 //  All sorts of functions used to calculate the tour for the TSP problem.
 //
-vector<Edge*> tspDP(const TreeDecomposition& TD) {
+vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Compute the smallest tour using DP on a tree decomposition.
+    bool debug = false;
+
     const Bag* pXroot = TD.getRoot();
     if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1)
         return vector<Edge*>();
@@ -26,20 +28,25 @@ vector<Edge*> tspDP(const TreeDecomposition& TD) {
     vector<int> degrees = vector<int>(pXroot->vertices.size(), 2);
     string S = fromDegreesEndpoints(degrees, vector<int>());
     int value = tspTable(*TD.getOriginalGraph(), hashlists, S, *pXroot);
-    cout << "TSP cost: " << value << endl;
-    for (unsigned int i=0; i<hashlists.size(); ++i) {
-        cout << "X" << i << endl;
-        for (const auto& iter : *hashlists[i])
-            cout << "  " << iter.first << ": " << iter.second << endl;
+    if (consoleOutput)
+        cout << "TSP cost: " << value << endl;
+    if (debug) {
+        for (unsigned int i=0; i<hashlists.size(); ++i) {
+            cout << "X" << i << endl;
+            for (const auto& iter : *hashlists[i])
+                cout << "  " << iter.first << ": " << iter.second << endl;
+        }
     }
 
     // Reconstruct the tour
     if (value < numeric_limits<int>::max()) {
         const vector<Edge*>& tour = tspReconstruct(*TD.getOriginalGraph(), hashlists, S, *pXroot); // Used list(set( ... ))
-        cout << "\nDP-TSP:\n  Length: " << value << "\n  Tour: ";
-        for (unsigned int i=0; i<tour.size(); ++i)
-            cout << tour[i] << ", ";
-        cout << endl;
+        if (debug) {
+            cout << "\nDP-TSP:\n  Length: " << value << "\n  Tour: ";
+            for (unsigned int i=0; i<tour.size(); ++i)
+                cout << *tour[i] << ", ";
+            cout << endl;
+        }
         return tour;
     }
     return vector<Edge*>();
@@ -115,7 +122,7 @@ vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map
     return tspRecurseVector(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
 }
 
-int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList) {
+int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList /*=nullptr*/) {
     // This method is the base case for the calculate tsp recurse method.
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     bool debug = false;
@@ -317,7 +324,7 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
 }
 
 // Todo: use the minimum to abort early??? (is possible for leaf case, but perhaps not for normal bag case
-int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, vector<Edge*>* pEdgeList) {
+int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, vector<Edge*>* pEdgeList /*=nullptr*/) {
     // Calculate the smallest cost to satisfy the degrees target using only using edges >= the index
     bool debug = false;
 

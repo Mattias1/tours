@@ -119,7 +119,7 @@ string &trim(string &rS) {
 //
 // Check if string is an integer number
 //
-bool isInt(const string& s, bool allowNegative)
+bool isInt(const string& s, bool allowNegative /*=false*/)
 {
     string::const_iterator it = s.begin();
     if (allowNegative && *it == '-')
