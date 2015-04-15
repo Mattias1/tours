@@ -47,7 +47,6 @@
 		<Unit filename="include/lkh-include/Segment.h" />
 		<Unit filename="include/lkh-include/Sequence.h" />
 		<Unit filename="include/treedecomposition.h" />
-		<Unit filename="include/unittests.h" />
 		<Unit filename="include/utils.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/dp_tsp.cpp" />
@@ -350,7 +349,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/treedecomposition.cpp" />
-		<Unit filename="src/unittests.cpp" />
 		<Unit filename="src/utils.cpp" />
 		<Extensions>
 			<code_completion />

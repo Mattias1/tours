@@ -13,7 +13,7 @@ using namespace std;
 //
 vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Compute the smallest tour using DP on a tree decomposition.
-    bool debug = false;
+    bool debug = true;
 
     const Bag* pXroot = TD.getRoot();
     if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1)
@@ -138,7 +138,7 @@ int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<strin
     // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
     vector<int> allChildEndpoints = flatten(rChildEndpoints);
     int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, edges, rTargetDegrees, rEndpoints, allChildEndpoints, pResultingEdgeList);
-    if (0 <= val && val < numeric_limits<int>::max()) {
+    if (0 <= val && val < numeric_limits<int>::max()) { // TODO: why can val ever be < 0??? Why is this first part of the check here??? It is also there in the python version...
         if (debug) {
             cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", edges: " << dbg(edges) << ", degrees: " << dbg(rTargetDegrees);
             cout << ", endpoints: " << dbg(rEndpoints) << ", edgeList: " << dbg(pResultingEdgeList) << endl;
@@ -159,7 +159,10 @@ int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<strin
                     cout << ", endpoints: " << dbg(rChildEndpoints[k]) << endl;
                 }
                 // Add to that base cost the cost of hamiltonian paths nescessary to satisfy the degrees.
-                val += tspTable(graph, rHashlists, S, Xkid);
+                int tableVal = tspTable(graph, rHashlists, S, Xkid);
+                if (tableVal == numeric_limits<int>::max())
+                    return tableVal;
+                val += tableVal;
             }
         }
         if (debug) {
@@ -221,8 +224,8 @@ int tspRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>
     bool debug = false;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
-        cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 10 - i);
-        cout << "(X" << Xi.vid << ": " << i << ", " << j << ")     " << dbg(rTargetDegrees) << "|" << dbg(rEndpoints) << endl;
+        cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
+        cout << "(X" << Xi.vid << ": " << i << ", " << j << ")   " << dbg(rTargetDegrees) << "|" << dbg(rEndpoints) << endl;
     }
 
     // Final base case.
