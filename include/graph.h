@@ -8,7 +8,7 @@
 using namespace std;
 
 
-// Forward declaration, because edge is going to need vertices (but only using (smart) pointers)
+// Forward declaration, because edge is going to need vertices (but only using pointers)
 class Vertex;
 // Header file declaration of small compare function, because it's also used in the tree decomposition file
 bool comp(const string& line, const string& firstPart);
@@ -72,6 +72,7 @@ class Graph
         bool AddTourFromFile(const vector<unsigned int>& vids);
 
         virtual unique_ptr<Graph> DeepCopy() const;
+        unique_ptr<Graph> CreateTourGraph(vector<Edge*> tour) const;
 };
 
 #endif // GRAPH_H

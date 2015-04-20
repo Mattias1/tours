@@ -32,4 +32,6 @@ bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>*
 
 bool inEndpoints(const vector<int>& endpoints, int startVid, int endVid);
 
+vector<Edge*> removeDoubles(const vector<Edge*>& edges, unsigned int length);
+
 #endif // DP_TSP_H

@@ -236,8 +236,8 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
 //
 Bag::Bag(int vid, int x, int y)
     :Vertex::Vertex(vid, x, y),
-    pParent(nullptr),
-    vertices(vector<Vertex*>())
+    vertices(vector<Vertex*>()),
+    pParent(nullptr)
 { }
 
 Bag::~Bag()

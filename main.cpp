@@ -68,6 +68,14 @@ int tourFromFile(Graph& rGraph, string path) {
     return -1;
 }
 
+void graphsToFile(const Graph& graph, string path) {
+    // 'Convert' the graph to string
+    string s = graph.ToFileString();
+    // Write the graphs to file (apparently this ignores all errors)
+    ofstream out(path);
+    out << s;
+    out.close();
+}
 void graphsToFile(const Graph& graph, const TreeDecomposition& treeDecomposition, string path) {
     // 'Convert' the graph to string
     string s = graph.ToFileString();
@@ -150,13 +158,13 @@ int main()
             cout << "ERROR: The first tour is not added, whut?" << endl;
             return 1;
         }
-        graphsToFile(*pG, *pTD, tempFile + "_0.txt");
+        graphsToFile(*pG, tempFile + "_0.txt");
         cout << "Added first tour (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
         for (int r=1; r<LKH_RUNS; ++r) {
             runWrapper();
             tourLength = tourFromFile(*pG, tempFile + ".tour");
             if (tourLength != -1) {
-                graphsToFile(*pG, *pTD, tempFile + "_" + to_string(r) + ".txt");
+                graphsToFile(*pG, tempFile + "_" + to_string(r) + ".txt");
                 cout << "Added new tour   (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
                 ++mergedTours;
             }
@@ -171,17 +179,22 @@ int main()
         int treewidth = pTD->GetTreeWidth();
         cout << "Done minimum degree heuristic (treewidth: " << treewidth << ")" << endl;
 
-        // Write the final graph with decomposition to file
-        graphsToFile(*pG, *pTD, tempFile + "_final.txt");
-        cout << "Done final graph to file" << endl;
+        // Write the merged graph of LKH tours with its decomposition to file
+        graphsToFile(*pG, *pTD, tempFile + "_merged.txt");
+        cout << "Done merged graph to file" << endl;
 
         // Run the DP
         if (treewidth > 10) {
-            cout << "Treewidth too large for the DP; aborting program." << endl << "----------------------------" << endl;
+            cout << "Treewidth too large for the DP; aborting run." << endl << "----------------------------" << endl;
             continue;
         }
-        tspDP(*pTD);
-        cout << "Done DP for TSP" << endl << "----------------------------" << endl;
+        vector<Edge*> tourEdges = tspDP(*pTD);
+        cout << "Done DP for TSP" << endl;
+
+        // Write the final graph with decomposition to file
+        unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
+        graphsToFile(*pResultingTourGraph, tempFile + "_final.txt");
+        cout << "Done final graph to file" << endl << "----------------------------" << endl;
     }
     return 0;
 }

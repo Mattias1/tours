@@ -149,6 +149,29 @@ unique_ptr<Graph> Graph::DeepCopy() const {
     return move(pGraph);
 }
 
+unique_ptr<Graph> Graph::CreateTourGraph(vector<Edge*> tour) const {
+    // Create a (deep) copy of the graph's vertices, and add a (deep) copy of the tour edges only
+    unique_ptr<Graph> pGraph = unique_ptr<Graph>(new Graph());
+    pGraph->name = this->name + " (tour copy)";
+
+    // Add all vertices
+    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+        const Vertex& v = *this->vertices[i];
+        pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y)) );
+    }
+
+    // Add all edges
+    for (unsigned int i=0; i<tour.size(); ++i) {
+        Vertex* pA = pGraph->vertices[tour[i]->pA->vid].get();
+        Vertex* pB = pGraph->vertices[tour[i]->pB->vid].get();
+        shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
+        pA->edges.push_back(pE);
+        pB->edges.push_back(pE);
+    }
+
+    return move(pGraph);
+}
+
 //
 //  Vertex
 //

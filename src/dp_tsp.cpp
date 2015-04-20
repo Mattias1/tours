@@ -13,7 +13,7 @@ using namespace std;
 //
 vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Compute the smallest tour using DP on a tree decomposition.
-    bool debug = true;
+    bool debug = false;
 
     const Bag* pXroot = TD.getRoot();
     if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1)
@@ -40,7 +40,9 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
 
     // Reconstruct the tour
     if (value < numeric_limits<int>::max()) {
-        const vector<Edge*>& tour = tspReconstruct(*TD.getOriginalGraph(), hashlists, S, *pXroot); // Used list(set( ... ))
+        vector<Edge*> tour = removeDoubles(tspReconstruct(*TD.getOriginalGraph(), hashlists, S, *pXroot), TD.getOriginalGraph()->vertices.size());
+        vector<int> allChildEndpointsParameter;
+        // cycleCheck(*TD.getOriginalGraph(), vector<int>(), &tour, allChildEndpointsParameter); // Sort the tour - TODO - ERROR, IT DOESN'T ACTUALLY SORT IT
         if (debug) {
             cout << "\nDP-TSP:\n  Length: " << value << "\n  Tour: ";
             for (unsigned int i=0; i<tour.size(); ++i)
@@ -383,16 +385,13 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
         cout << "Edge select (" << index << "), degrees: " << dbg(degrees) << endl;
     vector<Edge*> tempEL1;
     vector<Edge*> tempEL2;
-    vector<Edge*>* pTempEL1 = nullptr;
-    vector<Edge*>* pTempEL2 = nullptr;
     if (pEdgeList != nullptr) {
-        tempEL1 = duplicate(*pEdgeList);        // Notice the pointers to stack objects.
-        tempEL2 = duplicate(tempEL1);           // They will go out of scope at the end of the function, but that's fine,
+        tempEL1 = duplicate(*pEdgeList);    // Notice the pointers to stack objects.
+        tempEL2 = duplicate(tempEL1);       // They will go out of scope at the end of the function, but that's fine,
     }
-        pTempEL1 = &tempEL1;                    // we no longer need them after the edges are pushed back to pEdgeList.
-        pTempEL2 = &tempEL2;                    //
-        pTempEL1->push_back(pEdge);
-    //} // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+    vector<Edge*>* pTempEL1 = &tempEL1;    // we no longer need them after the edges are pushed back to pEdgeList.
+    vector<Edge*>* pTempEL2 = &tempEL2;    //
+    pTempEL1->push_back(pEdge);
     int val = tspEdgeSelect(minimum - pEdge->Cost, index + 1, graph, Xi, edges, deg, rEndpoints, rAllChildEndpoints, pTempEL1);
     if (val < numeric_limits<int>::max())
         minimum = min(minimum, pEdge->Cost + val);
@@ -473,13 +472,7 @@ bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>*
         if (debug) {
             cout << "cycle check dump 1:" << endl;
             cout << "  endpoints: " << dbg(endpointsClone) << endl;
-            cout << "  edgeList: " << edgeCounter << " - " << dbg(edgeList) << endl; // TODO: apparently some of the, well, things inside the edgeList are not NULLPTR, but neither are they valid...
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            cout << "  edgeList: " << edgeCounter << " - " << dbg(edgeList) << endl;
             cout << "  kid endpoints: " << endpsCounter << " - " << dbg(rAllChildEndpoints) << endl;
             cout << "  progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
         }
@@ -558,4 +551,27 @@ bool inEndpoints(const vector<int>& endpoints, int start, int end) {
         if ((endpoints[j] == start and endpoints[j + 1] == end) || (endpoints[j + 1] == start and endpoints[j] == end))
             return true;
     return false;
+}
+
+vector<Edge*> removeDoubles(const vector<Edge*>& edges, unsigned int length) {
+    // Return a vector with each edge only once from the edges-list.
+    unsigned int index = 0;
+    vector<Edge*> result = vector<Edge*>(length);
+    for (unsigned int i=0; i<edges.size(); ++i) {
+        bool inList = false;
+        Edge* pEdge = edges[i];
+        for (unsigned int j=0; j<result.size(); ++j) {
+            if (result[j] == nullptr)
+                break;
+            if (result[j] == pEdge) {
+                inList = true;
+                break;
+            }
+        }
+        if (!inList) {
+            result[index] = pEdge;
+            ++index;
+        }
+    }
+    return result;
 }
