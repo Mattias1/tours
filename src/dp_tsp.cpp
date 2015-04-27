@@ -9,12 +9,13 @@
 using namespace std;
 
 //
-//  All sorts of functions used to calculate the tour for the TSP problem.
+//  The core functions used to calculate the tour for the TSP problem.
 //
 vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Compute the smallest tour using DP on a tree decomposition.
     bool debug = false;
 
+    // Make sure there is a proper graph and decomposition
     const Bag* pXroot = TD.getRoot();
     if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1)
         return vector<Edge*>();
@@ -41,7 +42,7 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Reconstruct the tour
     if (value < numeric_limits<int>::max()) {
         vector<Edge*> tour = removeDoubles(tspReconstruct(*TD.getOriginalGraph(), hashlists, S, *pXroot), TD.getOriginalGraph()->vertices.size());
-        vector<int> allChildEndpointsParameter;
+        // vector<int> allChildEndpointsParameter;
         // cycleCheck(*TD.getOriginalGraph(), vector<int>(), &tour, allChildEndpointsParameter); // Sort the tour - TODO - ERROR, IT DOESN'T ACTUALLY SORT IT
         if (debug) {
             cout << "\nDP-TSP:\n  Length: " << value << "\n  Tour: ";
@@ -56,32 +57,14 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
 
 int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const string& S, const Bag& Xi) {
     // The smallest value such that all vertices below Xi have degree 2 and vertices in Xi have degrees defined by S
-    // bool debug = false;
-    // if debug: print("A({} {}, X{}): {}".format(toDegrees(S), toEndpoints(S), Xi.vid, "?"))
 
-    // If we know the value already, just look it up.
+    // If we know the value already, just look it up
     const auto& iter = rHashlists[Xi.vid]->find(S);
     if (iter != rHashlists[Xi.vid]->end())
-        // if debug: print('lookup return: {}'.format(Xi.a[S]))
         return iter->second;
 
-    // We don't know this value yet, so we compute it.
-    vector<Edge*> edges;
-    for (unsigned int i=0; i<Xi.vertices.size(); ++i) {
-        Vertex* pV = Xi.vertices[i];
-        for (unsigned int j=0; j<pV->edges.size(); ++j) {
-            Edge* pE = pV->edges[j].get();
-            if (!Xi.ContainsEdge(pE))
-                continue;
-            if (pV->vid < pE->Other(*pV)->vid)
-                edges.push_back(pE);
-        }
-    }
-    auto sortLambda = [&](Edge* pEdgeA, Edge* pEdgeB) {
-        // Compare the costs of the edges
-        return pEdgeA->Cost < pEdgeB->Cost;
-    };
-    sort(edges.begin(), edges.end(), sortLambda);
+    // We don't know this value yet, so we compute it (first get all parameters correct)
+    vector<Edge*> edges = getBagEdges(Xi);
     vector<int> degrees = toDegrees(S);
     vector<int> endpoints = toEndpoints(S);
     vector<vector<int>> childEndpoints = vector<vector<int>>(Xi.edges.size());
@@ -90,29 +73,14 @@ int tspTable(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>&
         childEndpoints[i] = vector<int>();
         childDegrees[i] = vector<int>(degrees.size(), 0);
     }
+    // Recursively find all possible combinations that satisfy the parameter arrays
     (*rHashlists[Xi.vid])[S] = tspRecurse(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
-    // if debug: print('calculation return: {}'.format(Xi.a[S]))
     return rHashlists[Xi.vid]->at(S);
 }
 
 vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const string& S, const Bag& Xi) {
-    // Reconstruct the tsp tour (get a list of all edges)
-    vector<Edge*> edges;
-    for (unsigned int i=0; i<Xi.vertices.size(); ++i) {
-        Vertex* pV = Xi.vertices[i];
-        for (unsigned int j=0; j<pV->edges.size(); ++j) {
-            Edge* pE = pV->edges[j].get();
-            if (!Xi.ContainsEdge(pE))
-                continue;
-            if (pV->vid < pE->Other(*pV)->vid)
-                edges.push_back(pE);
-        }
-    }
-    auto sortLambda = [&](Edge* pEdgeA, Edge* pEdgeB) {
-        // Compare the costs of the edges
-        return pEdgeA->Cost < pEdgeB->Cost;
-    };
-    sort(edges.begin(), edges.end(), sortLambda);
+    // Reconstruct the tsp tour (get a list of all tour edges)
+    vector<Edge*> edges = getBagEdges(Xi);
     vector<int> degrees = toDegrees(S);
     vector<int> endpoints = toEndpoints(S);
     vector<vector<int>> childEndpoints = vector<vector<int>>(Xi.edges.size());
@@ -124,7 +92,7 @@ vector<Edge*> tspReconstruct(const Graph& graph, vector<unique_ptr<unordered_map
     return tspRecurseVector(graph, rHashlists, Xi, edges, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
 }
 
-int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList /*=nullptr*/) {
+int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, const vector<vector<int>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList /*=nullptr*/) {
     // This method is the base case for the calculate tsp recurse method.
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     bool debug = false;
@@ -293,7 +261,7 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
     if (Xi.getParent() == Xi.edges[j]->Other(Xi) || !Xj.ContainsVertex(Xi.vertices[i]))
         return tspRecurseVector(graph, rHashlists, Xi, edges, i, j + 1, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints);
 
-    // If the current degree is 2, try letting the child manage it
+    // If the current degree is 2, try letting the child manage it (it = the i-th vertex in Xi)
     vector<Edge*> result;
     if (rTargetDegrees[i] == 2 and rChildDegrees[j][i] == 0) {
         vector<int> td = duplicate(rTargetDegrees);
@@ -302,10 +270,9 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
         cds[j][i] = 2;
         result = tspRecurseVector(graph, rHashlists, Xi, edges, i + 1, 0, td, cds, rEndpoints, rChildEndpoints);
     }
-    // If the current degree is at least 1 (which it is if we get here),
-    //   try to combine it (for all other vertices) in a hamiltonian path
+    // If the current degree is at least 1 (which it is if we get here), try to combine it (for all other vertices) in a hamiltonian path
     for (unsigned int k=i+1; k<Xi.vertices.size(); ++k) {
-        // Stay in {0, 1, 2}
+        // Stay in {0, 1, 2} (and make sure child k has the i-th vertex of Xi as well)
         if (rTargetDegrees[k] < 1 || rChildDegrees[j][k] > 1 || !Xj.ContainsVertex(Xi.vertices[k]))
             continue;
         // Don't add edges twice
@@ -320,6 +287,30 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
         cds[j][k] += 1;
         eps[j].push_back(Xi.vertices[i]->vid);
         eps[j].push_back(Xi.vertices[k]->vid);
+
+
+        // TODO: SOME VERTICES COULD BE IN THE ENDPOINTS TWICE!!!!!!!! (meaning it is not in fact an endpoint anymore - which can cause a huge amount of unnescessary (duplicate) table entries)
+        for (unsigned int test1=0; test1 < eps[j].size() - 1; ++test1)
+            for (unsigned int test2=test1 + 1; test2 < eps[j].size(); ++test2)
+                if (eps[j][test1] == eps[j][test2])
+                    cout << "NOOOOOOOOOOOOOOOO! - some endpoints are occuring twice in the eps list: " << dbg(eps[j]) << endl;
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+
+
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
         pushBackList(&result, tspRecurseVector(graph, rHashlists, Xi, edges, i, j, td, cds, rEndpoints, eps));
     }
@@ -411,6 +402,9 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     return minimum;
 }
 
+//
+// Some helper functions - also used in the VRP DP
+//
 vector<int> toDegrees(const string& S) {
     // From a string representation to a list of degrees
     return splitInt(split(S, '|')[0], ',');
@@ -545,12 +539,33 @@ bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>*
     return false;
 }
 
-bool inEndpoints(const vector<int>& endpoints, int start, int end) {
+bool inEndpoints(const vector<int>& endpoints, int start, int end, int stepsize /*=2*/) {
     // Return whether or not this combination of endpoints (or reversed order) is already in the endpoints list
-    for (unsigned int j=0; j<endpoints.size(); j += 2)
+    for (unsigned int j=0; j<endpoints.size(); j += stepsize)
         if ((endpoints[j] == start and endpoints[j + 1] == end) || (endpoints[j + 1] == start and endpoints[j] == end))
             return true;
     return false;
+}
+
+vector<Edge*> getBagEdges(const Bag& Xi) {
+    // Get all edges corresponding to a bag (meaning all the edges of which both endpoints are vertices in this bag)
+    vector<Edge*> edges;
+    for (unsigned int i=0; i<Xi.vertices.size(); ++i) {
+        Vertex* pV = Xi.vertices[i];
+        for (unsigned int j=0; j<pV->edges.size(); ++j) {
+            Edge* pE = pV->edges[j].get();
+            if (!Xi.ContainsEdge(pE))
+                continue;
+            if (pV->vid < pE->Other(*pV)->vid)
+                edges.push_back(pE);
+        }
+    }
+    auto sortLambda = [&](Edge* pEdgeA, Edge* pEdgeB) {
+        // Compare the costs of the edges
+        return pEdgeA->Cost < pEdgeB->Cost;
+    };
+    sort(edges.begin(), edges.end(), sortLambda);
+    return edges;
 }
 
 vector<Edge*> removeDoubles(const vector<Edge*>& edges, unsigned int length) {

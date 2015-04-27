@@ -8,7 +8,6 @@ using namespace std;
 //  Graph
 //
 Graph::Graph()
-    :vertices(vector<unique_ptr<Vertex>>())
 { }
 
 Graph::~Graph()
@@ -49,10 +48,11 @@ bool Graph::ReadFileLine(int& rState, string line) {
     // Add vertices, edges, bags or bag edges
     if (rState == 1) {
         // Just to be sure
-        if (l.size() != 3)
-            cout << "ERROR: The Graph ReadFileLine expects a vertex, but it doesn't get three strings in the first place." << endl;
+        if (l.size() < 3 || l.size() > 4)
+            cout << "ERROR: The Graph ReadFileLine expects a vertex, but it doesn't get three or four strings in the first place." << endl;
         // Add the vertex to the graph
-        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2]))));
+        int demand = l.size() == 4? stoi(l[3]) : 0;
+        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2]), demand)));
         return true;
     }
     if (rState == 2) {
@@ -83,7 +83,10 @@ string Graph::ToFileString() const {
     s += "NODE_COORD_SECTION\n";
     for (unsigned int i=0; i<this->vertices.size(); ++i) {
         Vertex* pV = this->vertices[i].get();
-        s += to_string(pV->vid + startVid) + " " + to_string(pV->x) + " " + to_string(pV->y) + "\n";
+        s += to_string(pV->vid + startVid) + " " + to_string(pV->x) + " " + to_string(pV->y);
+        if (pV->demand > 0)
+            s += " " + to_string(pV->demand);
+        s += "\n";
     }
 
     s += "EDGE_SECTION\n";
@@ -130,7 +133,7 @@ unique_ptr<Graph> Graph::DeepCopy() const {
     // Add all vertices
     for (unsigned int i=0; i<this->vertices.size(); ++i) {
         const Vertex& v = *this->vertices[i];
-        pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y)) );
+        pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y, v.demand)) );
     }
 
     // Add all edges
@@ -175,11 +178,11 @@ unique_ptr<Graph> Graph::CreateTourGraph(vector<Edge*> tour) const {
 //
 //  Vertex
 //
-Vertex::Vertex(int vid, int x, int y)
+Vertex::Vertex(int vid, int x, int y, int demand /*=0*/)
     :vid(vid),
     x(x),
     y(y),
-    edges(vector<shared_ptr<Edge>>())
+    demand(demand)
 { }
 
 Vertex::~Vertex()

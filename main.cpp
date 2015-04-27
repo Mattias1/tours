@@ -130,7 +130,7 @@ void runWrapper() {
 //
 int main()
 {
-    // The main entrypoint for this application. Here we load the graph (they should only contain vertices),
+    // The main entry-point for this application. Here we load the graph (they should only contain vertices),
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
 
     // The names of the tsp-problems we want to solve

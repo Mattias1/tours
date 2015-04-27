@@ -156,9 +156,10 @@ void TreeDecomposition::MinimumDegree() {
             if (pBag->vid == edgeList[i + 1])
                 pB = pBag;
         }
-        if (pA == pB)
+        if (pA == pB)  {
             // So what happends here is that it doesn't find either pA or pB, so it just uses the old one - which happends to be equal... not so funny.
             cout << "AAAAAAAAAAAAAAAAAAAAAAAAAHHH!!!! (error in Minimum Degree Heuristic: pA == pB)" << endl;
+        }
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);

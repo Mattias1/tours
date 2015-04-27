@@ -31,17 +31,36 @@ heuristics and exact solutions for TSP and VRP.}}
 %
 \section{Introduction}
 \label{sec:introduction}
+% Heuristics and Cook-Seymour
+For many optimization problems calculating optimal solutions is not feasible in practical
+applications, because the computation time grows exponentionally with the problem size. Hence,
+heuristics are used to find solutions that are good, but not nescessarily optimal.
+To get more certainty that a solution is good, or to improve the solution even more, the heuristics
+are applied multiple times and the best solution is selected. Although this works well, Cook and
+Seymour noted in their work \cite{cook-seymour} on the Traveling Salesman Problem (TSP) that by
+discarding the other solutions, possibly valuable information is lost. Hence the idea emerged to
+merge the found approximate solutions and calculate the optimal solution on this reduced problem,
+using branch decompositions.
+
+% Our contribution
+At the time of publishing the solutions found by Cook and Seymour improved on the best known results
+for instances with over 50000 vertices \cite{is this even true???}. Since then the heuristics have
+improved massively and outperform the approach by Cook and Seymour \cite{some LKH papers}.
+In this paper will try if the strategy for TSP by Cook and Seymour can still improve current heuristics
+even more. Apart from that we will try to extend it to work for the Vehicle Routing Problem (VRP) as
+well.
+
 % TSP and VRP; desription and defenition
-One of the most well studied NP-hard problems is the Traveling Salesman Problem (TSP), where a
+The Traveling Salesman Problem (TSP) is one of the most well studied NP-hard problems, where a
 merchant wants to visit a number of cities and get back at his starting point in the shortest
 possible amount of time.
 We recognize the TSP problem in many practical applications, from planning a school bus route to
 scheduling a machine to drill holes in a circuit board.
-A generalized version, where there are not one but a number of merchants or trucks visiting the
-cities from the starting point (or depot), is whidely used in the transportation sector. This
-problem is known as the Vehicle Routing Problem (VRP).
+A generalized version of this problem, where there are not one but a number of merchants or trucks
+visiting the cities from the starting point (or depot), is whidely used in the transportation
+sector. This problem is known as the Vehicle Routing Problem (VRP).
 
-Given a complete graph $G = (V, E)$, we define the TSP as finding the tour (or Hamiltonian
+We define the TSP, given a complete graph $G = (V, E)$, as finding the tour (or Hamiltonian
 circuit) with smallest total cost. For this paper we assume the cost $c_e$ of an edge $e = (v, w)$
 is the euclidean distance between $v$ and $w$.
 Given additionally a demand $d_v$ for each vertex $v$, a maximal capacity $C$ of goods per truck, a
@@ -51,21 +70,60 @@ the depot and has to have a total demand of at most $C$.
 There are many variants with additional constraints or freedoms, but these are out of the scope of
 this paper.
 
-% Heuristics and Cook-Seymour
-Because the time to compute optimal solutions to these problems grows exponentially with the
-problem size, often heuristics are used to find solutions that are usually very good, but not
-nescessarily optimal.
-To get more certainty that a solution is good, or to improve the solution even more, the heuristics
-are applied multiple times, and the best solution is selected. Although this works well, Cook and
-Seymour \cite{cook-seymour} noted in their work on TSP that by discarding the other solutions,
-possibly valuable information is lost. Hence the idea emerged to merge the found tours and
-calculate the optimal solution on this reduced graph, using branch decompositions.
+% Structure
+The paper is organised as follows: in section \ref{sec:heuristics} we will discuss the heuristics
+used to generate the initial tours and routes. In section \ref{sec:td} we will discuss how the
+solutions are merged and how the treedecomposition is calculated and in section \ref{sec:dp} we will
+show the dynamic programming algorithms on the computed decompositions. In section \ref{sec:results}
+we will discuss the result and finally we will conclude in section \ref{sec:conclusion}.
 
-% Our contribution
+
+
+%
+% Heuristics
+%
+\section{Heuristics}
+\label{sec:heuristics}
+Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
+are few that can compete with (variants of) the Lin Kernighan heuristic \cite{lin-kernighan}. We
+will discuss the Lin Kernighan Helsgaun variant in section \ref{sec:lkh}.
+For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms.
+Unfortunately they often require to finetune a lot of parameters and are focussed on specific
+instances of VRP, rather than giving consistent solutions for all versions \cite{hmmz, where to find
+a godo citation for this one}. Other heuristics like the classic savings heuristic or the ???TODO???
+heuristic 
+
+\subsection{Lin Kernighan Helsgaun}
+\label{sec:lkh}
 Todo
 
-% Structure
-The paper is organised as follows: More TODOs.
+
+
+%
+% Merging and Tree Decomposition calculations
+%
+\section{Tree decomposition}
+\label{sec:td}
+Todo: Merging
+Todo: Minimum Degree Heuristic
+
+
+
+%
+% The dynamic programming algorithms
+%
+\section{Dynamic programming}
+\label{sec:dp}
+Todo
+
+
+
+%
+% Results
+%
+\section{Results}
+\label{sec:results}
+Todo
 
 
 

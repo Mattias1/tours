@@ -46,10 +46,10 @@ class Vertex
     friend class Bag;
 
     public:
-        int vid, x, y;
+        int vid, x, y, demand;
         vector<shared_ptr<Edge>> edges;
 
-        Vertex(int vid, int x, int y);
+        Vertex(int vid, int x, int y, int demand = 0);
         virtual ~Vertex();
 
         bool IsConnectedTo(Vertex* other) const;
