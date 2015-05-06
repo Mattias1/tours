@@ -31,7 +31,7 @@ vector<int> toDegrees(const string& S);
 vector<int> toEndpoints(const string& S);
 string fromDegreesEndpoints(const vector<int>& degrees, const vector<int>& endpoints);
 
-bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>* pEdgeList, vector<int>& rAllChildEndpoints);
+bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>* pEdgeList, vector<int>& rAllChildEndpoints, int stepsize = 2);
 
 bool inEndpoints(const vector<int>& endpoints, int startVid, int endVid, int stepsize = 2);
 

@@ -100,7 +100,7 @@ int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<strin
     // Check: all bags (except the root) are not allowed to be a cycle.
     if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
         if (debug) {
-            cout << dbg("  ", Xi.vertices.size()) << "All bags should be a cycle - no endpoints given" << endl;
+            cout << dbg("  ", Xi.vertices.size()) << "All bags (except root) should have at least one path - no endpoints given" << endl;
         }
         return numeric_limits<int>::max();
     }
@@ -230,12 +230,48 @@ int tspRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>
         vector<int> td = duplicate(rTargetDegrees);
         vector<vector<int>> cds = duplicate(rChildDegrees);
         vector<vector<int>> eps = duplicate(rChildEndpoints);
+        // Update the degrees
         td[i] -= 1;
         cds[j][i] += 1;
         td[k] -= 1;
         cds[j][k] += 1;
-        eps[j].push_back(Xi.vertices[i]->vid);
-        eps[j].push_back(Xi.vertices[k]->vid);
+        // Update the endpoints (update when one (or both) of the endpoints are already in the list, otherwise insert)
+        if (cds[j][i] == 2 || cds[j][k] == 2) {
+            // So now at least one of the two is not new in the list, so we update it (or them)
+            // Find out who's in the list (and where)
+            int vidI = Xi.vertices[i]->vid;
+            int vidK = Xi.vertices[k]->vid;
+            unsigned int posI = numeric_limits<unsigned int>::max();
+            unsigned int posK = numeric_limits<unsigned int>::max(); // The position of the vertex in the list that has the same vertex id as the k-th vertex we compare with
+            for (unsigned int l=0; l<eps[j].size(); ++l) {
+                if (eps[j][l] == vidI)
+                    posI = l;
+                else if (eps[j][l] == vidK)
+                    posK = l;
+            }
+            // Two cases (1): only one is already in there (in this case the path is extended) (branch on which one is new)
+            if (posI == numeric_limits<unsigned int>::max()) {
+                if (posK == numeric_limits<unsigned int>::max())
+                    cout << "ASSERTION ERROR - tspRecurse - posK == uint::max !!!" << endl;
+                eps[j][posK] = vidI;
+            }
+            else if (posK == numeric_limits<unsigned int>::max()) {
+                eps[j][posI] = vidK;
+            }
+            // or (2): either both are already in there (in that case this edge merges the two paths together)
+            else {
+                unsigned int posBeginK = posK % 2 == 0? posK : posK - 1;
+                unsigned int posOtherK = posK == posBeginK? posBeginK + 1 : posBeginK;
+                eps[j][posI] = eps[j][posOtherK];
+                eps[j].erase(eps[j].begin() + posBeginK, eps[j].begin() + posBeginK + 2);
+            }
+        }
+        else {
+            // So now both are new in the list, so we just add (insert) them
+            eps[j].push_back(Xi.vertices[i]->vid);
+            eps[j].push_back(Xi.vertices[k]->vid);
+        }
+
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
         result = min(result, tspRecurse(graph, rHashlists, Xi, edges, i, j, td, cds, rEndpoints, eps));
     }
@@ -281,35 +317,47 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
         vector<int> td = duplicate(rTargetDegrees);
         vector<vector<int>> cds = duplicate(rChildDegrees);
         vector<vector<int>> eps = duplicate(rChildEndpoints);
+        // Update the degrees
         td[i] -= 1;
         cds[j][i] += 1;
         td[k] -= 1;
         cds[j][k] += 1;
-        eps[j].push_back(Xi.vertices[i]->vid);
-        eps[j].push_back(Xi.vertices[k]->vid);
-
-
-        // TODO: SOME VERTICES COULD BE IN THE ENDPOINTS TWICE!!!!!!!! (meaning it is not in fact an endpoint anymore - which can cause a huge amount of unnescessary (duplicate) table entries)
-        for (unsigned int test1=0; test1 < eps[j].size() - 1; ++test1)
-            for (unsigned int test2=test1 + 1; test2 < eps[j].size(); ++test2)
-                if (eps[j][test1] == eps[j][test2])
-                    cout << "NOOOOOOOOOOOOOOOO! - some endpoints are occuring twice in the eps list: " << dbg(eps[j]) << endl;
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-
+        // Update the endpoints (update when one (or both) of the endpoints are already in the list, otherwise insert)
+        if (cds[j][i] == 2 || cds[j][k] == 2) {
+            // So now at least one of the two is not new in the list, so we update it (or them)
+            // Find out who's in the list (and where)
+            int vidI = Xi.vertices[i]->vid;
+            int vidK = Xi.vertices[k]->vid;
+            unsigned int posI = numeric_limits<unsigned int>::max();
+            unsigned int posK = numeric_limits<unsigned int>::max(); // The position of the vertex in the list that has the same vertex id as the k-th vertex we compare with
+            for (unsigned int l=0; l<eps[j].size(); ++l) {
+                if (eps[j][l] == vidI)
+                    posI = l;
+                else if (eps[j][l] == vidK)
+                    posK = l;
+            }
+            // Two cases (1): only one is already in there (in this case the path is extended) (branch on which one is new)
+            if (posI == numeric_limits<unsigned int>::max()) {
+                if (posK == numeric_limits<unsigned int>::max())
+                    cout << "ASSERTION ERROR - tspRecurse - posK == uint::max !!!" << endl;
+                eps[j][posK] = vidI;
+            }
+            else if (posK == numeric_limits<unsigned int>::max()) {
+                eps[j][posI] = vidK;
+            }
+            // or (2): either both are already in there (in that case this edge merges the two paths together)
+            else {
+                unsigned int posBeginK = posK % 2 == 0? posK : posK - 1;
+                unsigned int posOtherK = posK == posBeginK? posBeginK + 1 : posBeginK;
+                eps[j][posI] = eps[j][posOtherK];
+                eps[j].erase(eps[j].begin() + posBeginK, eps[j].begin() + posBeginK + 2);
+            }
+        }
+        else {
+            // So now both are new in the list, so we just add (insert) them
+            eps[j].push_back(Xi.vertices[i]->vid);
+            eps[j].push_back(Xi.vertices[k]->vid);
+        }
 
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
         pushBackList(&result, tspRecurseVector(graph, rHashlists, Xi, edges, i, j, td, cds, rEndpoints, eps));
@@ -340,7 +388,7 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
             return numeric_limits<int>::max();
         }
         if (debug)
-            cout << "Edge select (" << index << "): no need to add edges, min value: 0" << endl;
+            cout << "Edge select (" << index << "): satisfied: no need to add any more edges, min value: 0" << endl;
         return 0;
     }
 
@@ -356,10 +404,11 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     vector<int> deg = duplicate(degrees);
     int assertCounter = 0;
     for (unsigned int i=0; i<deg.size(); ++i) {
-        int d = deg[i];
         if (Xi.vertices[i] == pEdge->pA || Xi.vertices[i] == pEdge->pB) {
-            if (d < 0) {    // If it's negative it will tell us later
-                if (debug)  //  - can't return right now, as we need to evaluete not taking this edge as well.
+            if (deg[i] < 0) {   // If it is negative already (we substract 1 after this if statement) then we can return int::max now.
+                                // If it becomes negative later we will just continue, as we have to evaluate not taking this edge as well.
+                                // (we return int::max for that case (taking the edge) in this piece of code, but in the next function call).
+                if (debug)
                     cout << "Edge select (" << index << "): too many edges added" << endl;
                 return numeric_limits<int>::max();
             }
@@ -423,13 +472,13 @@ string fromDegreesEndpoints(const vector<int>& degrees, const vector<int>& endpo
     return join(degrees, ',') + '|' + join(endpoints, ',');
 }
 
-bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>* pEdgeList, vector<int>& rAllChildEndpoints) {
+bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>* pEdgeList, vector<int>& rAllChildEndpoints, int stepsize /*=2*/) {
     // This method returns whether or not the given edge list and all child endpoints provide a set of paths
     // satisfying the endpoints and sorts the edge list in place.
     bool debug = false;
 
     // Inits
-    int progressCounter = -2;
+    int progressCounter = -stepsize;
     unsigned int edgeCounter = 0;
     unsigned int endpsCounter = 0;
     Vertex* pV = nullptr;
@@ -473,7 +522,7 @@ bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>*
 
         // If we completed the path
         if (pV == nullptr || pV->vid == endpointsClone[progressCounter + 1]) {
-            progressCounter += 2;
+            progressCounter += stepsize;
             if (static_cast<unsigned int>(progressCounter) >= endpointsClone.size()) {
                 if (edgeCounter == edgeList.size() && endpsCounter == rAllChildEndpoints.size()) {
                     return true;
@@ -497,7 +546,7 @@ bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>*
 
         // Find the next vertex
         bool noBreak = true;
-        for (unsigned int i=endpsCounter; i<rAllChildEndpoints.size(); i += 2) {
+        for (unsigned int i=endpsCounter; i<rAllChildEndpoints.size(); i += stepsize) {
             if (rAllChildEndpoints[i] == pV->vid || rAllChildEndpoints[i + 1] == pV->vid) {
                 pV = graph.vertices[rAllChildEndpoints[pV->vid == rAllChildEndpoints[i] ? i + 1 : i]].get();
 
@@ -507,8 +556,13 @@ bool cycleCheck(const Graph& graph, const vector<int>& endpoints, vector<Edge*>*
                 temp = rAllChildEndpoints[endpsCounter + 1];
                 rAllChildEndpoints[endpsCounter + 1] = rAllChildEndpoints[i + 1];
                 rAllChildEndpoints[i + 1] = temp;
+                if (stepsize >= 3) { // UPDATE THE DEMANDS AS WELL - this is nice, but is it nescessary? TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+                    temp = rAllChildEndpoints[endpsCounter + 2];
+                    rAllChildEndpoints[endpsCounter + 2] = rAllChildEndpoints[i + 2];
+                    rAllChildEndpoints[i + 2] = temp;
+                }
 
-                endpsCounter += 2;
+                endpsCounter += stepsize;
                 noBreak = false;
                 break;
             }

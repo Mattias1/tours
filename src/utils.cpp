@@ -190,6 +190,16 @@ string dbg(vector<Edge*>* pEdges) {
         return "null";
     return dbg(*pEdges);
 }
+string dbg(const vector<Vertex*>& vertices) {
+    // Output the vertex ids
+    string result = "[";
+    for (unsigned int i=0; i<vertices.size(); ++i) {
+        result += to_string(vertices[i]->vid);
+        if (i != vertices.size() - 1)
+            result += ",";
+    }
+    return result + "]";
+}
 
 
 //
