@@ -107,7 +107,10 @@ int tspChildEvaluation(const Graph& graph, vector<unique_ptr<unordered_map<strin
 
     // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
     vector<int> allChildEndpoints = flatten(rChildEndpoints);
-    int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, edges, rTargetDegrees, rEndpoints, allChildEndpoints, pResultingEdgeList);
+    unsigned int edgeListBits = 0;
+    int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, edges, rTargetDegrees, rEndpoints, allChildEndpoints, &edgeListBits);
+    if (pResultingEdgeList != nullptr)
+        addToEdgeListFromBits(edges, pResultingEdgeList, edgeListBits);
     if (0 <= val && val < numeric_limits<int>::max()) { // TODO: why can val ever be < 0??? Why is this first part of the check here??? It is also there in the python version...
         if (debug) {
             cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", edges: " << dbg(edges) << ", degrees: " << dbg(rTargetDegrees);
@@ -368,7 +371,7 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
 }
 
 // Todo: use the minimum to abort early??? (is possible for leaf case, but perhaps not for normal bag case
-int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, vector<Edge*>* pEdgeList /*=nullptr*/) {
+int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, unsigned int* pEdgeListBits /*=nullptr*/) {
     // Calculate the smallest cost to satisfy the degrees target using only using edges >= the index
     bool debug = false;
 
@@ -382,7 +385,9 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     }
     if (satisfied) {
         // So we have chosen all our edges and satisfied the targets - now make sure there is no cycle (unless root)
-        if (!cycleCheck(graph, rEndpoints, pEdgeList, rAllChildEndpoints)) {
+        vector<Edge*> edgeList;
+        addToEdgeListFromBits(edges, &edgeList, *pEdgeListBits);
+        if (!cycleCheck(graph, rEndpoints, &edgeList, rAllChildEndpoints)) { // Side effect: edgeList and child endpoints can be 'sorted'
             if (debug)
                 cout << "Edge select (" << index << "): edges contain a cycle" << endl;
             return numeric_limits<int>::max();
@@ -423,31 +428,28 @@ int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag
     // Try both to take the edge and not to take the edge
     if (debug)
         cout << "Edge select (" << index << "), degrees: " << dbg(degrees) << endl;
-    vector<Edge*> tempEL1;
-    vector<Edge*> tempEL2;
-    if (pEdgeList != nullptr) {
-        tempEL1 = duplicate(*pEdgeList);    // Notice the pointers to stack objects.
-        tempEL2 = duplicate(tempEL1);       // They will go out of scope at the end of the function, but that's fine,
+    unsigned int tempEL1, tempEL2;
+    if (pEdgeListBits != nullptr) {
+        tempEL1 = *pEdgeListBits;
+        tempEL2 = tempEL1;
     }
-    vector<Edge*>* pTempEL1 = &tempEL1;    // we no longer need them after the edges are pushed back to pEdgeList.
-    vector<Edge*>* pTempEL2 = &tempEL2;    //
-    pTempEL1->push_back(pEdge);
-    int val = tspEdgeSelect(minimum - pEdge->Cost, index + 1, graph, Xi, edges, deg, rEndpoints, rAllChildEndpoints, pTempEL1);
+    tempEL1 |= 1 << index;
+    int val = tspEdgeSelect(minimum - pEdge->Cost, index + 1, graph, Xi, edges, deg, rEndpoints, rAllChildEndpoints, &tempEL1);
     if (val < numeric_limits<int>::max())
         minimum = min(minimum, pEdge->Cost + val);
-    val = tspEdgeSelect(minimum, index + 1, graph, Xi, edges, degrees, rEndpoints, rAllChildEndpoints, pTempEL2);
+    val = tspEdgeSelect(minimum, index + 1, graph, Xi, edges, degrees, rEndpoints, rAllChildEndpoints, &tempEL2);
     if (val < minimum) {
         minimum = val;
         // So without edge is better - Append the second edge list
-        if (pEdgeList != nullptr)
-            pushBackList(pEdgeList, *pTempEL2);
+        if (pEdgeListBits != nullptr)
+            *pEdgeListBits |= tempEL2;
     }
     // So without edge is not better - Append the first edge list
-    else if (pEdgeList != nullptr) {
-        pushBackList(pEdgeList, *pTempEL1);
+    else if (pEdgeListBits != nullptr) {
+        *pEdgeListBits |= tempEL1;
     }
     if (debug)
-        cout << "Edge select (" << index << "): min value: " << minimum << ", edges: " << dbg(pEdgeList) << endl;
+        cout << "Edge select (" << index << "): min value: " << minimum << ", edges: " << *pEdgeListBits << endl;
     return minimum;
 }
 
@@ -619,6 +621,9 @@ vector<Edge*> getBagEdges(const Bag& Xi) {
         return pEdgeA->Cost < pEdgeB->Cost;
     };
     sort(edges.begin(), edges.end(), sortLambda);
+    if (edges.size() > sizeof(int)) {
+        cout << "ASSERTION ERROR (getBagEdges): There are more edges in bag X" << Xi.vid << " then there are bits in an int: " << sizeof(int) << endl;
+    }
     return edges;
 }
 
@@ -643,4 +648,24 @@ vector<Edge*> removeDoubles(const vector<Edge*>& edges, unsigned int length) {
         }
     }
     return result;
+}
+
+unsigned int toEdgeListBits(const vector<Edge*>& edges, const vector<Edge*>& resultingEdgeList) {
+    // Create the bitstring (uint) from the resulting edge list's edges (quite possibly this function will never be used, but still fun to write :]).
+    unsigned int result = 0;
+    int index = 0;
+    for (unsigned int i=0; i<edges.size(); ++i)
+        if (edges[i] == resultingEdgeList[index]) {
+            result |= 1 << i;
+            ++index;
+        }
+    return result;
+}
+void addToEdgeListFromBits(const vector<Edge*>& edges, vector<Edge*>* pResultingEdgeList, unsigned int edgeListBits) {
+    // Add the edges specified by the bitstring (uint) to the resulting edge list
+    for (unsigned int i=0; i<edges.size(); ++i) {
+        if ((edgeListBits & 1) == 1)
+            pResultingEdgeList->push_back(edges[i]);
+        edgeListBits >>= 1;
+    }
 }

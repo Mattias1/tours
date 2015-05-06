@@ -22,7 +22,7 @@ vector<Edge*>* tspLookback(const Graph& graph, vector<unique_ptr<unordered_map<s
 int tspRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, unsigned int i, unsigned int j, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints);
 vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>>& rHashlists, const Bag& Xi, const vector<Edge*>& edges, unsigned int i, unsigned int j, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints);
 
-int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, vector<Edge*>* pEdgeList = nullptr);
+int tspEdgeSelect(int minimum, unsigned int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& edges, const vector<int>& degrees, vector<int>& rEndpoints, vector<int>& rAllChildEndpoints, unsigned int* pEdgeListBits = nullptr);
 
 //
 // Some helper functions - also used in the VRP DP
@@ -38,5 +38,8 @@ bool inEndpoints(const vector<int>& endpoints, int startVid, int endVid, int ste
 vector<Edge*> getBagEdges(const Bag& Xi);
 
 vector<Edge*> removeDoubles(const vector<Edge*>& edges, unsigned int length);
+
+unsigned int toEdgeListBits(const vector<Edge*>& edges, const vector<Edge*>& resultingEdgeList);
+void addToEdgeListFromBits(const vector<Edge*>& edges, vector<Edge*>* pResultingEdgeList, unsigned int edgeListBits);
 
 #endif // DP_TSP_H
