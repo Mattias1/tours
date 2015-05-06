@@ -90,12 +90,13 @@ will discuss the Lin Kernighan Helsgaun variant in section \ref{sec:lkh}.
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms.
 Unfortunately they often require to finetune a lot of parameters and are focussed on specific
 instances of VRP, rather than giving consistent solutions for all versions \cite{hmmz, where to find
-a godo citation for this one}. Other heuristics like the classic savings heuristic or the ???TODO???
-heuristic 
+a good citation for this one}. Other heuristics like the classic savings heuristic or the ???TODO???
+heuristic do give good solutions for all variants of VRP, but they can't get the results one gets
+with the tabu heuristics.
 
-\subsection{Lin Kernighan Helsgaun}
-\label{sec:lkh}
-Todo
+    \subsection{Lin Kernighan Helsgaun}
+    \label{sec:lkh}
+    Todo
 
 
 
@@ -114,7 +115,11 @@ Todo: Minimum Degree Heuristic
 %
 \section{Dynamic programming}
 \label{sec:dp}
-Todo
+Provided the width $k$ of the tree decomposition $T = (W, F)$ is small enough ($k < TODO$), we can
+calculate the optimal solution for the merged graph using dynamic programming on $T$. Although
+running time upperbounds of $O(n 3^k 2^{O(k^2)}) - TODO???$ and $O(M n 3^k 2^{\dots})$ are very slow, in
+practice this limit is never reached. This is because edges... TODO
+TODO: Check the bounds of CookSeymour - what do they do with their edges???
 
 
 
