@@ -16,6 +16,10 @@ heuristics and exact solutions for TSP and VRP.}}
 \begin{document}
 \maketitle
 
+% Note:
+% Whenever I mention a graph, I should call it a complete graph, that will be sufficiently precise.
+% A complete graph is a graph that TODO TODO TODO.
+
 %
 % Abstract
 %
@@ -37,18 +41,17 @@ applications, because the computation time grows exponentionally with the proble
 heuristics are used to find solutions that are good, but not nescessarily optimal.
 To get more certainty that a solution is good, or to improve the solution even more, the heuristics
 are applied multiple times and the best solution is selected. Although this works well, Cook and
-Seymour noted in their work \cite{cook-seymour} on the Traveling Salesman Problem (TSP) that by
+Seymour noted in their work on the Traveling Salesman Problem (TSP) \cite{cook-seymour} that by
 discarding the other solutions, possibly valuable information is lost. Hence the idea emerged to
 merge the found approximate solutions and calculate the optimal solution on this reduced problem,
 using branch decompositions.
 
 % Our contribution
 At the time of publishing the solutions found by Cook and Seymour improved on the best known results
-for instances with over 50000 vertices \cite{is this even true???}. Since then the heuristics have
-improved massively and outperform the approach by Cook and Seymour \cite{some LKH papers}.
+for instances with almost 25000 vertices \cite{the sweden instance}. Since then the heuristics have
+improved massively and outperform the approach by Cook and Seymour \cite{lkh, some other LKH papers}.
 In this paper will try if the strategy for TSP by Cook and Seymour can still improve current heuristics
-even more. Apart from that we will try to extend it to work for the Vehicle Routing Problem (VRP) as
-well.
+even more. Furthermore, we will try to extend it to work for the Vehicle Routing Problem (VRP).
 
 % TSP and VRP; desription and defenition
 The Traveling Salesman Problem (TSP) is one of the most well studied NP-hard problems, where a
@@ -71,11 +74,11 @@ There are many variants with additional constraints or freedoms, but these are o
 this paper.
 
 % Structure
-The paper is organised as follows: in section \ref{sec:heuristics} we will discuss the heuristics
-used to generate the initial tours and routes. In section \ref{sec:td} we will discuss how the
-solutions are merged and how the treedecomposition is calculated and in section \ref{sec:dp} we will
-show the dynamic programming algorithms on the computed decompositions. In section \ref{sec:results}
-we will discuss the result and finally we will conclude in section \ref{sec:conclusion}.
+The paper is organised as follows: in section~\ref{sec:heuristics} we will discuss the heuristics
+used to generate the initial tours and routes. In section~\ref{sec:td} we will discuss how the
+solutions are merged and how the treedecomposition is calculated and in section~\ref{sec:dp} we will
+show the dynamic programming algorithms on the computed decompositions. In section~\ref{sec:results}
+we will discuss the result and finally we will conclude in section~\ref{sec:conclusion}.
 
 
 
@@ -86,13 +89,13 @@ we will discuss the result and finally we will conclude in section \ref{sec:conc
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
 are few that can compete with (variants of) the Lin Kernighan heuristic \cite{lin-kernighan}. We
-will discuss the Lin Kernighan Helsgaun variant in section \ref{sec:lkh}.
+will discuss the Lin Kernighan Helsgaun variant in section~\ref{sec:lkh}.
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms.
 Unfortunately they often require to finetune a lot of parameters and are focussed on specific
 instances of VRP, rather than giving consistent solutions for all versions \cite{hmmz, where to find
-a good citation for this one}. Other heuristics like the classic savings heuristic or the ???TODO???
-heuristic do give good solutions for all variants of VRP, but they can't get the results one gets
-with the tabu heuristics.
+a good citation for this one}. Other heuristics like the classic savings heuristic or the sweep
+(???) heuristic do give good solutions for all variants of VRP, but they can't get the results one
+gets with the tabu heuristics.
 
     \subsection{Lin Kernighan Helsgaun}
     \label{sec:lkh}
@@ -105,7 +108,21 @@ with the tabu heuristics.
 %
 \section{Tree decomposition}
 \label{sec:td}
-Todo: Merging
+NOTE: this section is very much not finished, just added some very quick things on the notation used
+in this paper.
+
+% TODO: Merging
+Given the complete graph $G'=(V,E)$. All tours $E'_j \subset E$, for $1 \leq j \leq} \#tours$ as found by the
+heuristics are merged together into a new graph $G = (V, (\bigcup E'_j)}$).
+
+% TODO: what is a tree decomposition
+Todo: What is a tree decomposition (a tree $T=(W, F)$ with three properties \dots)
+
+Let $X_i \subset V, i \in W$ be the set of vertices assigned to the $i$-th bag, and $Y_i =
+\{(u,v) \in E: u,v \in X_i \}$ the set of edges corresponding to the $i$-th bag. A bag $i$ is
+said to contain a vertex $v$ or edge $e$ if $v \in X_i$ or $e \in Y_i$ respectively.
+
+% Todo: Minimum Degree Heuristic
 Todo: Minimum Degree Heuristic
 
 
@@ -115,11 +132,79 @@ Todo: Minimum Degree Heuristic
 %
 \section{Dynamic programming}
 \label{sec:dp}
-Provided the width $k$ of the tree decomposition $T = (W, F)$ is small enough ($k < TODO$), we can
-calculate the optimal solution for the merged graph using dynamic programming on $T$. Although
-running time upperbounds of $O(n 3^k 2^{O(k^2)}) - TODO???$ and $O(M n 3^k 2^{\dots})$ are very slow, in
-practice this limit is never reached. This is because edges... TODO
-TODO: Check the bounds of CookSeymour - what do they do with their edges???
+Provided the treewidth is small enough, the optimal solution on the merged graph and its tree
+decomposition can be computed using dynamic programming algorithms. In the following sections we
+explain their details.
+
+    \subsection{Traveling Salesman}
+    \label{sec:dp-tsp}
+    % 2-connectedness: to make the graph disjoint, you need to remove at least 2 vertices
+    % Simle graph: G is unweighted (?); undirected; no double edges; no self loops.
+    Let $G=(V, E)$ be a simple graph with edge-weights $c_e$ and $T=(W, F)$ be the tree
+    decomposition with width $k - 1$ and $X_i$ and $Y_i$ as defined in section~\ref{sec:td}.
+    Note that because $G$ is the result of a number of merged tours, it is 2-connected.
+    The main idea of the algorithm is to find a series of disjoint paths and connect them together
+    into a hamiltonian tour of minimum weight. Such a path is encoded using vertex degrees and a
+    matching. Every vertex can have degree 0, 1 or 2. Vertices with degree 2 are already \emph{used}
+    in a path, vertices with degree 1 are \emph{endpoints} of a path and vertices with degree 0 are
+    \emph{free}, so not yet used in a path. For every pair of endpoints we have a \emph{matching}
+    $\{u, v\}: u,v \in V$ to mark which vertices mark the endpoints of one path.
+
+    We now define the function $F(X_i, degrees, matching)$ to be the minimum total cost of the
+    edges in a series of paths starting and ending in bag $X_i$. The endpoints of these paths should
+    be as in the matching, all vertices in bags below $X_i$ in the tree should be used (have a
+    degree of 2) and the vertices in bag $X_i$ should have degrees as given in the $degrees$
+    parameter.
+    A vertex' degree can be satisfied in the bag itself by choosing an edge from $Y_i$ or by passing
+    it on to one (or two) of the child bags. Formally this becomes
+    \[
+        F(X_i, D, M) = \min_{1 \leq p \leq P_i} (
+            \sum_{j \in W :\text{ Parent}(j) = i} F(X_j, D_{p,j}, M_{p,j}) + \sum_{e \in E_p} c_e
+        )
+    \]
+    for all $P_i$ ways of dividing $D$ and $M$ into the $D_{p,j}$ and $M_{p,j}$ sets and the
+    corresponding $E_p \subset Y_i$.
+
+    To find the different divisions we mainly focus on $D$, the set of degrees we have to 'spend'.
+    We try all possible combinations of dividing the degrees of per vertex. For a given vertex $v$,
+    assuming we have 2 degrees to spend, we first try to give it to each of the children. So for
+    possibility $p$ and child bag $j$ we try to set the degree of $v$ in $D_{p,j}$ to 2.
+    Afterwards, assuming we have at least 1 degree to spend for $v$, we try to use it as an endpoint
+    for each of the vertices in all of the child bags. So the degrees of two vertices, $v$ and
+    some other vertex $u$ in $D_{p,j}$ are set to 1. We try this for all (valid) combinations of $u$
+    and $j$. At this step we also add the matching $\{u, v\}$ to $M_{p,j}$.
+    Finally we also try not to assign $v$ to any of the child bags.
+    Of course, vertices are only given to a child bag if it contains the vertex.
+
+    For the remaining degrees that are not handled by any of the child bags we calculate a subset
+    $E_p$ of $Y_i$. For non leaf bags these edges mainly glue paths from the children together in
+    the paths as given in the $D$ and $M$ parameters. For the leaf bags there are of course no child
+    bags to delegate the degrees to so it all has to be solved using the bags own edges.
+    Note that the edge set is not allowed to introduce cycles, so in particular two endpoints in a
+    matching are not allowed to be connected. The root bag is of course an exception, because there
+    all paths are merged in a single cycle.
+    If no valid edge set is found, $F(X_i, D, M) = \infty$.
+
+    The algorithm then consists of a top down approach where we tabulate all entries for $F$,
+    starting at the root and then recursively work downwards in the tree. Then the value of each
+    table entry is finished bottem up as the recursion returns the values for children.
+
+    % Overview:
+    % - Idea: Disjoint paths
+    % - Vertex degrees: 0, 1, 2
+    % - Matchings for the 1's
+    % - Talk about subproblems / partial tours / table-entries / functions
+    % - The root bag
+    % - Top down approach; recursive
+    % - It tabulates the degrees+matchings
+
+    \subsection{Vehicle Routing}
+    \label{sec:dp-vrp}
+    Todo
+
+    \subsection{Speed}
+    Although DP running time upperbounds of $O(n 3^k 2^{k^2}) - TODO???$ and $O(M n 3^k 2^{\dots})$
+    are terrible, in practice these limits are never reached. This is because edges\dots TODO
 
 
 
@@ -147,9 +232,19 @@ Todo
 \begin{thebibliography}{9}
     % The most important references
     \bibitem{cook-seymour}
-        Cook, W., & Seymour, P. (2003).
+        Cook, W., \& Seymour, P. (2003).
         \emph{Tour merging via branch-decomposition.}
         INFORMS Journal on Computing, 15(3), 233-248.
+
+    \bibitem{lin-kernighan}
+        Lin, S., & Kernighan, B. W. (1973).
+        \emph{An effective heuristic algorithm for the traveling-salesman problem.}
+        Operations research, 21(2), 498-516.
+
+    \bibitem{lkh}
+        Helsgaun, K. (2009).
+        \emph{General k-opt submoves for the Lin–Kernighan TSP heuristic.}
+        Mathematical Programming Computation, 1(2-3), 119-163.
 
 \end{thebibliography}
 
