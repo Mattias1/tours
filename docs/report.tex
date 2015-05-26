@@ -25,7 +25,8 @@ heuristics and exact solutions for TSP and VRP.}}
 %
 \begin{abstract}
     % About TSP and VRP and what this paper does
-    This line of text is not very abstract.
+    A hybrid approach between heuristics and exact solutions for TSP and VRP using tree
+    decompositions.
 \end{abstract}
 
 
@@ -89,13 +90,14 @@ we will discuss the result and finally we will conclude in section~\ref{sec:conc
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
 are few that can compete with (variants of) the Lin Kernighan heuristic \cite{lin-kernighan}. We
-will discuss the Lin Kernighan Helsgaun variant in section~\ref{sec:lkh}.
+will discuss the Lin Kernighan Helsgaun~\cite{lkh} variant in section~\ref{sec:lkh}.
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms.
 Unfortunately they often require to finetune a lot of parameters and are focussed on specific
 instances of VRP, rather than giving consistent solutions for all versions \cite{hmmz, where to find
 a good citation for this one}. Other heuristics like the classic savings heuristic or the sweep
-(???) heuristic do give good solutions for all variants of VRP, but they can't get the results one
+heuristic do give good solutions for all variants of VRP, but they can't get the results one
 gets with the tabu heuristics.
+% SWEEP????????
 
     \subsection{Lin Kernighan Helsgaun}
     \label{sec:lkh}
@@ -108,22 +110,45 @@ gets with the tabu heuristics.
 %
 \section{Tree decomposition}
 \label{sec:td}
-NOTE: this section is very much not finished, just added some very quick things on the notation used
-in this paper.
+% Merging
+Once we have generated a couple of good tours for our original graph $G'=(V,E')$, we merge these
+tours in one graph. All tours $E'_j \subset E'$, for $1 \leq j \leq} \#tours$ as found by the
+heuristics are merged together into a new graph $G = (V, E)$, where $E=\bigcup E'_j}$). For this
+graph $G$ we will compute a tree decomposition so that we can compute the optimal tour in this
+reduced problem.
 
-% TODO: Merging
-Given the complete graph $G'=(V,E)$. All tours $E'_j \subset E$, for $1 \leq j \leq} \#tours$ as found by the
-heuristics are merged together into a new graph $G = (V, (\bigcup E'_j)}$).
+    % What is a tree decomposition
+    \subsection{Tree decomposition and width}
+    \label{sec:td-definition}
+    A \emph{tree decomposition} of a graph $G=(V, E)$ is a tree $T=(W, F)$ and a \emph{bag}, or a set of
+    vertices, $X_i \subset V$ for $i \in W$ such that:
+    \begin{enumerate}
+        \item $\bigcup_{i \in W} X_i = V,$
+        \item for all $(u, v) \in E$ there is an $i \in W$ with $u, v \in X_i$ and
+        \item for all $v \in V$, the set $W_v = \{i \in W: v \in X_i\}$ forms a connected subtree of $T$.
+    \end{enumerate}
+    The \emph{width} $k$ of the tree decomposition is $\max_{i \in W} |X_i| - 1$. The \emph{treewidth}
+    of a graph $G$, is the minimum width among all tree decompositions of $G$.
 
-% TODO: what is a tree decomposition
-Todo: What is a tree decomposition (a tree $T=(W, F)$ with three properties \dots)
+    % TODO: example of graph with it's tree decomposition.
 
-Let $X_i \subset V, i \in W$ be the set of vertices assigned to the $i$-th bag, and $Y_i =
-\{(u,v) \in E: u,v \in X_i \}$ the set of edges corresponding to the $i$-th bag. A bag $i$ is
-said to contain a vertex $v$ or edge $e$ if $v \in X_i$ or $e \in Y_i$ respectively.
+    In this paper we often work with the edge set corresponding to the bag $X_i$, $i \in W$, rather
+    than the vertex set $X_i$ itself, and to that end we define $Y_i = \{(u,v) \in E: u,v \in X_i \}$.
+    We say that a bag contains a vertex $v$ if $v \in X_i$ and that it contains an edge $e$ if $e \in Y_i$.
 
-% Todo: Minimum Degree Heuristic
-Todo: Minimum Degree Heuristic
+    % Todo: Minimum Degree Heuristic
+    \subsection{Minimum Degree Heuristic}
+    \label{sec:td-heuristic}
+    Calculating the optimal treewidth or the optimal tree decompositions is an NP Hard problem
+    \cite{find ref} so finding an optimal decomposition in reasonable time is infeasable unlesss
+    $P=NP$. We also do not nescessarily need a tree decomposition of optimal width, we just need the
+    width to be sufficiently small so that our DP algorithm runs fast enough.
+    Therefore, we compute our tree decomposition with a heuristic: the minimum degree heuristic by
+    Bodlaender and Koster~\cite{tw-upper-bounds}.
+
+    Todo
+
+    % TODO: trick of that other students paper to not merge all graphs?
 
 
 
@@ -141,7 +166,8 @@ explain their details.
     % 2-connectedness: to make the graph disjoint, you need to remove at least 2 vertices
     % Simle graph: G is unweighted (?); undirected; no double edges; no self loops.
     Let $G=(V, E)$ be a simple graph with edge-weights $c_e$ and $T=(W, F)$ be the tree
-    decomposition with width $k - 1$ and $X_i$ and $Y_i$ as defined in section~\ref{sec:td}.
+    decomposition with width $k - 1$ and $X_i$ and $Y_i$ as defined in
+    section~\ref{sec:td-definition}.
     Note that because $G$ is the result of a number of merged tours, it is 2-connected.
     The main idea of the algorithm is to find a series of disjoint paths and connect them together
     into a hamiltonian tour of minimum weight. Such a path is encoded using vertex degrees and a
@@ -185,9 +211,9 @@ explain their details.
     all paths are merged in a single cycle.
     If no valid edge set is found, $F(X_i, D, M) = \infty$.
 
-    The algorithm then consists of a top down approach where we tabulate all entries for $F$,
-    starting at the root and then recursively work downwards in the tree. Then the value of each
-    table entry is finished bottem up as the recursion returns the values for children.
+    The overall algorithm then consists of a top down approach where we tabulate all entries for
+    $F$, starting at the root and then recursively work downwards in the tree. Then the value of
+    each table entry is finished bottem up as the recursion returns the values for children.
 
     % Overview:
     % - Idea: Disjoint paths
@@ -237,7 +263,7 @@ Todo
         INFORMS Journal on Computing, 15(3), 233-248.
 
     \bibitem{lin-kernighan}
-        Lin, S., & Kernighan, B. W. (1973).
+        Lin, S., \& Kernighan, B. W. (1973).
         \emph{An effective heuristic algorithm for the traveling-salesman problem.}
         Operations research, 21(2), 498-516.
 
@@ -245,6 +271,11 @@ Todo
         Helsgaun, K. (2009).
         \emph{General k-opt submoves for the Lin–Kernighan TSP heuristic.}
         Mathematical Programming Computation, 1(2-3), 119-163.
+
+    \bibitem{tw-upper-bounds}
+        Bodlaender, H.I. \& Koster, A.M.C.A (2010).
+        \emph{Tree width computations I upper bounds.}
+        Information and Compuutation 208, 259-275
 
 \end{thebibliography}
 
