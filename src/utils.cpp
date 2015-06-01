@@ -16,22 +16,54 @@ using namespace std;
 vector<int> duplicate(const vector<int>& lst) {
     // Deep copy (which in this case is the same as a shallow copy)
     vector<int> result(lst.size());
-    for (unsigned int i=0; i<lst.size(); ++i)
+    for (int i=0; i<lst.size(); ++i)
         result[i] = lst[i];
     return result;
 }
 vector<vector<int>> duplicate(const vector<vector<int>>& lst) {
     // Deep copy
     vector<vector<int>> result(lst.size());
-    for (unsigned int i=0; i<lst.size(); ++i)
+    for (int i=0; i<lst.size(); ++i)
+        result[i] = duplicate(lst[i]);
+    return result;
+}
+vector<Matching> duplicate(const vector<Matching>& lst) {
+    // Deep copy (which in this case is the same as a shallow copy)
+    vector<Matching> result(lst.size());
+    for (int i=0; i<lst.size(); ++i)
+        result[i] = lst[i];
+    return result;
+}
+vector<Matching*> duplicate(const vector<Matching*>& lst) {
+    // Deep copy (which in this case is the same as a shallow copy)
+    vector<Matching*> result(lst.size());
+    for (int i=0; i<lst.size(); ++i)
+        result[i] = lst[i];
+    return result;
+}
+vector<vector<Matching*>> duplicate(const vector<vector<Matching*>>& lst) {
+    // Deep copy
+    vector<vector<Matching*>> result(lst.size());
+    for (int i=0; i<lst.size(); ++i)
         result[i] = duplicate(lst[i]);
     return result;
 }
 vector<Edge*> duplicate(const vector<Edge*>& lst) {
     // Deep copy (which in this case is the same as a shallow copy)
     vector<Edge*> result(lst.size());
-    for (unsigned int i=0; i<lst.size(); ++i)
+    for (int i=0; i<lst.size(); ++i)
         result[i] = lst[i];
+    return result;
+}
+
+//
+// Pointerize
+//
+vector<Matching*> pointerize(vector<Matching>& lst) {
+    // Return a vector with pointers to the values in lst
+    vector<Matching*> result;
+    for (int i=0; i<lst.size(); ++i)
+        result.push_back(&lst[i]);
     return result;
 }
 
@@ -40,8 +72,15 @@ vector<Edge*> duplicate(const vector<Edge*>& lst) {
 //
 vector<int> flatten(const vector<vector<int>>& lst) {
     vector<int> result; // Possible optimization: add in the correct size (the actual size in memory of the lst?)
-    for (unsigned int i=0; i<lst.size(); ++i)
-        for (unsigned int j=0; j<lst[i].size(); ++j)
+    for (int i=0; i<lst.size(); ++i)
+        for (int j=0; j<lst[i].size(); ++j)
+            result.push_back(lst[i][j]);
+    return result;
+}
+vector<Matching*> flatten(const vector<vector<Matching*>>& lst) {
+    vector<Matching*> result; // Possible optimization: add in the correct size (the actual size in memory of the lst?)
+    for (int i=0; i<lst.size(); ++i)
+        for (int j=0; j<lst[i].size(); ++j)
             result.push_back(lst[i][j]);
     return result;
 }
@@ -50,7 +89,11 @@ vector<int> flatten(const vector<vector<int>>& lst) {
 // Push back an entire list
 //
 void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd) {
-    for (unsigned int i=0; i<listToAdd.size(); ++i)
+    for (int i=0; i<listToAdd.size(); ++i)
+        pOriginalList->push_back(listToAdd[i]);
+}
+void pushBackList(vector<pair<int, vector<Matching>>>* pOriginalList, const vector<pair<int, vector<Matching>>>& listToAdd) {
+    for (int i=0; i<listToAdd.size(); ++i)
         pOriginalList->push_back(listToAdd[i]);
 }
 
@@ -97,6 +140,19 @@ string join(const vector<int>& v, char delim) {
     }
     return ss.str();
 }
+string join(const vector<Matching*>& v, char delim) {
+    stringstream ss;
+    for(size_t i = 0; i < v.size(); ++i) {
+        if(i != 0)
+            ss << delim;
+        ss << v[i]->A;
+        ss << delim;
+        ss << v[i]->B;
+        ss << delim;
+        ss << v[i]->Demand;
+    }
+    return ss.str();
+}
 
 //
 // String trim methods
@@ -133,17 +189,17 @@ bool isInt(const string& s, bool allowNegative /*=false*/)
 //
 // Some debug helpers
 //
-string dbg(const string& s, unsigned int i) {
+string dbg(const string& s, int i) {
     // Output i times s
     string result = "";
-    for (unsigned int z=0; z<i; ++z)
+    for (int z=0; z<i; ++z)
         result += s;
     return result;
 }
 string dbg(const vector<int>& v) {
     // Output the int vector
     string result = "[";
-    for (unsigned int i=0; i<v.size(); ++i) {
+    for (int i=0; i<v.size(); ++i) {
         result += to_string(v[i]);
         if (i != v.size() - 1)
             result += ",";
@@ -153,8 +209,8 @@ string dbg(const vector<int>& v) {
 string dbg(const vector<vector<int>>& v) {
     // Output the vector of int vectors
     string result = "[";
-    for (unsigned int i=0; i<v.size(); ++i) {
-        for (unsigned int j=0; j<v[i].size(); ++j) {
+    for (int i=0; i<v.size(); ++i) {
+        for (int j=0; j<v[i].size(); ++j) {
             result += to_string(v[i][j]);
             if (j != v[i].size() - 1)
                 result += ",";
@@ -164,10 +220,34 @@ string dbg(const vector<vector<int>>& v) {
     }
     return result + "]";
 }
+string dbg(const vector<Matching*>& matchings) {
+    // Output the matchings
+    string result = "[";
+    for (int i=0; i<matchings.size(); ++i) {
+        result += to_string(matchings[i]->A) + "-" + to_string(matchings[i]->B);
+        if (i != matchings.size() - 1)
+            result += ",";
+    }
+    return result + "]";
+}
+string dbg(const vector<vector<Matching*>>& matchings) {
+    // Output the vector of matchings
+    string result = "[";
+    for (int i=0; i<matchings.size(); ++i) {
+        for (int j=0; j<matchings[i].size(); ++j) {
+        result += to_string(matchings[i][j]->A) + "-" + to_string(matchings[i][j]->B);
+            if (j != matchings[i].size() - 1)
+                result += ",";
+        }
+        if (i != matchings.size() - 1)
+            result += " - ";
+    }
+    return result + "]";
+}
 string dbg(const vector<Edge*>& edges) {
     // Output the edges
     string result = "[";
-    for (unsigned int i=0; i<edges.size(); ++i) {
+    for (int i=0; i<edges.size(); ++i) {
         // Just to be sure...
         if (edges[i] == nullptr) {
             result += "null";
@@ -193,7 +273,7 @@ string dbg(vector<Edge*>* pEdges) {
 string dbg(const vector<Vertex*>& vertices) {
     // Output the vertex ids
     string result = "[";
-    for (unsigned int i=0; i<vertices.size(); ++i) {
+    for (int i=0; i<vertices.size(); ++i) {
         result += to_string(vertices[i]->vid);
         if (i != vertices.size() - 1)
             result += ",";

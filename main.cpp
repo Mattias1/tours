@@ -35,7 +35,7 @@ int tourFromFile(Graph& rGraph, string path) {
     ifstream in(path);
     bool inTourSection = false; // Make sure it is an actual tour file, that doesn't have integers lying around not part of the tour...
     int tourLength = 0;
-    vector<unsigned int> vids;
+    vector<int> vids;
     for (string line; getline(in, line); ) {
         line = trim(line);
         if (comp(line, "COMMENT : Length = ")) {
@@ -97,9 +97,9 @@ int mainWrapper(vector<string> args) {
         return 1337;
     vector<unique_ptr<char>> argvMemoryManager;
     vector<char*> argv;
-    for (unsigned int i=0; i<args.size(); ++i) {
+    for (int i=0; i<args.size(); ++i) {
         unique_ptr<char> pStr = unique_ptr<char>(new char[args[i].size() + 1]);
-        for (unsigned int j=0; j<args[i].size() + 1; ++j) {
+        for (int j=0; j<args[i].size() + 1; ++j) {
             pStr.get()[j] = args[i].c_str()[j];
         }
         argv.push_back(pStr.get());
@@ -128,6 +128,20 @@ void runWrapper() {
 //
 // The main function
 //
+void debug() {
+    // Load the graph (including TD)
+    Graph* pG = new Graph(); // pTD will be the owner of pG.
+    unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
+    graphsFromFile(*pG, *pTD, "test-graph.txt");
+    int treewidth = pTD->GetTreeWidth();
+    pTD->CreateRoot();
+    cout << "Done graph from file - treewidth: " << treewidth << endl << "----------------------------" << endl;
+
+    // RUN TSP
+    vector<Edge*> tourEdges = tspDP(*pTD);
+    cout << "Done DP for TSP" << endl;
+}
+
 int main()
 {
     // The main entry-point for this application. Here we load the graph (they should only contain vertices),
@@ -139,7 +153,7 @@ int main()
     int LKH_RUNS = 5;
 
     // Get the tour for each of the files
-    for (unsigned int i=0; i<FILES.size(); ++i) {
+    for (int i=0; i<FILES.size(); ++i) {
         string file = "tsp-files/" + FILES[i];
         string tempFile = "tsp-files/temp/" + FILES[i];
 
@@ -191,10 +205,18 @@ int main()
         vector<Edge*> tourEdges = tspDP(*pTD);
         cout << "Done DP for TSP" << endl;
 
-        // Write the final graph with decomposition to file
+        // Write the result graph with decomposition to file
         unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
-        graphsToFile(*pResultingTourGraph, tempFile + "_final.txt");
-        cout << "Done final graph to file" << endl << "----------------------------" << endl;
+        graphsToFile(*pResultingTourGraph, tempFile + "_result.txt");
+        cout << "Done result graph to file" << endl << "----------------------------" << endl;
     }
     return 0;
 }
+
+// TODO: change the list of (haslist[deg|match], Xi.vid) pairs to a list of hashlist[Xi.vid|deg|match]
+// TODO: in tsp_dp (and vrp_dp) recurse methods a vertex can be assigned as edge (matching, w/e) twice, meaning it's really
+//       assigned degree 2 and ignored in the matching. Then just assign degree 2 and don't fiddle with matchings...
+//       (a vertex may be used twice as endpoint but for different children - either way, the whole matching merging shouldn't be nescessary :S)
+//       (that merging is because a j is matched who was matched as a k before)
+// TODO: vrp endpoints return triple: (int: cost, int: edgeBits, vector<...> demands)
+// RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...

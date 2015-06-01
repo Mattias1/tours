@@ -81,7 +81,7 @@ string Graph::ToFileString() const {
     s += "EDGE_WEIGHT_TYPE : EUC_2D\n";
 
     s += "NODE_COORD_SECTION\n";
-    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+    for (int i=0; i<this->vertices.size(); ++i) {
         Vertex* pV = this->vertices[i].get();
         s += to_string(pV->vid + startVid) + " " + to_string(pV->x) + " " + to_string(pV->y);
         if (pV->demand > 0)
@@ -90,9 +90,9 @@ string Graph::ToFileString() const {
     }
 
     s += "EDGE_SECTION\n";
-    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+    for (int i=0; i<this->vertices.size(); ++i) {
         Vertex* pV = this->vertices[i].get();
-        for (unsigned int j=0; j<pV->edges.size(); ++j) {
+        for (int j=0; j<pV->edges.size(); ++j) {
             Edge* pE = pV->edges[j].get();
             if (pV->vid < pE->Other(*pV)->vid)
                 s += to_string(pE->pA->vid + startVid) + " " + to_string(pE->pB->vid + startVid) + " " + to_string(pE->Cost) + "\n";
@@ -102,11 +102,11 @@ string Graph::ToFileString() const {
     return s;
 }
 
-bool Graph::AddTourFromFile(const vector<unsigned int>& vids) {
+bool Graph::AddTourFromFile(const vector<int>& vids) {
     // Add all edges from the cycle
     int startVid = 1;
     bool result = false;
-    for (unsigned int i=0; i<vids.size() - 1; ++i) {
+    for (int i=0; i<vids.size() - 1; ++i) {
         // Assert that the vertices exist
         if (vids[i] - startVid >= this->vertices.size() || vids[i + 1] - startVid >= this->vertices.size()) {
             cout << "ERROR, the vertex requested by the AddTourFromFile doesn't exist - " << vids[i] - startVid << ", " << vids[i + 1] - startVid << endl;
@@ -131,16 +131,16 @@ unique_ptr<Graph> Graph::DeepCopy() const {
     pGraph->name = this->name + " (copy)";
 
     // Add all vertices
-    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+    for (int i=0; i<this->vertices.size(); ++i) {
         const Vertex& v = *this->vertices[i];
         pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y, v.demand)) );
     }
 
     // Add all edges
-    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+    for (int i=0; i<this->vertices.size(); ++i) {
         const Vertex& v = *this->vertices[i];
         Vertex* pA = pGraph->vertices[i].get();
-        for (unsigned int j=0; j<v.edges.size(); ++j) {
+        for (int j=0; j<v.edges.size(); ++j) {
             Vertex* pB = pGraph->vertices[ v.edges[j]->Other(v)->vid ].get();
             shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
             pA->edges.push_back(pE);
@@ -158,13 +158,13 @@ unique_ptr<Graph> Graph::CreateTourGraph(vector<Edge*> tour) const {
     pGraph->name = this->name + " (tour copy)";
 
     // Add all vertices
-    for (unsigned int i=0; i<this->vertices.size(); ++i) {
+    for (int i=0; i<this->vertices.size(); ++i) {
         const Vertex& v = *this->vertices[i];
         pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y)) );
     }
 
     // Add all edges
-    for (unsigned int i=0; i<tour.size(); ++i) {
+    for (int i=0; i<tour.size(); ++i) {
         Vertex* pA = pGraph->vertices[tour[i]->pA->vid].get();
         Vertex* pB = pGraph->vertices[tour[i]->pB->vid].get();
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
@@ -192,7 +192,7 @@ bool Vertex::IsConnectedTo(Vertex* other) const {
     // Return whether or not this vertex is connected to another vertex (a vertex is considered to be connected to himself)
     if (this == other)
         return true;
-    for (unsigned int i=0; i<this->edges.size(); ++i)
+    for (int i=0; i<this->edges.size(); ++i)
         if (this->edges[i]->Other(*this) == other)
             return true;
     return false;

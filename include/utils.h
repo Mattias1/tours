@@ -2,6 +2,8 @@
 #define UTILS_H
 
 #include "graph.h"
+#include "dp_tsp.h"
+#include "dp_vrp.h"
 #include <string>
 #include <vector>
 using namespace std;
@@ -12,17 +14,27 @@ using namespace std;
 //
 vector<int> duplicate(const vector<int>& lst);
 vector<vector<int>> duplicate(const vector<vector<int>>& lst);
+vector<Matching> duplicate(const vector<Matching>& lst);
+vector<Matching*> duplicate(const vector<Matching*>& lst);
+vector<vector<Matching*>> duplicate(const vector<vector<Matching*>>& lst);
 vector<Edge*> duplicate(const vector<Edge*>& lst);
 
 //
-// Flatten a vector of int-vectors
+// Pointerize
+//
+vector<Matching*> pointerize(vector<Matching>& lst);
+
+//
+// Flatten a vector of vectors
 //
 vector<int> flatten(const vector<vector<int>>& lst);
+vector<Matching*> flatten(const vector<vector<Matching*>>& lst);
 
 //
 // Push back an entire list
 //
 void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd);
+void pushBackList(vector<pair<int, vector<Matching>>>* pOriginalList, const vector<pair<int, vector<Matching>>>& listToAdd);
 
 
 //
@@ -40,6 +52,7 @@ vector<int> splitInt(const string &s, char delim);
 // (Thank you SO: http://stackoverflow.com/questions/1430757/c-vector-to-string)
 //
 string join(const vector<int>& v, char delim);
+string join(const vector<Matching*>& v, char delim);
 
 
 //
@@ -62,9 +75,11 @@ bool isInt(const string& s, bool allowNegative=false);
 //
 // Some debug helpers
 //
-string dbg(const string& s, unsigned int i);
+string dbg(const string& s, int i);
 string dbg(const vector<int>& v);
 string dbg(const vector<vector<int>>& v);
+string dbg(const vector<Matching*>& matchings);
+string dbg(const vector<vector<Matching*>>& matchings);
 string dbg(const vector<Edge*>& edges);
 string dbg(vector<Edge*>* pEdges);
 string dbg(const vector<Vertex*>& vertices);

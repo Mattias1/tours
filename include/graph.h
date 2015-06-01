@@ -69,7 +69,7 @@ class Graph
 
         virtual bool ReadFileLine(int& rState, string line);
         virtual string ToFileString() const;
-        bool AddTourFromFile(const vector<unsigned int>& vids);
+        bool AddTourFromFile(const vector<int>& vids);
 
         virtual unique_ptr<Graph> DeepCopy() const;
         unique_ptr<Graph> CreateTourGraph(vector<Edge*> tour) const;

@@ -23,6 +23,8 @@ class Bag : public Vertex
 
         void SetParentsRecursive(Bag* pParent, bool adjustCoordinates=false);
 
+        vector<Edge*> GetBagEdges() const;
+
     private:
         Bag* pParent;
 };
