@@ -19,14 +19,13 @@ class Matching
         Matching();
         Matching(int a, int b);
         Matching(int a, int b, int demand);
-        virtual ~Matching();
 
         int Other(int vid) const;
 
         bool IsIncidentTo(int vid) const;
         bool EqualsSortOf(int vid1, int vid2) const;
 
-        static bool MergeInto(int a, int b, vector<Matching*> matchings);
+        static bool MergeInto(int a, int b, vector<Matching*>& rMatchings, vector<Matching>& rNewMatchingsMemoryManager);
 
     private:
         int* getPointerTo(int vid);

@@ -25,7 +25,6 @@ class Edge
         int Cost;
 
         Edge(Vertex* pA, Vertex* pB);
-        virtual ~Edge();
 
         Vertex* Other(const Vertex& v) const;
 

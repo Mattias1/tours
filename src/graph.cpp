@@ -9,7 +9,6 @@ using namespace std;
 //
 Graph::Graph()
 { }
-
 Graph::~Graph()
 { }
 
@@ -184,7 +183,6 @@ Vertex::Vertex(int vid, int x, int y, int demand /*=0*/)
     y(y),
     demand(demand)
 { }
-
 Vertex::~Vertex()
 { }
 
@@ -208,9 +206,6 @@ Edge::Edge(Vertex* pA, Vertex* pB)
     // I don't think I can initialize this, so lets just assign t.
     this->updateEuclideanCost();
 }
-
-Edge::~Edge()
-{ }
 
 Vertex* Edge::Other(const Vertex& v) const {
     if (v.vid == this->pA->vid)

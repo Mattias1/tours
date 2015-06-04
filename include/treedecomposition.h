@@ -16,7 +16,6 @@ class Bag : public Vertex
         vector<Vertex*> vertices;
 
         Bag(int vid, int x, int y);
-        virtual ~Bag();
 
         bool ContainsVertex(Vertex* pV) const;
         bool ContainsEdge(Edge* pE) const;
@@ -37,7 +36,6 @@ class TreeDecomposition : public Graph
         const Graph* getOriginalGraph() const { return this->pOriginalGraph.get(); }
 
         TreeDecomposition(Graph* originalGraph);
-        virtual ~TreeDecomposition();
 
         virtual bool ReadFileLine(int& rState, string line) override;
         virtual string ToFileString() const override;

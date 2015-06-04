@@ -8,6 +8,16 @@
 #include <limits>
 using namespace std;
 
+
+
+int DEBUG_COUNTER_TOTAL = 0;
+int DEBUG_COUNTER_A = 0;
+int DEBUG_COUNTER_B = 0;
+int DEBUG_COUNTER_AB = 0;
+int DEBUG_COUNTER_NEITHER = 0;
+
+
+
 //
 // The matching class
 //
@@ -20,9 +30,6 @@ Matching::Matching(int a, int b, int demand)
     :A(a),
     B(b),
     Demand(demand)
-{ }
-
-Matching::~Matching()
 { }
 
 int Matching::Other(int vid) const {
@@ -44,51 +51,47 @@ bool Matching::EqualsSortOf(int vid1, int vid2) const {
     return (this->A == vid1 && this->B == vid2) || (this->B == vid1 && this->A == vid2);
 }
 
-int* Matching::getPointerTo(int vid) {
-    // Get the pointer to the matching element whise value is equal to a given vid
-    if (this->A == vid)
-        return &this->A;
-    if (this->B == vid)
-        return &this->B;
-    return nullptr;
-}
-
-bool Matching::MergeInto(int a, int b, vector<Matching*> matchings) {
+bool Matching::MergeInto(int a, int b, vector<Matching*>& rMatchings, vector<Matching>& rNewMatchingsMemoryManager) {
     // Find out who's in the list (and where)
-    int* pA = nullptr;
-    int* pB = nullptr;
+    int posA = -1;
+    int otherA = -1;
+    int posB = -1;
     int otherB = -1;
-    int positionOfB = 0;
-    for (int i=0; i<matchings.size(); ++i) {
-        if (pA == nullptr) {
-            pA = matchings[i]->getPointerTo(a);
+    for (int i=0; i<rMatchings.size(); ++i) {
+        if (posA == -1 && rMatchings[i]->IsIncidentTo(a)) {
+            posA = i;
+            otherA = rMatchings[i]->Other(a);
         }
-        if (pB == nullptr) {
-            pB = matchings[i]->getPointerTo(b);
-            if (pB != nullptr) {
-                otherB = matchings[i]->Other(b);
-                positionOfB = i;
-            }
+        else if (posB == -1 && rMatchings[i]->IsIncidentTo(b)) {
+            posB = i;
+            otherB = rMatchings[i]->Other(b);
         }
-        else if (pA != nullptr) {
+        else {
             break;
         }
     }
     // Two cases (1): only one is already in there (in this case the path (matching) is extended) (branch on which one is new)
-    if (pA == nullptr) {
-        if (pB == nullptr) {
+    if (posA == -1) {
+        if (posB == -1) {
             // Third case (3): both are not in here - the matching needs to be added in another way
+            ++DEBUG_COUNTER_NEITHER;
             return false;
         }
-        *pB = a;
+        ++DEBUG_COUNTER_A;
+        rNewMatchingsMemoryManager.push_back(Matching(otherB, a, rMatchings[posB]->Demand));
+        rMatchings[posB] = &rNewMatchingsMemoryManager[rNewMatchingsMemoryManager.size() - 1];
     }
-    else if (pB == nullptr) {
-        *pA = b;
+    else if (posB == -1) {
+        ++DEBUG_COUNTER_B;
+        rNewMatchingsMemoryManager.push_back(Matching(otherA, b, rMatchings[posA]->Demand));
+        rMatchings[posA] = &rNewMatchingsMemoryManager[rNewMatchingsMemoryManager.size() - 1];
     }
     // or (2): both are already in there (in that case merges the two paths (matchings) together)
     else {
-        *pA = otherB;
-        matchings.erase(matchings.begin() + positionOfB);
+        ++DEBUG_COUNTER_AB;
+        rNewMatchingsMemoryManager.push_back(Matching(otherA, b, rMatchings[posA]->Demand));
+        rMatchings[posB] = &rNewMatchingsMemoryManager[rNewMatchingsMemoryManager.size() - 1];
+        rMatchings.erase(rMatchings.begin() + posB);
     }
     return true;
 }
@@ -126,6 +129,8 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     int value = tspTable(*TD.getOriginalGraph(), hashlists, S, *pXroot);
     if (consoleOutput)
         cout << "TSP cost: " << value << endl;
+    cout << "DEBUG COUNTERS: " << DEBUG_COUNTER_TOTAL << ", " << DEBUG_COUNTER_A << ", " << DEBUG_COUNTER_B << ", " << DEBUG_COUNTER_AB << ", " << DEBUG_COUNTER_NEITHER << endl;
+
     if (debug) {
         for (int i=0; i<hashlists.size(); ++i) {
             cout << "X" << i << endl;
@@ -135,7 +140,7 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     }
 
     // Reconstruct the tour
-    if (value < numeric_limits<int>::max()) {
+    if (false && value < numeric_limits<int>::max()) {
         vector<Edge*> tour = removeDoubles(tspReconstruct(*TD.getOriginalGraph(), hashlists, S, *pXroot), TD.getOriginalGraph()->vertices.size());
         // vector<int> allChildEndpointsParameter;
         // cycleCheck(*TD.getOriginalGraph(), vector<int>(), &tour, allChildEndpointsParameter); // Sort the tour - TODO - ERROR, IT DOESN'T ACTUALLY SORT IT
@@ -339,17 +344,17 @@ int tspRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>
         td[k] -= 1;
         cds[j][k] += 1;
         // Update the endpoints (update when one (or both) of the endpoints are already in the list, otherwise insert)
-        bool matchingMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2;
+        bool matchingMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2; // TODO
         if (matchingMightExistAlready) {
+            ++DEBUG_COUNTER_TOTAL;
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!Matching::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j]))
+            if (!Matching::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], newMatchingsMemoryManager))
                 matchingMightExistAlready = false;
         }
         if (!matchingMightExistAlready) {
             // So now both are new in the list, so we just add (insert) them
-            Matching matching = Matching(Xi.vertices[i]->vid, Xi.vertices[k]->vid);
-            newMatchingsMemoryManager.push_back(matching);
-            eps[j].push_back(&matching);
+            newMatchingsMemoryManager.push_back(Matching(Xi.vertices[i]->vid, Xi.vertices[k]->vid));
+            eps[j].push_back(&newMatchingsMemoryManager[newMatchingsMemoryManager.size() - 1]);
         }
 
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
@@ -407,7 +412,7 @@ vector<Edge*> tspRecurseVector(const Graph& graph, vector<unique_ptr<unordered_m
         bool matchingMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2;
         if (matchingMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!Matching::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j]))
+            if (!Matching::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], newMatchingsMemoryManager))
               matchingMightExistAlready = false;
         }
         if (!matchingMightExistAlready) {

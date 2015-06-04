@@ -253,7 +253,7 @@ int vrpRecurse(const Graph& graph, vector<unique_ptr<unordered_map<string, int>>
         // Update the endpoints (update when one (or both) of the endpoints are already in the list, otherwise insert)
         if (cds[j][i] == 2 || cds[j][k] == 2) {
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!Matching::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j]))
+            if (!Matching::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], newMatchingsMemoryManager))
                 cout << "ASSERTION ERROR - Matching::MergeInto returns false!!!" << endl;
         }
         else {
@@ -571,21 +571,21 @@ vector<vector<vector<Matching>>> allChildMatchings(const Graph& graph, const Bag
     return vector<vector<vector<Matching>>>();
 }
 
-void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int size) {
+void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int sizeLeft) {
     // Find all permutations of demands (or capacities, w/e - int's with min value 2) for a single path and store them in the result array.
     // So for a given demand of 6 and a size of 2, this will add [4,2], [3,3] and [2,4] to the rResult list (rLoop initialized as vector of size 2).
 
     // Base case
-    if (size == 1) {
+    if (sizeLeft == 1) {
         rLoop[rLoop.size() - 1] = demandLeft;
         rResult.push_back(duplicate(rLoop));
         return;
     }
 
     // Normal case
-    for (int d = demandLeft - 2*(size - 1); d>=2; ++d) {
-        rLoop[rLoop.size() - size] = d;
-        distributeDemands(rResult, rLoop, demandLeft - d, size - 1);
+    for (int d = demandLeft - 2*(sizeLeft - 1); d>=2; ++d) {
+        rLoop[rLoop.size() - sizeLeft] = d;
+        distributeDemands(rResult, rLoop, demandLeft - d, sizeLeft - 1);
     }
 }
 

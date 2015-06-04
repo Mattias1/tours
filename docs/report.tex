@@ -75,11 +75,13 @@ There are many variants with additional constraints or freedoms, but these are o
 this paper.
 
 % Structure
-The paper is organised as follows: in section~\ref{sec:heuristics} we will discuss the heuristics
-used to generate the initial tours and routes. In section~\ref{sec:td} we will discuss how the
-solutions are merged and how the treedecomposition is calculated and in section~\ref{sec:dp} we will
-show the dynamic programming algorithms on the computed decompositions. In section~\ref{sec:results}
-we will discuss the result and finally we will conclude in section~\ref{sec:conclusion}.
+The paper is organised as follows: in Section~\ref{sec:heuristics} we will discuss the heuristics
+used to generate the initial tours and routes. In Section~\ref{sec:td} we will discuss how the
+solutions are merged and how the treedecomposition is calculated and in Section~\ref{sec:dp} we will
+show the dynamic programming algorithms on the computed decompositions. In Section~\ref{sec:results}
+we will discuss the result and finally we will conclude in Section~\ref{sec:conclusion}.
+
+% TODO: are we (am I) the only one doing something with the cook-seymour approach? (but one recent: yes)
 
 
 
@@ -90,7 +92,7 @@ we will discuss the result and finally we will conclude in section~\ref{sec:conc
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
 are few that can compete with (variants of) the Lin Kernighan heuristic \cite{lin-kernighan}. We
-will discuss the Lin Kernighan Helsgaun~\cite{lkh} variant in section~\ref{sec:lkh}.
+will discuss the Lin Kernighan Helsgaun~\cite{lkh} variant in Section~\ref{sec:lkh}.
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms.
 Unfortunately they often require to finetune a lot of parameters and are focussed on specific
 instances of VRP, rather than giving consistent solutions for all versions \cite{hmmz, where to find
@@ -116,6 +118,8 @@ tours in one graph. All tours $E'_j \subset E'$, for $1 \leq j \leq} \#tours$ as
 heuristics are merged together into a new graph $G = (V, E)$, where $E=\bigcup E'_j}$). For this
 graph $G$ we will compute a tree decomposition so that we can compute the optimal tour in this
 reduced problem.
+% Roadmap:
+Before we show how we compute this tree decomposition, we first give the defenition.
 
     % What is a tree decomposition
     \subsection{Tree decomposition and width}
@@ -142,9 +146,11 @@ reduced problem.
     Calculating the optimal treewidth or the optimal tree decompositions is an NP Hard problem
     \cite{find ref} so finding an optimal decomposition in reasonable time is infeasable unlesss
     $P=NP$. We also do not nescessarily need a tree decomposition of optimal width, we just need the
-    width to be sufficiently small so that our DP algorithm runs fast enough.
-    Therefore, we compute our tree decomposition with a heuristic: the minimum degree heuristic by
-    Bodlaender and Koster~\cite{tw-upper-bounds}.
+    width to be sufficiently small so that our DP algorithm runs fast enough. Therefore, we compute
+    our tree decomposition with a heuristic.
+
+    In an evaluation by Bodlaender and Koster~\cite{tw-upper-bounds}, 
+    We chose the minimum degree heuristic by Bodlaender and Koster~\cite{tw-upper-bounds}.
 
     Todo
 
@@ -157,9 +163,10 @@ reduced problem.
 %
 \section{Dynamic programming}
 \label{sec:dp}
-Provided the treewidth is small enough, the optimal solution on the merged graph and its tree
+Provided the width is small enough, the optimal solution on the merged graph and its tree
 decomposition can be computed using dynamic programming algorithms. In the following sections we
 explain their details.
+% TODO: roadmap
 
     \subsection{Traveling Salesman}
     \label{sec:dp-tsp}
@@ -167,7 +174,7 @@ explain their details.
     % Simle graph: G is unweighted (?); undirected; no double edges; no self loops.
     Let $G=(V, E)$ be a simple graph with edge-weights $c_e$ and $T=(W, F)$ be the tree
     decomposition with width $k - 1$ and $X_i$ and $Y_i$ as defined in
-    section~\ref{sec:td-definition}.
+    Section~\ref{sec:td-definition}.
     Note that because $G$ is the result of a number of merged tours, it is 2-connected.
     The main idea of the algorithm is to find a series of disjoint paths and connect them together
     into a hamiltonian tour of minimum weight. Such a path is encoded using vertex degrees and a

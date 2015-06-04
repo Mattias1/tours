@@ -13,9 +13,6 @@ TreeDecomposition::TreeDecomposition(Graph* originalGraph)
     pOriginalGraph(unique_ptr<Graph>(originalGraph))
 { }
 
-TreeDecomposition::~TreeDecomposition()
-{ }
-
 bool TreeDecomposition::ReadFileLine(int& rState, string line) {
     // Handle one line of a file (note that the in place editing of the string in trim is a good thing).
     int startVid = 1; // TODO, THINK OF THIS ONE
@@ -239,9 +236,6 @@ Bag::Bag(int vid, int x, int y)
     :Vertex::Vertex(vid, x, y),
     vertices(vector<Vertex*>()),
     pParent(nullptr)
-{ }
-
-Bag::~Bag()
 { }
 
 bool Bag::ContainsVertex(Vertex* pV) const {
