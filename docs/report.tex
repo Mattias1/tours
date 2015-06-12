@@ -20,11 +20,15 @@ heuristics and exact solutions for TSP and VRP.}}
 % Whenever I mention a graph, I should call it a complete graph, that will be sufficiently precise.
 % A complete graph is a graph that TODO TODO TODO.
 %
+% TODO: is a cycle defined as a set of edges, or shoulld I define a tour as a set of edges forming a
+%       cycle, rather then just a cycle.
+%
 % Things to think of:
 % - A tour SATISFIES a demand; it doesn't HAVE a demand.
 % - Use of the dash (i.e. The Lin-Kernighan-Helsgaun heuristic)
 % - Don't say this PAPER, but say this THESIS
 % - The word Section with a capital letter
+% - Don't use the word treewidth when you mean 'width of the decomposition'.
 
 %
 % Abstract
@@ -57,6 +61,7 @@ branch decompositions.
 % Our contribution
 % TODO: is this really at the time of publishing?????
 % (1-2 years before - sept 2001), while publish date is 2002 or (2003 according to google scholar)
+% TODO: find reference
                                                                                     % TODO TODO TODO TODO TODO TODO TODO TODO TODO
 At the time of publishing, the solutions found by Cook and Seymour improved on the best known
 results for instances with almost 25000 vertices \cite{the sweden instance}. Since then other
@@ -103,7 +108,7 @@ show the dynamic programming algorithms on the computed decompositions. In Secti
 we will discuss the result and finally we will conclude in Section~\ref{sec:conclusion}.
 
 % TODO: are we (am I) the only one doing something with the cook-seymour approach? (but one recent: yes)
-%       (this is called related work)
+%       (related work)
 
 
 
@@ -113,8 +118,9 @@ we will discuss the result and finally we will conclude in Section~\ref{sec:conc
 \section{Heuristics}
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
-are few that can compete with (variants of) the Lin-Kernighan heuristic \cite{lin-kernighan}. We
-will discuss the Lin-Kernighan-Helsgaun~\cite{lkh} variant in Section~\ref{sec:lkh}.
+are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lin-kernighan}. We
+will discuss the Lin-Kernighan heuristic and the Lin-Kernighan-Helsgaun variant~\cite{lkh} in
+Section~\ref{sec:lkh}.
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms
 \cite{TODO: assuming this is even true, the other one}.
 Unfortunately they often require to finetune a lot of parameters and are focussed on specific
@@ -124,9 +130,66 @@ heuristic do give good solutions for all variants of VRP, but they can't get the
 gets with the tabu heuristics.
 % SWEEP????????
 
+    \subsection{Lin Kernighan}
+    \label{sec:lk}
+    % Introduction to Lin-Kernighan
+    % TODO: check for the use of 'we' and 'they'
+    The Lin-Kernighan heuristic is an improvement heuristic. That means that the strategy to solve
+    the TSP consists of the following steps:
+    \begin{enumerate}
+        \item Generate a (pseudo-) random initial tour.
+        \item Try to find a modification of the tour to improve it.
+        \item If an improved solution is found, replace the tour and repeat from step 2.
+        \item If no improved solutions can be found anymore, we are at a local optimum. We can
+            either start again from step 1 or stop, depending on some stopping criterium (e.g. the
+            solution is good enough, the pool of initial tours is deplenished, or a time limit is
+            reached).
+    \end{enumerate}
+    The interseting part of this strategy is step 2: how do we improve on the current tour. One way
+    of doing this is to use a $k$-opt algorithm. In a $k$-opt algorithm we try to find two disjoint
+    sets of edges $X$ and $Y$, both containing $k$ edges, such that when we remove the edges in $X$
+    from the current tour and replace them the edges from $Y$ the tour will have a lower cost.
+    $k$-opt algorithms are well known and often used heuristics because they improve a tour
+    effectively while being easy to implement.
+    2-opt and 3-opt improvements were proposed for the first time by Croes~\cite{2-opt} and
+    Lin~\cite{3-opt}, respecively in 1958 and 1965. $k$-opts with higher values of $k$ have been
+    tried as well, for example by TODO~\cite{TODO}, but are less effective.
+    However, using $k$-opt for fixed $k$ has its limitations. It is unknown on beforehand which
+    value of $k$ will give a good result for the running time involved, as it gets substantially
+    harder to find the edge sets and their improvements for increasing values of $k$.
+
+    % The acutal generalized k-opt
+    The Lin-Kernighan algorithm is a $k$-opt algorithm, but for a dynamic $k$. The edge sets to be
+    replaced are equal to a sequence of 2-opt exchanges, possibly preceeded by a single 3-opt. The
+    difference between this approach and repeatedly applying 2-opt optimizations is that not every
+    part of the sequence has to improve on the cost of the tour; it is the cost of the entire
+    sequence that matters.
+    Another difference is that in the 2-opt algorithm we first choose the set $X$ of edges in the
+    original tour (i.e. two crossing edges with the euclidean metric) and then find the
+    corresponding set $Y$ of new edges to be inserted in the tour. In the Lin-Kernighan algorithm,
+    the sets $X$ and $Y$ are built up step by step, as the sequence grows.
+    In the algorithm we start by choosing an initial vertex and choose one of the two adjacent edges
+    $x_1$ in the original tour. After that we choose an edge $y_1$ from a set of \#? nearest
+    neighbours and the accompanying edge $x_2$ (which is uniquely defined most of the time).
+    Note that the result after removing the edges in $X$ and adding the edges in $Y$ is not a tour,
+    but a path. It can be closed however by adding the edge between the vertex after $x_2$ and the
+    vertex before $x_1$.
+    We keep adding edges $y_i$ and removing edges $x_{i+1}$, untill either the complete sequence
+    including the edge $y_{i+2}$ that will close the tour if added is shorter than the previous tour
+    (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour even
+    if the next edges would have weight 0 (in which case we failed).
+    If we fail, we can either stop, start again completely, or use backtracking. The latter means
+    that we go back a few steps and try another edge $y_i$ (or occasionally $x_{i+1}$).
+    TODO - more details?
+    % TODO: images
+    \dots
+    We end by remarking that this is only a short description of the main idea in the Lin-Kernighan
+    algorithm. There are many details of importance in the implementation, for whom we refer to the
+    original paper~\cite{lin-kernighan}.
+
     \subsection{Lin Kernighan Helsgaun}
     \label{sec:lkh}
-    Todo
+    TODO
 
 
 
@@ -164,7 +227,7 @@ the defenition of a tree decomposition.
     than the vertex set $X_i$ itself. To that end we define $Y_i = \{(u,v) \in E: u,v \in X_i \}$.
     We say that a bag contains a vertex $v$ if $v \in X_i$ and that it contains an edge $e$ if $e \in Y_i$.
 
-    % Todo: Minimum Degree Heuristic
+    % Minimum Degree Heuristic
     \subsection{Minimum Degree Heuristic}
     \label{sec:td-heuristic}
     Calculating the optimal treewidth or the optimal tree decompositions is an NP Hard problem
@@ -347,6 +410,16 @@ Todo
         \emph{Tour merging via branch-decomposition.}
         INFORMS Journal on Computing, 15(3), 233-248.
 
+    \bibitem{2-opt}
+        Croes, G. A. (1958).
+        \emph{A method for solving traveling-salesman problems.}
+        Operations research, 6(6), 791-812.
+
+    \bibitem{3-opt}
+        Lin, S. (1965).
+        \emph{Computer solutions of the traveling salesman problem.}
+        Bell System Technical Journal, The, 44(10), 2245-2269.
+
     \bibitem{lin-kernighan}
         Lin, S., \& Kernighan, B. W. (1973).
         \emph{An effective heuristic algorithm for the traveling-salesman problem.}
@@ -356,6 +429,7 @@ Todo
         Helsgaun, K. (2009).
         \emph{General k-opt submoves for the Lin–Kernighan TSP heuristic.}
         Mathematical Programming Computation, 1(2-3), 119-163.
+    % url?
 
     \bibitem{tw-upper-bounds}
         Bodlaender, H. L., \& Koster, A. M. (2010).
