@@ -89,7 +89,7 @@ bool Graph::ReadFileLine(int& rState, string line) {
         // If someone has it's depot in a weird place, I'd have to just swap it with the first vertex (and fix vid's). But for now we'll keep it at this.
         if (l.size() != 1 && stoi(l[0]) != startVid && stoi(l[0]) != -1)
             cout << "WHOOPS, THE DEPOT IS NOT THE FIRST VERTEX (or maybe another error, like it not being a single integer?)" << endl;
-        if (this->vertices[startVid]->demand != 0)
+        if (this->vertices[0]->demand != 0)
             cout << "REMARKABLE: The demand of the depot is not 0." << endl;
         return true;
     }

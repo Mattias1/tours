@@ -120,6 +120,8 @@ bool TreeDecomposition::CreateRoot(Bag* pRoot, bool adjustCoordinates) {
 }
 
 void TreeDecomposition::MinimumDegree() {
+    // TODO: Add depot to every bag (if VRP)
+
     // Check if the treedecompoistion is empty
     if (this->vertices.size() != 0 || this->pRoot != nullptr) {
         cout << "ERROR!!! - MinimumDegree called on a non empty tree decomposition" << endl;

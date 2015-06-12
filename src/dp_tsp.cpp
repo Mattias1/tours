@@ -100,7 +100,7 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Make sure there is a proper graph and decomposition
     const Bag* pXroot = TD.getRoot();
     if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1) {
-        cout << "TspDP ERROR: Probably no root bag present" << endl;
+        cout << "ERROR (TSP-DP): Probably no root bag present" << endl;
         return vector<Edge*>();
     }
 

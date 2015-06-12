@@ -245,6 +245,7 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
 
         // Create the tree decomposition
         // pTD->MinimumDegree();
+        pTD->CreateRoot(); // Remove this once the Minimum degree is called - it roots the tree for us.
         int treewidth = pTD->GetTreeWidth();
         cout << "Done minimum degree heuristic (treewidth: " << treewidth << ")" << endl;
 

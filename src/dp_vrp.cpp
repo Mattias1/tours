@@ -26,8 +26,10 @@ vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=t
 
     // Make sure there is a proper graph and decomposition
     const Bag* pXroot = TD.getRoot();
-    if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1)
+    if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1) {
+        cout << "ERROR (VRP-DP): Probably no root bag present" << endl;
         return vector<vector<Edge*>>();
+    }
 
     // Start the calculation
     unordered_map<string, int> hashlist;
