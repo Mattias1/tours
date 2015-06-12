@@ -94,7 +94,7 @@ int mainWrapper(vector<string> args) {
     // Convert the args string vector to an array of c style strings (array of char arrays)
     int argc = args.size();
     if (argc <= 0)
-        return 1337;
+        return 1;
     vector<unique_ptr<char>> argvMemoryManager;
     vector<char*> argv;
     for (int i=0; i<args.size(); ++i) {
@@ -129,7 +129,7 @@ void runWrapper() {
 // The main function
 //
 void debug() {
-    // Load the graph (including TD)
+    // Load the graph (including tree decomposition)
     Graph* pG = new Graph(); // pTD will be the owner of pG.
     unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
     graphsFromFile(*pG, *pTD, "test-graph.txt");
@@ -142,17 +142,9 @@ void debug() {
     cout << "Done DP for TSP" << endl;
 }
 
-int main()
-{
-    // The main entry-point for this application. Here we load the graph (they should only contain vertices),
-    // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
-
-    // The names of the tsp-problems we want to solve
-    vector<string> FILES = { "mod502" };
-    // The number of LKH runs
-    int LKH_RUNS = 5;
-
-    // Get the tour for each of the files
+int runTSP(vector<string> FILES, int LKH_RUNS) {
+    // Calculate the tour for each of the files
+    cout << "Running TSP experiments." << endl;
     for (int i=0; i<FILES.size(); ++i) {
         string file = "tsp-files/" + FILES[i];
         string tempFile = "tsp-files/temp/" + FILES[i];
@@ -213,10 +205,93 @@ int main()
     return 0;
 }
 
-// TODO: change the list of (haslist[deg|match], Xi.vid) pairs to a list of hashlist[Xi.vid|deg|match]
-// TODO: in tsp_dp (and vrp_dp) recurse methods a vertex can be assigned as edge (matching, w/e) twice, meaning it's really
-//       assigned degree 2 and ignored in the matching. Then just assign degree 2 and don't fiddle with matchings...
-//       (a vertex may be used twice as endpoint but for different children - either way, the whole matching merging shouldn't be nescessary :S)
-//       (that merging is because a j is matched who was matched as a k before)
+int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
+    // Calculate a set of routes for each of the files
+    cout << "Running VRP experiments." << endl;
+    for (int i=0; i<FILES.size(); ++i) {
+        string file = "vrp-files/" + FILES[i];
+        string tempFile = "vrp-files/temp/" + FILES[i];
+
+        // Load the graph
+        Graph* pG = new Graph(); // pTD will be the owner of pG.
+        unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
+        graphsFromFile(*pG, *pTD, file + ".vrp");
+        cout << "Done graph from file" << endl << "----------------------------" << endl;
+
+        // Run heuristics and merge the tours
+        int mergedTours = 1;
+        // vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
+        // mainWrapper(lkhArgs);
+        // int tourLength = tourFromFile(*pG, tempFile + ".tour");
+        // if (tourLength == -1) {
+        //     cout << "ERROR: The first tour is not added, whut?" << endl;
+        //     return 1;
+        // }
+        // graphsToFile(*pG, tempFile + "_0.txt");
+        // cout << "Added first tour (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
+        // for (int r=1; r<LKH_RUNS; ++r) {
+        //     runWrapper();
+        //     tourLength = tourFromFile(*pG, tempFile + ".tour");
+        //     if (tourLength != -1) {
+        //         graphsToFile(*pG, tempFile + "_" + to_string(r) + ".txt");
+        //         cout << "Added new tour   (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
+        //         ++mergedTours;
+        //     }
+        //     else {
+        //         cout << "LKH found identical tour" << endl;
+        //     }
+        // }
+        // cout << "----------------------------" << endl << "Done LKH; merged " << mergedTours << " tours" << endl;
+
+        // Create the tree decomposition
+        // pTD->MinimumDegree();
+        int treewidth = pTD->GetTreeWidth();
+        cout << "Done minimum degree heuristic (treewidth: " << treewidth << ")" << endl;
+
+        // Write the merged graph of LKH tours with its decomposition to file
+        graphsToFile(*pG, *pTD, tempFile + "_merged.txt");
+        cout << "Done merged graph to file" << endl;
+
+        // Run the DP
+        if (treewidth > 10) {
+            cout << "Treewidth too large for the DP; aborting run." << endl << "----------------------------" << endl;
+            continue;
+        }
+        vector<vector<Edge*>> tourEdges = vrpDP(*pTD);
+        cout << "Done DP for VRP" << endl;
+
+        // Write the result graph with decomposition to file
+        unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
+        graphsToFile(*pResultingTourGraph, tempFile + "_result.txt");
+        cout << "Done result graph to file" << endl << "----------------------------" << endl;
+    }
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    // The main entry-point for this application. Here we load the graph (they should only contain vertices),
+    // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
+    vector<string> args(argv, argv + argc); // Currently not used
+    bool TSP = false;
+
+    // Run TSP algorithms
+    if (TSP) {
+        vector<string> FILES = { "mod502" };
+        int LKH_RUNS = 5;
+
+        return runTSP(FILES, LKH_RUNS);
+    }
+    // Run VRP algorithms
+    else {
+        vector<string> FILES = { "test-vrp" };
+        int SAVINGS_RUNS = 1;
+        int SWEEP_RUNS = 0;
+
+        return runVRP(FILES, SAVINGS_RUNS, SWEEP_RUNS);
+    }
+}
+
 // TODO: vrp endpoints return triple: (int: cost, int: edgeBits, vector<...> demands)
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
+// TODO: fix memory issue (memory manager for MatchingEdge)

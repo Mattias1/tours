@@ -15,7 +15,7 @@ TreeDecomposition::TreeDecomposition(Graph* originalGraph)
 
 bool TreeDecomposition::ReadFileLine(int& rState, string line) {
     // Handle one line of a file (note that the in place editing of the string in trim is a good thing).
-    int startVid = 1; // TODO, THINK OF THIS ONE
+    int startVid = 1; // Apparently ppl like to have their lists 1-based, rather than 0-based.
     vector <string> l = split(trim(line), ' ');
     // Important file parameters
     if (comp(line, "NAME : ")) {
@@ -42,9 +42,9 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
 
     // Add vertices, edges, bags or bag edges
     if (rState == 3) {
-        // Just to be sure
         if (l.size() <= 3)
             cout << "ERROR: The TD ReadFileLine expects a bag, but it doesn't even gets three strings in the first place." << endl;
+        // Create a new bag
         unique_ptr<Bag> pBag = unique_ptr<Bag>(new Bag(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2])));
         for (int i=3; i<l.size(); ++i) {
             // Add a specific vertex to a bag.
@@ -55,7 +55,6 @@ bool TreeDecomposition::ReadFileLine(int& rState, string line) {
         return true;
     }
     if (rState == 4) {
-        // Just to be sure
         if (l.size() < 2 || l.size() > 3)
             cout << "ERROR: The TD ReadFileLine expects an edge, but it doesn't get two or three strings in the first place." << endl;
         // Add the edge to the edgelist of it's endpoints
@@ -134,7 +133,7 @@ void TreeDecomposition::MinimumDegree() {
     }
     auto sortLambda = [&](int vidA, int vidB) {
         // Compare the degrees of the vertices
-        return graph.vertices[vidA]->edges.size() < graph.vertices[vidB]->edges.size();
+        return graph.vertices[vidA]->edges.size() < graph.vertices[vidB]->edges.size(); // TODO: n log n to n^2
     };
     sort(vertexList.begin(), vertexList.end(), sortLambda);
     vector<int> edgeList = vector<int>();
@@ -154,7 +153,7 @@ void TreeDecomposition::MinimumDegree() {
                 pB = pBag;
         }
         if (pA == pB)  {
-            // So what happends here is that it doesn't find either pA or pB, so it just uses the old one - which happends to be equal... not so funny.
+            // What happends here is that it doesn't find pA or pB, so it just uses the old one - which happends to be equal... not so funny.
             cout << "AAAAAAAAAAAAAAAAAAAAAAAAAHHH!!!! (error in Minimum Degree Heuristic: pA == pB)" << endl;
         }
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));

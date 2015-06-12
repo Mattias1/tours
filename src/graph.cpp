@@ -19,7 +19,7 @@ bool comp(const string& line, const string& firstPart) {
 
 bool Graph::ReadFileLine(int& rState, string line) {
     // Handle one line of a file (note that the in place editing of the string in trim is a good thing).
-    int startVid = 1;
+    int startVid = 1; // Apparently ppl like to have their lists 1-based, rather than 0-based.
     vector <string> l = split(trim(line), ' ');
     // Important file parameters
     if (comp(line, "NAME : ")) {
@@ -40,13 +40,20 @@ bool Graph::ReadFileLine(int& rState, string line) {
         rState = 2;
         return true;
     }
+    if (comp(line, "DEMAND_SECTION")) {
+        rState = 5;
+        return true;
+    }
+    if (comp(line, "DEPOT_SECTION")) {
+        rState = 6;
+        return true;
+    }
     if (comp(line, "BAG_COORD_SECTION") || comp(line, "BAG_EDGE_SECTION")) {
         return false;
     }
 
     // Add vertices, edges, bags or bag edges
     if (rState == 1) {
-        // Just to be sure
         if (l.size() < 3 || l.size() > 4)
             cout << "ERROR: The Graph ReadFileLine expects a vertex, but it doesn't get three or four strings in the first place." << endl;
         // Add the vertex to the graph
@@ -55,7 +62,6 @@ bool Graph::ReadFileLine(int& rState, string line) {
         return true;
     }
     if (rState == 2) {
-        // Just to be sure
         if (l.size() < 2 || l.size() > 3)
             cout << "ERROR: The Graph ReadFileLine expects an edge, but it doesn't get two or three strings in the first place." << endl;
         // Add the edge to the edgelist of it's endpoints
@@ -68,6 +74,23 @@ bool Graph::ReadFileLine(int& rState, string line) {
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
+        return true;
+    }
+    if (rState == 5) {
+        if (l.size() != 2)
+            cout << "ERROR: We expect two integers (vid demand) for the demand_section." << endl;
+        // Change the demand for the vertex
+        this->vertices[stoi(l[0]) - startVid]->demand = stoi(l[1]);
+        return true;
+    }
+    if (rState == 6) {
+        // Well, I kinda assume the depot is just the first vertex in the list. Let's see how far we get with that.
+        // This whole section is there only because some VRP variants have multiple depots, but I'm ignoring those.
+        // If someone has it's depot in a weird place, I'd have to just swap it with the first vertex (and fix vid's). But for now we'll keep it at this.
+        if (l.size() != 1 && stoi(l[0]) != startVid && stoi(l[0]) != -1)
+            cout << "WHOOPS, THE DEPOT IS NOT THE FIRST VERTEX (or maybe another error, like it not being a single integer?)" << endl;
+        if (this->vertices[startVid]->demand != 0)
+            cout << "REMARKABLE: The demand of the depot is not 0." << endl;
         return true;
     }
     return false;
@@ -170,6 +193,29 @@ unique_ptr<Graph> Graph::CreateTourGraph(vector<Edge*> tour) const {
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
     }
+
+    return move(pGraph);
+}
+unique_ptr<Graph> Graph::CreateTourGraph(vector<vector<Edge*>> tours) const {
+    // Create a (deep) copy of the graph's vertices, and add a (deep) copy of the tour edges only
+    unique_ptr<Graph> pGraph = unique_ptr<Graph>(new Graph());
+    pGraph->name = this->name + " (tours copy)";
+
+    // Add all vertices
+    for (int i=0; i<this->vertices.size(); ++i) {
+        const Vertex& v = *this->vertices[i];
+        pGraph->vertices.push_back( unique_ptr<Vertex>(new Vertex(v.vid, v.x, v.y)) );
+    }
+
+    // Add all edges
+    for (int j=0; j<tours.size(); ++j)
+        for (int i=0; i<tours[j].size(); ++i) {
+            Vertex* pA = pGraph->vertices[tours[j][i]->pA->vid].get();
+            Vertex* pB = pGraph->vertices[tours[j][i]->pB->vid].get();
+            shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
+            pA->edges.push_back(pE);
+            pB->edges.push_back(pE);
+        }
 
     return move(pGraph);
 }

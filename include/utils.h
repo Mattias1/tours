@@ -14,27 +14,27 @@ using namespace std;
 //
 vector<int> duplicate(const vector<int>& lst);
 vector<vector<int>> duplicate(const vector<vector<int>>& lst);
-vector<Matching> duplicate(const vector<Matching>& lst);
-vector<Matching*> duplicate(const vector<Matching*>& lst);
-vector<vector<Matching*>> duplicate(const vector<vector<Matching*>>& lst);
+vector<MatchingEdge> duplicate(const vector<MatchingEdge>& lst);
+vector<MatchingEdge*> duplicate(const vector<MatchingEdge*>& lst);
+vector<vector<MatchingEdge*>> duplicate(const vector<vector<MatchingEdge*>>& lst);
 vector<Edge*> duplicate(const vector<Edge*>& lst);
 
 //
 // Pointerize
 //
-vector<Matching*> pointerize(vector<Matching>& lst);
+vector<MatchingEdge*> pointerize(vector<MatchingEdge>& lst);
 
 //
 // Flatten a vector of vectors
 //
 vector<int> flatten(const vector<vector<int>>& lst);
-vector<Matching*> flatten(const vector<vector<Matching*>>& lst);
+vector<MatchingEdge*> flatten(const vector<vector<MatchingEdge*>>& lst);
 
 //
 // Push back an entire list
 //
 void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd);
-void pushBackList(vector<pair<int, vector<Matching>>>* pOriginalList, const vector<pair<int, vector<Matching>>>& listToAdd);
+void pushBackList(vector<pair<int, vector<MatchingEdge>>>* pOriginalList, const vector<pair<int, vector<MatchingEdge>>>& listToAdd);
 
 
 //
@@ -52,7 +52,7 @@ vector<int> splitInt(const string &s, char delim);
 // (Thank you SO: http://stackoverflow.com/questions/1430757/c-vector-to-string)
 //
 string join(const vector<int>& v, char delim);
-string join(const vector<Matching*>& v, char delim);
+string join(const vector<MatchingEdge*>& v, char delim);
 
 
 //
@@ -78,8 +78,8 @@ bool isInt(const string& s, bool allowNegative=false);
 string dbg(const string& s, int i);
 string dbg(const vector<int>& v);
 string dbg(const vector<vector<int>>& v);
-string dbg(const vector<Matching*>& matchings);
-string dbg(const vector<vector<Matching*>>& matchings);
+string dbg(const vector<MatchingEdge*>& matchings);
+string dbg(const vector<vector<MatchingEdge*>>& matchings);
 string dbg(const vector<Edge*>& edges);
 string dbg(vector<Edge*>* pEdges);
 string dbg(const vector<Vertex*>& vertices);

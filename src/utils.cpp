@@ -27,23 +27,23 @@ vector<vector<int>> duplicate(const vector<vector<int>>& lst) {
         result[i] = duplicate(lst[i]);
     return result;
 }
-vector<Matching> duplicate(const vector<Matching>& lst) {
+vector<MatchingEdge> duplicate(const vector<MatchingEdge>& lst) {
     // Deep copy (which in this case is the same as a shallow copy)
-    vector<Matching> result(lst.size());
+    vector<MatchingEdge> result(lst.size());
     for (int i=0; i<lst.size(); ++i)
         result[i] = lst[i];
     return result;
 }
-vector<Matching*> duplicate(const vector<Matching*>& lst) {
+vector<MatchingEdge*> duplicate(const vector<MatchingEdge*>& lst) {
     // Deep copy (which in this case is the same as a shallow copy)
-    vector<Matching*> result(lst.size());
+    vector<MatchingEdge*> result(lst.size());
     for (int i=0; i<lst.size(); ++i)
         result[i] = lst[i];
     return result;
 }
-vector<vector<Matching*>> duplicate(const vector<vector<Matching*>>& lst) {
+vector<vector<MatchingEdge*>> duplicate(const vector<vector<MatchingEdge*>>& lst) {
     // Deep copy
-    vector<vector<Matching*>> result(lst.size());
+    vector<vector<MatchingEdge*>> result(lst.size());
     for (int i=0; i<lst.size(); ++i)
         result[i] = duplicate(lst[i]);
     return result;
@@ -59,9 +59,9 @@ vector<Edge*> duplicate(const vector<Edge*>& lst) {
 //
 // Pointerize
 //
-vector<Matching*> pointerize(vector<Matching>& lst) {
+vector<MatchingEdge*> pointerize(vector<MatchingEdge>& lst) {
     // Return a vector with pointers to the values in lst
-    vector<Matching*> result;
+    vector<MatchingEdge*> result;
     for (int i=0; i<lst.size(); ++i)
         result.push_back(&lst[i]);
     return result;
@@ -77,8 +77,8 @@ vector<int> flatten(const vector<vector<int>>& lst) {
             result.push_back(lst[i][j]);
     return result;
 }
-vector<Matching*> flatten(const vector<vector<Matching*>>& lst) {
-    vector<Matching*> result; // Possible optimization: add in the correct size (the actual size in memory of the lst?)
+vector<MatchingEdge*> flatten(const vector<vector<MatchingEdge*>>& lst) {
+    vector<MatchingEdge*> result; // Possible optimization: add in the correct size (the actual size in memory of the lst?)
     for (int i=0; i<lst.size(); ++i)
         for (int j=0; j<lst[i].size(); ++j)
             result.push_back(lst[i][j]);
@@ -92,7 +92,7 @@ void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd) 
     for (int i=0; i<listToAdd.size(); ++i)
         pOriginalList->push_back(listToAdd[i]);
 }
-void pushBackList(vector<pair<int, vector<Matching>>>* pOriginalList, const vector<pair<int, vector<Matching>>>& listToAdd) {
+void pushBackList(vector<pair<int, vector<MatchingEdge>>>* pOriginalList, const vector<pair<int, vector<MatchingEdge>>>& listToAdd) {
     for (int i=0; i<listToAdd.size(); ++i)
         pOriginalList->push_back(listToAdd[i]);
 }
@@ -140,7 +140,7 @@ string join(const vector<int>& v, char delim) {
     }
     return ss.str();
 }
-string join(const vector<Matching*>& v, char delim) {
+string join(const vector<MatchingEdge*>& v, char delim) {
     stringstream ss;
     for(size_t i = 0; i < v.size(); ++i) {
         if(i != 0)
@@ -220,7 +220,7 @@ string dbg(const vector<vector<int>>& v) {
     }
     return result + "]";
 }
-string dbg(const vector<Matching*>& matchings) {
+string dbg(const vector<MatchingEdge*>& matchings) {
     // Output the matchings
     string result = "[";
     for (int i=0; i<matchings.size(); ++i) {
@@ -230,7 +230,7 @@ string dbg(const vector<Matching*>& matchings) {
     }
     return result + "]";
 }
-string dbg(const vector<vector<Matching*>>& matchings) {
+string dbg(const vector<vector<MatchingEdge*>>& matchings) {
     // Output the vector of matchings
     string result = "[";
     for (int i=0; i<matchings.size(); ++i) {

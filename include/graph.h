@@ -72,6 +72,7 @@ class Graph
 
         virtual unique_ptr<Graph> DeepCopy() const;
         unique_ptr<Graph> CreateTourGraph(vector<Edge*> tour) const;
+        unique_ptr<Graph> CreateTourGraph(vector<vector<Edge*>> tours) const;
 };
 
 #endif // GRAPH_H
