@@ -25,7 +25,7 @@ class MatchingEdge
         bool IsIncidentTo(int vid) const;
         bool EqualsSortOf(int vid1, int vid2) const;
 
-        static bool MergeInto(int a, int b, vector<MatchingEdge*>& rMatchings, vector<MatchingEdge>& rNewMatchingsMemoryManager);
+        static bool MergeInto(int a, int b, vector<MatchingEdge*>& rMatchings, vector<unique_ptr<MatchingEdge>>& rNewMatchingsMemoryManager);
 
     private:
         int* getPointerTo(int vid);

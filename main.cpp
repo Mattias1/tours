@@ -293,6 +293,4 @@ int main(int argc, char *argv[])
     }
 }
 
-// TODO: vrp endpoints return triple: (int: cost, int: edgeBits, vector<...> demands)
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
-// TODO: fix memory issue (memory manager for MatchingEdge)

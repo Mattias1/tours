@@ -41,7 +41,7 @@ bool MatchingEdge::EqualsSortOf(int vid1, int vid2) const {
     return (this->A == vid1 && this->B == vid2) || (this->B == vid1 && this->A == vid2);
 }
 
-bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vector<MatchingEdge>& rNewMatchingsMemoryManager) {
+bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vector<unique_ptr<MatchingEdge>>& rMatchingsMemoryManager) {
     // Find out who's in the list (and where)
     int posA = -1;
     int otherA = -1;
@@ -66,17 +66,17 @@ bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vec
             // Third case (3): both are not in here - the matching needs to be added in another way
             return false;
         }
-        rNewMatchingsMemoryManager.push_back(MatchingEdge(otherB, a, rMatching[posB]->Demand));
-        rMatching[posB] = &rNewMatchingsMemoryManager[rNewMatchingsMemoryManager.size() - 1];
+        rMatchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(otherB, a, rMatching[posB]->Demand)));
+        rMatching[posB] = rMatchingsMemoryManager.back().get();
     }
     else if (posB == -1) {
-        rNewMatchingsMemoryManager.push_back(MatchingEdge(otherA, b, rMatching[posA]->Demand));
-        rMatching[posA] = &rNewMatchingsMemoryManager[rNewMatchingsMemoryManager.size() - 1];
+        rMatchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(otherA, b, rMatching[posA]->Demand)));
+        rMatching[posA] = rMatchingsMemoryManager.back().get();
     }
     // or (2): both are already in there (in that case merges the two paths (matchings) together)
     else {
-        rNewMatchingsMemoryManager.push_back(MatchingEdge(otherA, b, rMatching[posA]->Demand));
-        rMatching[posB] = &rNewMatchingsMemoryManager[rNewMatchingsMemoryManager.size() - 1];
+        rMatchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(otherA, b, rMatching[posA]->Demand)));
+        rMatching[posB] = rMatchingsMemoryManager.back().get();
         rMatching.erase(rMatching.begin() + posB);
     }
     return true;
@@ -118,7 +118,7 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     }
 
     // Reconstruct the tour
-    if (false && value < numeric_limits<int>::max()) { // TODO
+    if (value < numeric_limits<int>::max()) {
         vector<Edge*> tour = removeDoubles(tspReconstruct(*TD.getOriginalGraph(), hashlist, S, *pXroot), TD.getOriginalGraph()->vertices.size());
         // vector<int> allChildEndpointsParameter;
         // cycleCheck(*TD.getOriginalGraph(), vector<int>(), &tour, allChildEndpointsParameter); // Sort the tour - TODO - ERROR, IT DOESN'T ACTUALLY SORT IT
@@ -191,7 +191,7 @@ int tspChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, Yi, rTargetDegrees, rEndpoints, allChildEndpoints, &edgeListBits);
     if (pResultingEdgeList != nullptr)
         addToEdgeListFromBits(Yi, pResultingEdgeList, edgeListBits);
-    if (0 <= val && val < numeric_limits<int>::max()) { // TODO: why can val ever be < 0??? Why is this first part of the check here??? It is also there in the python version...
+    if (val < numeric_limits<int>::max()) {
         if (debug) {
             cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", Yi: " << dbg(Yi) << ", degrees: " << dbg(rTargetDegrees);
             cout << ", endpoints: " << dbg(rEndpoints) << ", edgeList: " << dbg(pResultingEdgeList) << endl;
@@ -305,7 +305,7 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     }
     // If the current degree is at least 1 (which it is if we get here),
     //   try to combine it (for all other vertices) in a hamiltonian path
-    vector<MatchingEdge> newMatchingsMemoryManager;
+    vector<unique_ptr<MatchingEdge>> matchingsMemoryManager;
     for (int k=i+1; k<Xi.vertices.size(); ++k) {
         // Stay in {0, 1, 2}
         if (rTargetDegrees[k] < 1 || rChildDegrees[j][k] > 1 || !Xj.ContainsVertex(Xi.vertices[k]))
@@ -325,13 +325,13 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
         bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2; // TODO
         if (edgeMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], newMatchingsMemoryManager))
+            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingsMemoryManager))
                 edgeMightExistAlready = false;
         }
         if (!edgeMightExistAlready) {
             // So now both are new in the list, so we just add (insert) them
-            newMatchingsMemoryManager.push_back(MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid));
-            eps[j].push_back(&newMatchingsMemoryManager[newMatchingsMemoryManager.size() - 1]);
+            matchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid)));
+            eps[j].push_back(matchingsMemoryManager.back().get());
         }
 
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
@@ -369,7 +369,7 @@ vector<Edge*> tspRecurseVector(const Graph& graph, unordered_map<string, int>& r
         result = tspRecurseVector(graph, rHashlist, Xi, Yi, i + 1, 0, td, cds, rEndpoints, rChildEndpoints);
     }
     // If the current degree is at least 1 (which it is if we get here), try to combine it (for all other vertices) in a hamiltonian path
-    vector<MatchingEdge> newMatchingsMemoryManager;
+    vector<unique_ptr<MatchingEdge>> matchingsMemoryManager;
     for (int k=i+1; k<Xi.vertices.size(); ++k) {
         // Stay in {0, 1, 2} (and make sure child k has the i-th vertex of Xi as well)
         if (rTargetDegrees[k] < 1 || rChildDegrees[j][k] > 1 || !Xj.ContainsVertex(Xi.vertices[k]))
@@ -389,14 +389,13 @@ vector<Edge*> tspRecurseVector(const Graph& graph, unordered_map<string, int>& r
         bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2;
         if (edgeMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], newMatchingsMemoryManager))
+            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingsMemoryManager))
               edgeMightExistAlready = false;
         }
         if (!edgeMightExistAlready) {
             // So now both are new in the list, so we just add (insert) them
-            MatchingEdge matching = MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid);
-            newMatchingsMemoryManager.push_back(matching);
-            eps[j].push_back(&matching);
+            matchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid)));
+            eps[j].push_back(matchingsMemoryManager.back().get());
         }
 
         // We may have to try to analyze the same vertex again if it's degree is higher than 1

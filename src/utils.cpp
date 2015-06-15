@@ -92,7 +92,7 @@ void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd) 
     for (int i=0; i<listToAdd.size(); ++i)
         pOriginalList->push_back(listToAdd[i]);
 }
-void pushBackList(vector<pair<int, vector<MatchingEdge>>>* pOriginalList, const vector<pair<int, vector<MatchingEdge>>>& listToAdd) {
+void pushBackList(vector<tuple<int, int, vector<MatchingEdge>>>* pOriginalList, const vector<tuple<int, int, vector<MatchingEdge>>>& listToAdd) {
     for (int i=0; i<listToAdd.size(); ++i)
         pOriginalList->push_back(listToAdd[i]);
 }

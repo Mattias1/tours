@@ -6,6 +6,7 @@
 #include "dp_vrp.h"
 #include <string>
 #include <vector>
+#include <tuple>
 using namespace std;
 
 
@@ -34,7 +35,7 @@ vector<MatchingEdge*> flatten(const vector<vector<MatchingEdge*>>& lst);
 // Push back an entire list
 //
 void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd);
-void pushBackList(vector<pair<int, vector<MatchingEdge>>>* pOriginalList, const vector<pair<int, vector<MatchingEdge>>>& listToAdd);
+void pushBackList(vector<tuple<int, int, vector<MatchingEdge>>>* pOriginalList, const vector<tuple<int, int, vector<MatchingEdge>>>& listToAdd);
 
 
 //

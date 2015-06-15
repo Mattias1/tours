@@ -120,7 +120,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
 
     // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
     vector<MatchingEdge*> allChildEndpoints = flatten(rChildEndpoints);
-    vector<pair<int, vector<MatchingEdge>>> edgeSelectEps = vrpEdgeSelect(0, numeric_limits<int>::max(), 0, graph, Xi, Yi, rTargetDegrees, rEndpoints, allChildEndpoints);
+    vector<tuple<int, int, vector<MatchingEdge>>> edgeSelectEps = vrpEdgeSelect(0, numeric_limits<int>::max(), 0, graph, Xi, Yi, rTargetDegrees, rEndpoints, allChildEndpoints);
 
     // TODO: filter edge selections to remove overrated demands
 
@@ -128,9 +128,9 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     int resultT = 0;
     int resultVal = numeric_limits<int>::max();
     for (int t=0; t<edgeSelectEps.size(); ++t) {
-        int val = edgeSelectEps[t].first;
-        vector<MatchingEdge> edgeDemands = edgeSelectEps[t].second;
-        if (0 <= val && val < numeric_limits<int>::max()) { // TODO: why can val ever be < 0??? Why is this first part of the check here??? It is also there in the python version...
+        int val; int edgeBits; vector<MatchingEdge> edgeDemands;
+        tie(val, edgeBits, edgeDemands) = edgeSelectEps[t];
+        if (val < numeric_limits<int>::max()) {
             if (debug) {
                 cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", Yi: " << dbg(Yi);
                 cout << ", degrees: " << dbg(rTargetDegrees) << ", endpoints: " << dbg(rEndpoints) << endl;
@@ -224,7 +224,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     }
     // If the current degree is at least 1 (which it is if we get here), try to combine it (for all other vertices) in a hamiltonian path
     // (all these 'hamiltonian paths' are added as single edges, they are merged later, in cycle check (via ???))
-    vector<MatchingEdge> newMatchingMemoryManager;
+    vector<unique_ptr<MatchingEdge>> matchingMemoryManager;
     for (int k=i+1; k<Xi.vertices.size(); ++k) {
         // Stay in {0, 1, 2} (and make sure child k has the i-th vertex of Xi as well)
         if (rTargetDegrees[k] < 1 || rChildDegrees[j][k] > 1 || !Xj.ContainsVertex(Xi.vertices[k]))
@@ -246,20 +246,14 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
         bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2;
         if (edgeMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], newMatchingMemoryManager))
+            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingMemoryManager))
                 edgeMightExistAlready = false;
         }
         if (!edgeMightExistAlready) {
             // So now both are new in the list, so we just add (insert) them
-            MatchingEdge matching = MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid, -1);
-            newMatchingMemoryManager.push_back(matching);
-            eps[j].push_back(&matching);
+            matchingMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid, -1)));
+            eps[j].push_back(matchingMemoryManager.back().get());
         }
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        //      demands
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
         result = min(result, vrpRecurse(graph, rHashlist, Xi, Yi, i, j, td, cds, rEndpoints, eps));
@@ -274,7 +268,7 @@ vector<vector<Edge*>> vrpRecurseVector(const Graph& graph, unordered_map<string,
     return vector<vector<Edge*>>();
 }
 
-vector<pair<int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimum, int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& Yi, const vector<int>& degrees, vector<MatchingEdge*>& rEndpoints, vector<MatchingEdge*>& rAllChildEndpoints, int edgeListBits /*=0*/) {
+vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimum, int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& Yi, const vector<int>& degrees, vector<MatchingEdge*>& rEndpoints, vector<MatchingEdge*>& rAllChildEndpoints, int edgeListBits /*=0*/) {
     // Calculate the smallest cost to satisfy the degrees target using only using edges >= the index
     bool debug = false;
 
@@ -294,18 +288,18 @@ vector<pair<int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimum, int
             if (debug)
                 cout << "Edge select (" << index << "): edges contain a cycle" << endl;
             vector<MatchingEdge> edgeDemands = pathDemands(graph, Xi, edgeList, rEndpoints, rAllChildEndpoints);
-            return { make_pair(cost, edgeDemands) };
+            return { make_tuple(cost, edgeListBits, edgeDemands) };
         }
         if (debug)
             cout << "Edge select (" << index << "): satisfied: no need to add any more edges, min value: 0" << endl;
-        return vector<pair<int, vector<MatchingEdge>>>();
+        return vector<tuple<int, int, vector<MatchingEdge>>>();
     }
 
     // Base case 2: we have not succeeded yet, but there are no more edges to add, so we failed
     if (index >= Yi.size()) {
         if (debug)
             cout << "Edge select (" << index << "): no more edges to add" << endl;
-        return vector<pair<int, vector<MatchingEdge>>>();
+        return vector<tuple<int, int, vector<MatchingEdge>>>();
     }
 
     // Base case 3: one of the degrees is < 1, so we added too many vertices, so we failed [with side effect]
@@ -319,7 +313,7 @@ vector<pair<int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimum, int
                                 // (we return int::max for that case (taking the edge) in this piece of code, but in the next function call).
                 if (debug)
                     cout << "Edge select (" << index << "): too many edges added" << endl;
-                return vector<pair<int, vector<MatchingEdge>>>();
+                return vector<tuple<int, int, vector<MatchingEdge>>>();
             }
             // While checking this base case, also compute the new degree list for the first recursion
             deg[i] -= 1;
@@ -332,7 +326,7 @@ vector<pair<int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimum, int
     // Try both to take the edge and not to take the edge
     if (debug)
         cout << "Edge select (" << index << "), degrees: " << dbg(degrees) << endl;
-    vector<pair<int, vector<MatchingEdge>>> result = vrpEdgeSelect(cost + pEdge->Cost, minimum - pEdge->Cost, index + 1, graph, Xi, Yi, deg, rEndpoints, rAllChildEndpoints, edgeListBits | 1 << index);
+    vector<tuple<int, int, vector<MatchingEdge>>> result = vrpEdgeSelect(cost + pEdge->Cost, minimum - pEdge->Cost, index + 1, graph, Xi, Yi, deg, rEndpoints, rAllChildEndpoints, edgeListBits | 1 << index);
     pushBackList(&result, vrpEdgeSelect(cost, minimum, index + 1, graph, Xi, Yi, degrees, rEndpoints, rAllChildEndpoints, edgeListBits));
     return result;
 }
