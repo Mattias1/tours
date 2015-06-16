@@ -153,6 +153,19 @@ string join(const vector<MatchingEdge*>& v, char delim) {
     }
     return ss.str();
 }
+string join(const vector<MatchingEdge>& v, char delim) {
+    stringstream ss;
+    for(size_t i = 0; i < v.size(); ++i) {
+        if(i != 0)
+            ss << delim;
+        ss << v[i].A;
+        ss << delim;
+        ss << v[i].B;
+        ss << delim;
+        ss << v[i].Demand;
+    }
+    return ss.str();
+}
 
 //
 // String trim methods

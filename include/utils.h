@@ -54,6 +54,7 @@ vector<int> splitInt(const string &s, char delim);
 //
 string join(const vector<int>& v, char delim);
 string join(const vector<MatchingEdge*>& v, char delim);
+string join(const vector<MatchingEdge>& v, char delim);
 
 
 //

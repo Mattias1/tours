@@ -172,106 +172,6 @@ vector<Edge*> tspReconstruct(const Graph& graph, unordered_map<string, int>& rHa
     return tspRecurseVector(graph, rHashlist, Xi, Yi, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
 }
 
-int tspChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, const vector<vector<MatchingEdge*>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList /*=nullptr*/) {
-    // This method is the base case for the calculate tsp recurse method.
-    // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
-    bool debug = false;
-
-    // Check: all bags (except the root) are not allowed to be a cycle.
-    if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
-        if (debug) {
-            cout << dbg("  ", Xi.vertices.size()) << "All bags (except root) should have at least one path - no endpoints given" << endl;
-        }
-        return numeric_limits<int>::max();
-    }
-
-    // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
-    vector<MatchingEdge*> allChildEndpoints = flatten(rChildEndpoints);
-    int edgeListBits = 0;
-    int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, Yi, rTargetDegrees, rEndpoints, allChildEndpoints, &edgeListBits);
-    if (pResultingEdgeList != nullptr)
-        addToEdgeListFromBits(Yi, pResultingEdgeList, edgeListBits);
-    if (val < numeric_limits<int>::max()) {
-        if (debug) {
-            cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", Yi: " << dbg(Yi) << ", degrees: " << dbg(rTargetDegrees);
-            cout << ", endpoints: " << dbg(rEndpoints) << ", edgeList: " << dbg(pResultingEdgeList) << endl;
-        }
-        for (int k=0; k<rChildDegrees.size(); ++k) {
-            const vector<int>& cds = rChildDegrees[k];
-            const Bag& Xkid = *dynamic_cast<Bag*>(Xi.edges[k]->Other(Xi));
-            if (Xi.getParent() != &Xkid) {
-                // Strip off the vertices not in Xkid and add degrees 2 for vertices not in Xi
-                vector<int> kidDegrees(Xkid.vertices.size(), 2);
-                for (int p=0; p<Xkid.vertices.size(); ++p)
-                    for (int q=0; q<Xi.vertices.size(); ++q)
-                        if (Xkid.vertices[p] == Xi.vertices[q]) {
-                            kidDegrees[p] = cds[q];
-                            break;
-                        }
-                string S = toTableEntry(Xkid, kidDegrees, rChildEndpoints[k]);
-                if (debug) {
-                    cout << dbg("  ", Xi.vertices.size()) << "child A: " << val << ", cds: " << dbg(cds) << ", degrees: " << dbg(kidDegrees);
-                    cout << ", endpoints: " << dbg(rChildEndpoints[k]) << endl;
-                }
-                // Add to that base cost the cost of hamiltonian paths nescessary to satisfy the degrees.
-                int tableVal = tspTable(graph, rHashlist, S, Xkid);
-                if (tableVal == numeric_limits<int>::max())
-                    return tableVal;
-                val += tableVal;
-            }
-        }
-        if (debug) {
-            cout << dbg("  ", Xi.vertices.size()) << "Min cost for X" << Xi.vid << " with these child-degrees: " << val << endl;
-        }
-    }
-    else if (debug) {
-        cout << dbg("  ", Xi.vertices.size()) << "No local edge selection found" << endl;
-    }
-    return val;
-}
-
-vector<Edge*> tspLookback(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints) {
-    // This method is the base case for the reconstruct tsp recurse method.
-    // bool debug = false;
-    vector<Edge*> resultingEdgeList; // This list will be filled with the edges used in Xi
-    vector<int> totalDegrees = duplicate(rTargetDegrees);
-    for (int j=0; j<rChildDegrees.size(); ++j) {
-        const vector<int>& cds = rChildDegrees[j];
-        for (int i=0; i<cds.size(); ++i)
-            totalDegrees[i] += cds[i];
-    }
-
-    string S = toTableEntry(Xi, totalDegrees, rEndpoints);
-    const auto& iter = rHashlist.find(S);
-    if (iter == rHashlist.end())
-        return vector<Edge*>();
-    int val = iter->second;
-    if (val != tspChildEvaluation(graph, rHashlist, Xi, Yi, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints, &resultingEdgeList))
-        return vector<Edge*>(); // Side effect above intended to fill the edge list
-    // if debug: print('X{} edgelist 1: {}'.format(Xi.vid, resultingEdgeList))
-    // So these are indeed the child degrees that we are looking for
-    for (int k=0; k<rChildDegrees.size(); ++k) {
-        const vector<int>& cds = rChildDegrees[k];
-
-        const Bag& Xkid = *dynamic_cast<Bag*>(Xi.edges[k]->Other(Xi));
-        if (Xi.getParent() != &Xkid) {
-            // Strip off the vertices not in Xkid and add degrees 2 for vertices not in Xi
-            vector<int> kidDegrees(Xkid.vertices.size(), 2);
-            for (int p=0; p<Xkid.vertices.size(); ++p)
-                for (int q=0; q<Xi.vertices.size(); ++q)
-                    if (Xkid.vertices[p] == Xi.vertices[q])
-                        kidDegrees[p] = cds[q];
-            string S = toTableEntry(Xkid, kidDegrees, rChildEndpoints[k]);
-            // We already got the resultingEdgeList for Xi, now add the REL for all the children
-            const vector<Edge*>& test = tspReconstruct(graph, rHashlist, S, Xkid);
-            pushBackList(&resultingEdgeList, test);
-            // print('test 2 edgelist: {}'.format(resultingEdgeList))
-        }
-    }
-    // if debug: print('X{} edgelist 3: {}'.format(Xi.vid, resultingEdgeList))
-    return resultingEdgeList;
-}
-
 int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, int i, int j, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints) {
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
@@ -406,6 +306,105 @@ vector<Edge*> tspRecurseVector(const Graph& graph, unordered_map<string, int>& r
     return result;
 }
 
+int tspChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, const vector<vector<MatchingEdge*>>& rChildEndpoints, vector<Edge*>* pResultingEdgeList /*=nullptr*/) {
+    // This method is the base case for the calculate tsp recurse method.
+    // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
+    bool debug = false;
+
+    // Check: all bags (except the root) are not allowed to be a cycle.
+    if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
+        if (debug) {
+            cout << dbg("  ", Xi.vertices.size()) << "All bags (except root) should have at least one path - no endpoints given" << endl;
+        }
+        return numeric_limits<int>::max();
+    }
+
+    // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
+    vector<MatchingEdge*> allChildEndpoints = flatten(rChildEndpoints);
+    int edgeListBits = 0;
+    int val = tspEdgeSelect(numeric_limits<int>::max(), 0, graph, Xi, Yi, rTargetDegrees, rEndpoints, allChildEndpoints, &edgeListBits);
+    if (pResultingEdgeList != nullptr)
+        addToEdgeListFromBits(Yi, pResultingEdgeList, edgeListBits);
+    if (val < numeric_limits<int>::max()) {
+        if (debug) {
+            cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", Yi: " << dbg(Yi) << ", degrees: " << dbg(rTargetDegrees);
+            cout << ", endpoints: " << dbg(rEndpoints) << ", edgeList: " << dbg(pResultingEdgeList) << endl;
+        }
+        for (int j=0; j<rChildDegrees.size(); ++j) {
+            const vector<int>& cds = rChildDegrees[j];
+            const Bag& Xkid = *dynamic_cast<Bag*>(Xi.edges[j]->Other(Xi));
+            if (Xi.getParent() != &Xkid) {
+                // Strip off the vertices not in Xkid and add degrees 2 for vertices not in Xi
+                vector<int> kidDegrees(Xkid.vertices.size(), 2);
+                for (int p=0; p<Xkid.vertices.size(); ++p)
+                    for (int q=0; q<Xi.vertices.size(); ++q)
+                        if (Xkid.vertices[p] == Xi.vertices[q]) {
+                            kidDegrees[p] = cds[q];
+                            break;
+                        }
+                string S = toTableEntry(Xkid, kidDegrees, rChildEndpoints[j]);
+                if (debug) {
+                    cout << dbg("  ", Xi.vertices.size()) << "child A: " << val << ", cds: " << dbg(cds) << ", degrees: " << dbg(kidDegrees);
+                    cout << ", endpoints: " << dbg(rChildEndpoints[j]) << endl;
+                }
+                // Add to that base cost the cost of hamiltonian paths nescessary to satisfy the degrees.
+                int tableVal = tspTable(graph, rHashlist, S, Xkid);
+                if (tableVal == numeric_limits<int>::max())
+                    return tableVal;
+                val += tableVal;
+            }
+        }
+        if (debug) {
+            cout << dbg("  ", Xi.vertices.size()) << "Min cost for X" << Xi.vid << " with these child-degrees: " << val << endl;
+        }
+    }
+    else if (debug) {
+        cout << dbg("  ", Xi.vertices.size()) << "No local edge selection found" << endl;
+    }
+    return val;
+}
+
+vector<Edge*> tspLookback(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints) {
+    // This method is the base case for the reconstruct tsp recurse method.
+    // bool debug = false;
+    vector<Edge*> resultingEdgeList; // This list will be filled with the edges used in Xi
+    vector<int> totalDegrees = duplicate(rTargetDegrees);
+    for (int j=0; j<rChildDegrees.size(); ++j) {
+        const vector<int>& cds = rChildDegrees[j];
+        for (int i=0; i<cds.size(); ++i)
+            totalDegrees[i] += cds[i];
+    }
+
+    string S = toTableEntry(Xi, totalDegrees, rEndpoints);
+    const auto& iter = rHashlist.find(S);
+    if (iter == rHashlist.end())
+        return vector<Edge*>();
+    int val = iter->second;
+    if (val != tspChildEvaluation(graph, rHashlist, Xi, Yi, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints, &resultingEdgeList))
+        return vector<Edge*>(); // Side effect above intended to fill the edge list
+    // if debug: print('X{} edgelist 1: {}'.format(Xi.vid, resultingEdgeList))
+    // So these are indeed the child degrees that we are looking for
+    for (int j=0; j<rChildDegrees.size(); ++j) {
+        const vector<int>& cds = rChildDegrees[j];
+
+        const Bag& Xkid = *dynamic_cast<Bag*>(Xi.edges[j]->Other(Xi));
+        if (Xi.getParent() != &Xkid) {
+            // Strip off the vertices not in Xkid and add degrees 2 for vertices not in Xi
+            vector<int> kidDegrees(Xkid.vertices.size(), 2);
+            for (int p=0; p<Xkid.vertices.size(); ++p)
+                for (int q=0; q<Xi.vertices.size(); ++q)
+                    if (Xkid.vertices[p] == Xi.vertices[q])
+                        kidDegrees[p] = cds[q];
+            string S = toTableEntry(Xkid, kidDegrees, rChildEndpoints[j]);
+            // We already got the resultingEdgeList for Xi, now add the REL for all the children
+            pushBackList(&resultingEdgeList, tspReconstruct(graph, rHashlist, S, Xkid));
+            // print('test 2 edgelist: {}'.format(resultingEdgeList))
+        }
+    }
+    // if debug: print('X{} edgelist 3: {}'.format(Xi.vid, resultingEdgeList))
+    return resultingEdgeList;
+}
+
 // Todo: use the minimum to abort early??? (is possible for leaf case, but perhaps not for normal bag case
 int tspEdgeSelect(int minimum, int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& Yi, const vector<int>& degrees, vector<MatchingEdge*>& rEndpoints, vector<MatchingEdge*>& rAllChildEndpoints, int* pEdgeListBits /*=nullptr*/) {
     // Calculate the smallest cost to satisfy the degrees target using only using edges >= the index
@@ -513,6 +512,10 @@ vector<MatchingEdge> tableEntryToEndpoints(const string& S) {
 }
 
 string toTableEntry(const Bag& Xi, const vector<int>& degrees, const vector<MatchingEdge*>& endpoints) {
+    // From a list of degrees and endpoints to a string representation
+    return 'X' + to_string(Xi.vid) + '|' + join(degrees, ',') + '|' + join(endpoints, ',');
+}
+string toTableEntry(const Bag& Xi, const vector<int>& degrees, const vector<MatchingEdge>& endpoints) {
     // From a list of degrees and endpoints to a string representation
     return 'X' + to_string(Xi.vid) + '|' + join(degrees, ',') + '|' + join(endpoints, ',');
 }
