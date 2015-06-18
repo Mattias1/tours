@@ -26,6 +26,14 @@ bool Graph::ReadFileLine(int& rState, string line) {
         this->name = l[2];
         return true;
     }
+    if (comp(line, "CAPACITY : ")) {
+        this->capacity = stoi(l[2]);
+        return true;
+    }
+    if (comp(line, "TRUCKS : ")) {
+        this->trucks = stoi(l[2]);
+        return true;
+    }
     if (comp(line, "EOF")) {
         rState = 0;
         return true;

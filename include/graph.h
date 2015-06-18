@@ -61,6 +61,7 @@ class Graph
 
     public:
         string name;
+        int capacity, trucks;
         vector<unique_ptr<Vertex>> vertices;
 
         Graph();

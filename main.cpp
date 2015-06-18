@@ -216,6 +216,10 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
         Graph* pG = new Graph(); // pTD will be the owner of pG.
         unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
         graphsFromFile(*pG, *pTD, file + ".vrp");
+        if (pG->trucks == 0 || pG->capacity == 0) {
+            cout << "ERROR in file " << file << ".vrp: TRUCKS = " << pG->trucks << " and CAPACITY = " << pG->capacity << endl;
+            continue;
+        }
         cout << "Done graph from file" << endl << "----------------------------" << endl;
 
         // Run heuristics and merge the tours
