@@ -265,9 +265,17 @@ bool Bag::ContainsEdge(Edge* pE) const {
 }
 
 void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
-    // Update all bags recursively
+    // Update all bags recursively (the parent, the coordinates (optinally) and the order (vid 0 always in front))
     int diameter = 120;
     this->pParent = pParent;
+    for (int i=1; i<this->vertices.size(); ++i) {
+        if (isDepot(this->vertices[i])) {
+            Vertex* pTemp = this->vertices[i];
+            this->vertices[i] = this->vertices[0];
+            this->vertices[0] = pTemp;
+            break;
+        }
+    }
     for (int i=0; i<this->edges.size(); ++i) {
         Bag* pBag = dynamic_cast<Bag*>(this->edges[i]->Other(*this));
         if (this->pParent == pBag)
