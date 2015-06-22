@@ -298,3 +298,4 @@ int main(int argc, char *argv[])
 }
 
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
+// TODO: Make sure the depot vertex is in every bag

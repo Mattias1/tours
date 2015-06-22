@@ -30,6 +30,7 @@ vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimu
 // Some helper functions
 //
 bool isDepot(Vertex* pV);
+bool isDepot(int vid);
 
 vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector<Edge*>& edgeList, const vector<MatchingEdge*>& endpoints, const vector<MatchingEdge*>& allChildEndpoints);
 

@@ -233,11 +233,21 @@ string dbg(const vector<vector<int>>& v) {
     }
     return result + "]";
 }
+string dbg(const vector<MatchingEdge>& matchings) {
+    // Output the matchings
+    string result = "[";
+    for (int i=0; i<matchings.size(); ++i) {
+        result += to_string(matchings[i].A) + "-" + to_string(matchings[i].B) + ":" + to_string(matchings[i].Demand);
+        if (i != matchings.size() - 1)
+            result += ",";
+    }
+    return result + "]";
+}
 string dbg(const vector<MatchingEdge*>& matchings) {
     // Output the matchings
     string result = "[";
     for (int i=0; i<matchings.size(); ++i) {
-        result += to_string(matchings[i]->A) + "-" + to_string(matchings[i]->B);
+        result += to_string(matchings[i]->A) + "-" + to_string(matchings[i]->B) + ":" + to_string(matchings[i]->Demand);
         if (i != matchings.size() - 1)
             result += ",";
     }
@@ -248,7 +258,7 @@ string dbg(const vector<vector<MatchingEdge*>>& matchings) {
     string result = "[";
     for (int i=0; i<matchings.size(); ++i) {
         for (int j=0; j<matchings[i].size(); ++j) {
-        result += to_string(matchings[i][j]->A) + "-" + to_string(matchings[i][j]->B);
+        result += to_string(matchings[i][j]->A) + "-" + to_string(matchings[i][j]->B) + ":" + to_string(matchings[i][j]->Demand);
             if (j != matchings[i].size() - 1)
                 result += ",";
         }

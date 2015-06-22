@@ -522,7 +522,8 @@ string toTableEntry(const Bag& Xi, const vector<int>& degrees, const vector<Matc
 
 bool cycleCheck(const Graph& graph, const vector<MatchingEdge*>& endpoints, vector<Edge*>* pEdgeList, vector<MatchingEdge*>& rAllChildEndpoints) {
     // This method returns whether or not the given edge list and all child endpoints provide a set of paths
-    // satisfying the endpoints and sorts the edge list in place.
+    // satisfying the endpoints and sorts the edge list in place (true if there is NO cycle).
+    // TODO: figure out how this method works in the face of a VRP-cased root bag (as it contains loads of cycles, but all of them begin and end in the same vertex: 0).
     bool debug = false;
 
     // Inits

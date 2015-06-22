@@ -26,6 +26,8 @@ vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=t
 
     // Make sure there is a proper graph and decomposition
     const Bag* pXroot = TD.getRoot();
+    int TRUCKS = TD.getOriginalGraph()->trucks;
+    int CAPACITY = TD.getOriginalGraph()->capacity;
     if (TD.vertices.size() < 1 || pXroot == nullptr || TD.getOriginalGraph()->vertices.size() < 1) {
         cout << "ERROR (VRP-DP): Probably no root bag present" << endl;
         return vector<vector<Edge*>>();
@@ -34,7 +36,12 @@ vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=t
     // Start the calculation
     unordered_map<string, int> hashlist;
     vector<int> degrees = vector<int>(pXroot->vertices.size(), 2);
-    string S = toTableEntry(*pXroot, degrees, vector<MatchingEdge*>());
+    degrees[0] = TRUCKS * 2;
+    vector<MatchingEdge> endpointsMemoryManager = vector<MatchingEdge>(TRUCKS);
+    for (int i=0; i<endpointsMemoryManager.size(); ++i) {
+        endpointsMemoryManager[i] = MatchingEdge(0, 0, CAPACITY);
+    }
+    string S = toTableEntry(*pXroot, degrees, pointerize(endpointsMemoryManager));
     int value = vrpTable(*TD.getOriginalGraph(), hashlist, S, *pXroot);
     if (consoleOutput)
         cout << "VRP cost: " << value << endl;
@@ -108,7 +115,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = false;
+    bool debug = i == Xi.vertices.size(); // bool debug = true;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
@@ -190,14 +197,25 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     // Check: all bags (except the root) are not allowed to be a cycle.
     if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
         if (debug) {
-            cout << dbg("  ", Xi.vertices.size()) << "All bags (except root) should have at least one path - no endpoints given" << endl;
+            cout << "All bags (except root) should have at least one path - no endpoints given" << endl;
         }
         return numeric_limits<int>::max();
+    }
+    for (int j=0; j<rChildEndpoints.size(); ++j) {
+        if (rChildEndpoints[j].size() == 0 && Xi.getParent() != Xi.edges[j]->Other(Xi)) {
+            if (debug)
+                cout << dbg("  ", Xi.vertices.size()) << "All child bags should have at least one path." << endl;
+            return numeric_limits<int>::max();
+        }
     }
 
     // Base cost: the edges needed inside this Xi to account for the (target) degrees we didn't pass on to our children.
     vector<MatchingEdge*> allChildEndpoints = flatten(rChildEndpoints);
     vector<tuple<int, int, vector<MatchingEdge>>> edgeSelectEps = vrpEdgeSelect(0, numeric_limits<int>::max(), 0, graph, Xi, Yi, rTargetDegrees, rEndpoints, allChildEndpoints);
+
+    if (debug) {
+        cout << "EdgeSelectEps size: " << edgeSelectEps.size() << endl;
+    }
 
     // TODO: filter edge selections to remove overrated demands
 
@@ -212,12 +230,16 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
         // Leaf case should be threated differently here (assuming more than 1 node in the tree decomposition)
         if (Xi.edges.size() == 1 && Xi.getParent() != nullptr) {
             // Abuse the fact that Yi is sorted, so we don't have to bother about the others and can return the first one
+            cout << "Leaf bag, Local edge selection cost: " << value << ", Yi: " << dbg(Yi);
+            cout << ", degrees: " << dbg(rTargetDegrees) << ", endpoints: " << dbg(rEndpoints) << endl;
             return value;
         }
 
         vector<Edge*> edgeList;
         addToEdgeListFromBits(Yi, &edgeList, edgeListBits);
         vector<vector<vector<MatchingEdge>>> possibleMatchings = allChildMatchings(graph, Xi, Yi, edgeList, rEndpoints, rChildEndpoints);
+
+        cout << "DEBUG possibleMatchings size: " << possibleMatchings.size() << endl; // TODO
 
         // Loop all possible demands in the matchings
         for (int i=0; i<possibleMatchings[0].size(); ++i) {
@@ -247,10 +269,13 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                             cout << dbg("  ", Xi.vertices.size()) << "child A: " << val << ", cds: " << dbg(cds);
                             cout << ", degrees: " << dbg(kidDegrees) << ", endpoints: " << dbg(rChildEndpoints[j]) << endl;
                         }
-                        // Add to that base cost the cost of hamiltonian paths nescessary to satisfy the degrees.
+                        // Add to that base cost the cost of Hamiltonian paths nescessary to satisfy the degrees.
                         int tableVal = vrpTable(graph, rHashlist, S, Xkid);
-                        if (tableVal == numeric_limits<int>::max())
+                        if (tableVal == numeric_limits<int>::max()) {
+                            if (debug)
+                                cout << dbg("  ", Xi.vertices.size()) << "value for this child is int::max" << endl;
                             return tableVal;
+                        }
                         val += tableVal;
                     }
                 }
@@ -294,14 +319,17 @@ vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimu
         if (!cycleCheck(graph, rEndpoints, &edgeList, rAllChildEndpoints)) {
             if (debug)
                 cout << "Edge select (" << index << "): edges contain a cycle" << endl;
-            vector<MatchingEdge> edgeDemands = pathDemands(graph, Xi, edgeList, rEndpoints, rAllChildEndpoints);
-            if (edgeDemands.size() == 0)
-                return vector<tuple<int, int, vector<MatchingEdge>>>(); // TODO: exception for root bag I guess?
-            return { make_tuple(cost, edgeListBits, edgeDemands) };
+            return vector<tuple<int, int, vector<MatchingEdge>>>();
+        }
+        vector<MatchingEdge> edgeDemands = pathDemands(graph, Xi, edgeList, rEndpoints, rAllChildEndpoints);
+        if (edgeDemands.size() == 0 && Xi.getParent() != nullptr) {
+            if (debug)
+                cout << "Edge select (" << index << "): edgedemands is empty" << endl;
+            return vector<tuple<int, int, vector<MatchingEdge>>>();
         }
         if (debug)
-            cout << "Edge select (" << index << "): satisfied: no need to add any more edges, min value: 0" << endl;
-        return vector<tuple<int, int, vector<MatchingEdge>>>();
+            cout << "Edge select (" << index << "): satisfied. Cost: " << cost << ", edgeListBits: " << edgeListBits << ", edgeDemands: " << dbg(edgeDemands) << endl;
+        return { make_tuple(cost, edgeListBits, edgeDemands) };
     }
 
     // Base case 2: we have not succeeded yet, but there are no more edges to add, so we failed
@@ -345,16 +373,20 @@ vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimu
 //
 bool isDepot(Vertex* pV) {
     // return whether or not this vertex is the depot
-    return false; // TODO
+    return isDepot(pV->vid);
+}
+bool isDepot(int vid) {
+    // return whether or not this vertex is the depot
+    return vid == 0;
 }
 
 vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector<Edge*>& edgeList, const vector<MatchingEdge*>& endpoints, const vector<MatchingEdge*>& allChildEndpoints) {
     // Loop through the chosen edges and save the demand per path (and the corresponding endpoints: int_ep, int_ep, int_d)
     // What we compute here is the total demand of all vertices per path,
     // assuming the childbags only add a single edge (so no new cities, and therefore no additional demand).
-    bool debug = false;
+    bool debug = true;
 
-    // Empty case
+    // Empty case for the root bag (if this is for another bag there is a serious error, and it should trigger an 'assertion cout' elsewhere).
     if (endpoints.size() == 0)
         return vector<MatchingEdge>();
 
@@ -380,7 +412,7 @@ vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector
         // If we completed the path
         if (pV == nullptr || pV->vid == targetVid) {
             // Check if the demands are not too high
-            if (result[progressCounter].Demand > endpoints[progressCounter]->Demand) {
+            if (pV != nullptr && result[progressCounter].Demand > endpoints[progressCounter]->Demand) {
                 return vector<MatchingEdge>();
             }
             // Check if we finished
@@ -396,15 +428,15 @@ vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector
             // Update move variables
             pV = graph.vertices[endpoints[progressCounter]->A].get();
             targetVid = endpoints[progressCounter]->B;
-            result[progressCounter] = MatchingEdge(pV->vid, targetVid, pV->demand); // Store the new matching (with the yet uncorrect demand)
+            result[progressCounter] = MatchingEdge(pV->vid, targetVid, pV->demand); // Store the new matching (with the yet incorrect demand)
 
             if (debug) {
                 cout << "Completed the path; progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
             }
         }
 
-        // Find the next vertex (since we just have had the cycleCheck function doing its magic, we don't need to loop here anymore - RIGHT????
-        if (allChildEndpoints[endpsCounter]->IsIncidentTo(pV->vid)) {
+        // Find the next vertex (since we just have had the cycleCheck function doing its magic, we don't need to loop here any more - RIGHT????
+        if (allChildEndpoints.size() > endpsCounter && allChildEndpoints[endpsCounter]->IsIncidentTo(pV->vid)) {
             // Update the move variables
             pV = graph.vertices[allChildEndpoints[endpsCounter]->Other(pV->vid)].get();
             ++endpsCounter;
@@ -448,11 +480,18 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     // Assumes cycleCheck method has already been called??? Is this a good assumption??? Probably not... :S
     bool debug = false;
 
+    if (debug) {
+        // Output all parameters
+        cout << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl;
+    }
+
     // Empty case
     if (endpoints.size() == 0) {
-        // TODO - I DON'T KNOW WHAT TO DO HERE RIGHT NOW!!!
+        // TODO - I DON'T KNOW WHAT TO DO HERE RIGHT NOW!!! (this case shouldn't actually occur)
         // (Probably not return but go on with max capacity value, but also add some initial somethings,
         //  so that at least there is a pV to get.)
+        if (debug)
+            cout << "ERROR: allChildMatchings - endpoints is empty" << endl;
         return vector<vector<vector<MatchingEdge>>>();
     }
 
@@ -464,7 +503,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     int lastChildEndpoint = -1;
     int lastEdge = -1;
     Vertex* pV = nullptr;
-    int targetVid = 0;
+    int targetVid = -1;
 
     //
     // Step 1: find all sub paths (paths in child bags) of all main paths (paths for the current bag)
@@ -473,8 +512,9 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         // Dump the state
         if (debug) {
             cout << "all child ep-possibilities dump:" << endl;
-            cout << "  endpoints: " << dbg(endpoints) << endl;
-            cout << "  progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
+            cout << "  endpoints: " << dbg(endpoints) << ", lastChild: " << lastChild << ", lastChildEp: " << lastChildEndpoint << ", lastEdge: " << lastEdge << endl;
+            cout << "  targetVid: " << targetVid << "  progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
+            //cout << "  pathList: " << dbg(pathList) << endl;
         }
 
         // If we completed a path
@@ -489,6 +529,8 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                 for (int i=0; i<pathDemands.size(); ++i) {
                     if (pathDemands[i] < 2 * pathList[i].size()) {
                         // TODO: Ehhhh, yeah, what now? How to return an error (int::max) here?
+                        if (debug)
+                            cout << "Too little capacity for the sub path " << i << endl;
                         return vector<vector<vector<MatchingEdge>>>();
                     }
                 }
@@ -497,7 +539,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                 vector<vector<vector<int>>> allSubPathDemands = vector<vector<vector<int>>>(pathDemands.size());
                 for (int i=0; i<pathDemands.size(); ++i) {
                     vector<int> loop = vector<int>(pathDemands.size(), 0);
-                    distributeDemands(allSubPathDemands[i], loop, pathDemands[i], pathList[i].size());
+                    distributeDemands(allSubPathDemands[i], loop, pathDemands[i], pathList[i].size()); // TODO: Out of memory :)
                 }
 
                 // Create all possible child endpoint possibilities
@@ -510,6 +552,8 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                 return result;
             }
             pV = graph.vertices[endpoints[progressCounter]->A].get();
+            if (debug)
+                cout << "pV becomes: " << pV->vid << endl;
             targetVid = endpoints[progressCounter]->B;
 
             // Initially (no edges found yet) we have this much demand to give to our sub-paths (if any)
@@ -524,19 +568,27 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         bool noBreak = true;
         for (int j=0; j<childEndpoints.size(); ++j) {
             for (int i=0; i<childEndpoints[j].size(); ++i) {
-                if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && lastChild != j && lastChildEndpoint != i) { // The depot vertex might make this an infinite loop, pay attention here - TODO
+                if (debug && j == 1 && i == 0 && lastChild == 0) {
+                    // TODO DEBUG
+                    cout << "childEndpoints: " << dbg(childEndpoints) << ", pV->vid: " << pV->vid << endl;
+                }
+                if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && (lastChild != j || lastChildEndpoint != i)) { // The depot vertex might make this an infinite loop, pay attention here - TODO
                     // Update the demands of the previous path
                     pathDemands[progressCounter] += pV->demand;
 
                     // Update loop variables
                     pV = graph.vertices[childEndpoints[j][i]->Other(pV->vid)].get();
+                    if (debug)
+                        cout << "pV becomes: " << pV->vid << endl;
                     lastChild = j;
                     lastChildEndpoint = i;
 
                     // Update the sub paths of the current (main) path
                     pathList[progressCounter].push_back(make_pair(j, i));
 
+                    // Break both for loops
                     noBreak = false;
+                    j = childEndpoints.size();
                     break;
                 }
             }
@@ -572,6 +624,11 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
 void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int sizeLeft) {
     // Find all permutations of demands (or capacities, w/e - int's with min value 2) for a single path and store them in the result array.
     // So for a given demand of 6 and a size of 2, this will add [4,2], [3,3] and [2,4] to the rResult list (rLoop initialized as vector of size 2).
+    bool debug = false;
+    if (debug) {
+        // result : [], loop: [0], demandLeft: 7, sizeLeft: 2
+        cout << "result: " << dbg(rResult) << ", loop: " << dbg(rLoop) << ", demandLeft: " << demandLeft << ", sizeLeft: " << sizeLeft << endl;
+    }
 
     // Base case
     if (sizeLeft == 1) {
@@ -581,7 +638,7 @@ void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int dem
     }
 
     // Normal case
-    for (int d = demandLeft - 2*(sizeLeft - 1); d>=2; ++d) {
+    for (int d = demandLeft - 2*(sizeLeft - 1); d>=2; --d) {
         rLoop[rLoop.size() - sizeLeft] = d;
         distributeDemands(rResult, rLoop, demandLeft - d, sizeLeft - 1);
     }
