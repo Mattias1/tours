@@ -243,6 +243,20 @@ string dbg(const vector<MatchingEdge>& matchings) {
     }
     return result + "]";
 }
+string dbg(const vector<vector<MatchingEdge>>& matchings) {
+    // Output the vector of matchings
+    string result = "[";
+    for (int i=0; i<matchings.size(); ++i) {
+        for (int j=0; j<matchings[i].size(); ++j) {
+        result += to_string(matchings[i][j].A) + "-" + to_string(matchings[i][j].B) + ":" + to_string(matchings[i][j].Demand);
+            if (j != matchings[i].size() - 1)
+                result += ",";
+        }
+        if (i != matchings.size() - 1)
+            result += " - ";
+    }
+    return result + "]";
+}
 string dbg(const vector<MatchingEdge*>& matchings) {
     // Output the matchings
     string result = "[";
@@ -263,6 +277,20 @@ string dbg(const vector<vector<MatchingEdge*>>& matchings) {
                 result += ",";
         }
         if (i != matchings.size() - 1)
+            result += " - ";
+    }
+    return result + "]";
+}
+string dbg(const vector<vector<pair<int, int>>>& pairs) {
+    // Output the vector of pairs
+    string result = "[";
+    for (int i=0; i<pairs.size(); ++i) {
+        for (int j=0; j<pairs[i].size(); ++j) {
+        result += to_string(pairs[i][j].first) + "-" + to_string(pairs[i][j].second);
+            if (j != pairs[i].size() - 1)
+                result += ",";
+        }
+        if (i != pairs.size() - 1)
             result += " - ";
     }
     return result + "]";

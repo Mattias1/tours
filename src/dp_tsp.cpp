@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <assert.h>
 using namespace std;
 
 //
@@ -457,8 +458,7 @@ int tspEdgeSelect(int minimum, int index, const Graph& graph, const Bag& Xi, con
             assertCounter += 1;
         }
     }
-    if (assertCounter != 0 && assertCounter != 2)
-        cout << "ASSERTION ERROR - the assertCounter is not 0 or 2." << endl;
+    assert(assertCounter == 0 || assertCounter == 2);
 
     // Try both to take the edge and not to take the edge
     if (debug)
@@ -632,8 +632,8 @@ bool cycleCheck(const Graph& graph, const vector<MatchingEdge*>& endpoints, vect
             }
         }
     }
-    cout << "ERROR: The code should not come here (cycleCheck function)." << endl;
-    return false;
+    cout << "ASSERTION ERROR: The code should not come here (cycleCheck function)." << endl;
+    assert(false);
 }
 
 bool inEndpoints(const vector<MatchingEdge*>& endpoints, int vid1, int vid2) {

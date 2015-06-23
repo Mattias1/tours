@@ -8,6 +8,7 @@
 #include "treedecomposition.h"
 #include "utils.h"
 #include "dp_tsp.h"
+#include "dp_vrp.h"
 using namespace std;
 
 // The header for the renamed main and run functions ~Matty
@@ -128,6 +129,40 @@ void runWrapper() {
 //
 // The main function
 //
+bool unitTests() {
+    // Run some unit tests
+    bool debug = false;
+
+    bool testResult = true;
+    if (debug)
+        cout << "Unit tests:\n------------------------" << endl;
+
+    // Distribute demands 1:
+    // void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int sizeLeft) {
+    // Find all permutations of demands (or capacities, w/e - int's with min value 2) for a single path and store them in the result array.
+    // So for a given demand of 6 and a size of 2, this will add [4,2], [3,3] and [2,4] to the rResult list (rLoop initialized as vector of size 2).
+    vector<vector<int>> result;
+    vector<int> loop = vector<int>(2, 0);
+    distributeDemands(result, loop, 6, 2);
+    if (debug)
+        cout << "distribute demands 1: " << dbg(result) << endl;
+    if (dbg(result) != "[4,2 - 3,3 - 2,4]")
+        testResult = false;
+
+    // Distribute demands 2:
+    result = vector<vector<int>>();
+    loop = vector<int>(2, 0);
+    distributeDemands(result, loop, 7, 2);
+    if (debug)
+        cout << "distribute demands 2: " << dbg(result) << endl;
+    if (dbg(result) != "[5,2 - 4,3 - 3,4 - 2,5]")
+        testResult = false;
+
+    // Finish
+    cout << "Unit tests completed.\n------------------------" << endl;
+    return testResult;
+}
+
 void debug() {
     // Load the graph (including tree decomposition)
     Graph* pG = new Graph(); // pTD will be the owner of pG.
@@ -279,6 +314,9 @@ int main(int argc, char *argv[])
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
     vector<string> args(argv, argv + argc); // Currently not used
     bool TSP = false;
+
+    // DEBUG
+    assert(unitTests());
 
     // Run TSP algorithms
     if (TSP) {
