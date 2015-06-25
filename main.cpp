@@ -146,16 +146,7 @@ bool unitTests() {
     distributeDemands(result, loop, 6, 2);
     if (debug)
         cout << "distribute demands 1: " << dbg(result) << endl;
-    if (dbg(result) != "[4,2 - 3,3 - 2,4]")
-        testResult = false;
-
-    // Distribute demands 2:
-    result = vector<vector<int>>();
-    loop = vector<int>(2, 0);
-    distributeDemands(result, loop, 7, 2);
-    if (debug)
-        cout << "distribute demands 2: " << dbg(result) << endl;
-    if (dbg(result) != "[5,2 - 4,3 - 3,4 - 2,5]")
+    if (dbg(result) != "[6,0 - 5,1 - 4,2 - 3,3 - 2,4 - 1,5 - 0,6]")
         testResult = false;
 
     // Finish
@@ -337,3 +328,4 @@ int main(int argc, char *argv[])
 
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
 // TODO: Make sure the depot vertex is in every bag
+// TODO: save in a bag the total demand of all vertices in that bag and below, so that we can return early in bad cases

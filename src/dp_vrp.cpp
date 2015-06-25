@@ -116,7 +116,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = i == Xi.vertices.size(); // bool debug = true;
+    bool debug = i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
@@ -193,7 +193,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     // This method is the base case for the calculate vrp recurse method - it is the same as tspChildEval, except that it calls the vrpEdgeSelect and vrpTable [TODO?].
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     // This method is exactly the same as tspChildEvaluation, except that it calls the vrpEdgeSelect AND vrpTable
-    bool debug = true;
+    bool debug = Xi.vid==0; // debug = true;
 
     // Check: all bags (except the root) are not allowed to be a cycle.
     if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
@@ -222,38 +222,53 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
 
     // Loop all possible edge selctions
     int resultT = 0;
-    int resultVal = numeric_limits<int>::max();
+    int resultValue = numeric_limits<int>::max();
     for (int t=0; t<edgeSelectEps.size(); ++t) {
-        int value;
+        int edgeValue;
         int edgeListBits;
         vector<MatchingEdge> edgeDemands;
-        tie(value, edgeListBits, edgeDemands) = edgeSelectEps[t];
+        tie(edgeValue, edgeListBits, edgeDemands) = edgeSelectEps[t];
         // Leaf case should be threated differently here (assuming more than 1 node in the tree decomposition)
         if (Xi.edges.size() == 1 && Xi.getParent() != nullptr) {
             // Abuse the fact that Yi is sorted, so we don't have to bother about the others and can return the first one
-            cout << "Leaf bag, Local edge selection cost: " << value << ", Yi: " << dbg(Yi);
-            cout << ", degrees: " << dbg(rTargetDegrees) << ", endpoints: " << dbg(rEndpoints) << endl;
-            return value;
+            if (debug) {
+                cout << "Leaf bag, Local edge selection cost: " << edgeValue << ", Yi: " << dbg(Yi);
+                cout << ", degrees: " << dbg(rTargetDegrees) << ", endpoints: " << dbg(rEndpoints) << endl;
+            }
+            if (true)
+                // TODO: I haven't actually checked the demands. This will always return the cheapest edge selection value, even if the demands are NOT ok.
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                return edgeValue;
+            else
+                continue;
         }
 
         vector<Edge*> edgeList;
         addToEdgeListFromBits(Yi, &edgeList, edgeListBits);
         vector<vector<vector<MatchingEdge>>> possibleMatchings = allChildMatchings(graph, Xi, Yi, edgeList, rEndpoints, rChildEndpoints);
 
-        cout << "DEBUG possibleMatchings size: " << possibleMatchings.size() << ", endpoints: " << dbg(rEndpoints) << ", childEps: " << dbg(rChildEndpoints) << endl; // TODO
+        if (debug)
+            cout << "DEBUG possibleMatchings size: " << possibleMatchings.size() << ", endpoints: " << dbg(rEndpoints) << ", childEps: " << dbg(rChildEndpoints) << endl; // TODO
 
         // Loop all possible demands in the matchings
         if (possibleMatchings.size() == 0)
             continue;
         for (int i=0; i<possibleMatchings[0].size(); ++i) {
-            if (value < numeric_limits<int>::max()) {
+            if (edgeValue < numeric_limits<int>::max()) {
                 if (debug) {
-                    cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << value << ", Yi: " << dbg(Yi);
+                    cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << edgeValue << ", Yi: " << dbg(Yi);
                     cout << ", degrees: " << dbg(rTargetDegrees) << ", endpoints: " << dbg(rEndpoints) << endl;
                 }
-                int val = value;
+                int value = edgeValue;
                 for (int j=0; j<rChildDegrees.size(); ++j) {
-                    const vector<int>& cds = rChildDegrees[j];
                     const Bag& Xkid = *dynamic_cast<Bag*>(Xi.edges[j]->Other(Xi));
                     if (Xi.getParent() != &Xkid) {
                         // Strip off the vertices not in Xkid and add degrees 2 for vertices not in Xi
@@ -261,32 +276,34 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                         for (int p=0; p<Xkid.vertices.size(); ++p) {
                             for (int q=0; q<Xi.vertices.size(); ++q)
                                 if (Xkid.vertices[p] == Xi.vertices[q]) {
-                                    kidDegrees[p] = cds[q];
+                                    kidDegrees[p] = rChildDegrees[j][q];
                                     break;
                                 }
                         }
                         // Parse these to the DP-table string S
                         string S = toTableEntry(Xkid, kidDegrees, possibleMatchings[j][i]);
+                        int tableVal = vrpTable(graph, rHashlist, S, Xkid);
                         if (debug) {
-                            cout << dbg("  ", Xi.vertices.size()) << "child A: " << val << ", cds: " << dbg(cds);
+                            cout << dbg("  ", Xi.vertices.size()) << "child " << S << ": " << tableVal << " - " << ", cds: " << dbg(rChildDegrees[j]);
                             cout << ", degrees: " << dbg(kidDegrees) << ", endpoints: " << dbg(rChildEndpoints[j]) << ", Ykid: " << dbg(Xkid.GetBagEdges()) << endl;
                         }
-                        // Add to that base cost the cost of Hamiltonian paths nescessary to satisfy the degrees.
-                        int tableVal = vrpTable(graph, rHashlist, S, Xkid);
+                        // Add to that base cost the cost of paths nescessary to satisfy the degrees.
                         if (tableVal == numeric_limits<int>::max()) {
                             if (debug)
                                 cout << dbg("  ", Xi.vertices.size()) << "value for this child is int::max" << endl;
-                            return tableVal;
+                            value = numeric_limits<int>::max();
+                            break;
+                            // TODO: OK, returning is not a good iea, because we just caught this inside an edgeselect size for...
                         }
-                        val += tableVal;
+                        value += tableVal;
                     }
                 }
                 if (debug) {
-                    cout << dbg("  ", Xi.vertices.size()) << "Min cost for X" << Xi.vid << " with these child-degrees: " << val << endl;
+                    cout << dbg("  ", Xi.vertices.size()) << "Min cost for X" << Xi.vid << " with these child-degrees: " << value << endl;
                 }
-                if (val < resultVal) {
+                if (value < resultValue) {
                     resultT = t; // TODO: Return this one later as well for the optimiztion later on???
-                    resultVal = val;
+                    resultValue = value;
                 }
             }
             else if (debug) {
@@ -294,7 +311,9 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
             }
         }
     }
-    return resultVal;
+    if (debug)
+        cout << dbg("  ", Xi.vertices.size()) << "Final result: " << resultValue << endl;
+    return resultValue;
 }
 
 vector<Edge*>* vrpLookback(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints) {
@@ -640,8 +659,8 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
 }
 
 void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int sizeLeft) {
-    // Find all permutations of demands (or capacities, w/e - int's with min value 2) for a single path and store them in the result array.
-    // So for a given demand of 6 and a size of 2, this will add [4,2], [3,3] and [2,4] to the rResult list (rLoop initialized as vector of size 2).
+    // Find all permutations of demands (or capacities, w/e - int's) for a single path and store them in the result array.
+    // So for a given demand of 3 and a size of 2, this will add [3,0], [2,1], [1,2] and [0,3] to the rResult list (rLoop initialized as vector of size 2).
     bool debug = false;
     if (debug) {
         // result : [], loop: [0], demandLeft: 7, sizeLeft: 2
@@ -656,7 +675,9 @@ void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int dem
     }
 
     // Normal case
-    for (int d = demandLeft - 2*(sizeLeft - 1); d>=2; --d) {
+    // for (int d = demandLeft - 2*(sizeLeft - 1); d>=2; --d) { // No minimum of 2, depot vertex can be endpoint(s).
+    // TODO: minimum of 1 is valid???
+    for (int d = demandLeft; d>=0; --d) {
         rLoop[rLoop.size() - sizeLeft] = d;
         distributeDemands(rResult, rLoop, demandLeft - d, sizeLeft - 1);
     }
