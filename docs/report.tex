@@ -8,12 +8,21 @@ heuristics and exact solutions for TSP and VRP.}}
 \usepackage{amssymb}
 \usepackage{enumitem}
 \usepackage{graphicx}
+\usepackage{tikz}
 \usepackage{algpseudocode}
 \usepackage[margin=1.5in]{geometry}
 
 \providecommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
 
 \begin{document}
+\tikzstyle{vertex2} = [circle,fill=black!25,minimum size=18pt,align=center,font=\tiny,inner sep=0pt]
+\tikzstyle{vertex1} = [circle,fill=black!75,minimum size=4pt,align=center,inner sep=0pt]
+\tikzstyle{vertex0} = [circle,fill=black!75,minimum size=1pt,inner sep=0pt]
+\tikzstyle{bag} = [circle,fill=black!25,minimum size=35pt,align=center,text width=35pt,font=\tiny,inner sep=0pt]
+\tikzstyle{edge} = [draw=black!75,-]
+\tikzstyle{arc} = [draw,->-]
+\tikzstyle{weight} = [font=\small]
+
 \maketitle
 
 % Notes:
@@ -50,6 +59,7 @@ heuristics and exact solutions for TSP and VRP.}}
 %
 \section{Introduction}
 \label{sec:introduction}
+
 % Heuristics and Cook-Seymour
 For many optimization problems calculating optimal solutions is not feasible in practical
 applications, because the computation time grows exponentionally with the problem size. Hence,
@@ -68,10 +78,10 @@ branch decompositions.
                                                                                     % TODO TODO TODO TODO TODO TODO TODO TODO TODO
 At the time of publishing, the solutions found by Cook and Seymour improved on the best known
 results for instances with almost 25000 vertices \cite{the sweden instance}. Since then other
-heuristics have improved massively and outperform the approach by Cook and Seymour \cite{lkh,
-some other LKH papers}. In this thesis, we will try if the strategy for TSP by Cook and Seymour can
-still improve current heuristics even more. Furthermore, we will try to extend it to work for the
-Vehicle Routing Problem (VRP).
+heuristics have improved massively and outperform the approach by Cook and Seymour \cite{lkh2}. In
+this thesis, we will try if the strategy for TSP by Cook and Seymour can still improve current
+heuristics even more. Furthermore, we will try to extend it to work for the Vehicle Routing Problem
+(VRP).
 
 % TSP and VRP; desription and defenition
 The Traveling Salesman Problem (TSP) is one of the most well studied NP-hard problems, where a
@@ -79,6 +89,7 @@ merchant wants to visit a number of cities and get back at his starting point in
 possible amount of time.
 We recognize the TSP problem in many practical applications, from planning a school bus route to
 scheduling a machine to drill holes in a circuit board.
+% More examples in the LKH 1 paper
 A generalized version of this problem, where there are not one but a number of merchants (or trucks)
 visiting the cities from the starting point (or depot), is widely used in the transportation sector.
 This problem is known as the Vehicle Routing Problem (VRP).
@@ -111,8 +122,18 @@ show the dynamic programming algorithms on the computed decompositions. In Secti
 we will discuss the result and finally we will conclude in Section~\ref{sec:conclusion}.
 
 % TODO: are we (am I) the only one doing something with the cook-seymour approach? (but one recent: yes)
-%       (related work)
-
+%   (related work)
+% Quote from LKH 1 paper:
+%   Symmetric problems are usually more difficult to solve than asymmetric
+%   problems [9]. Today the 7397-city problem is the largest (nontrivial) symmetric
+%   problem that has been solved. In comparison, the optimal solution of a
+%   500,000-city asymmetric problem has been reported [10].
+%   [9] M. Bellmore & J. C. Malone,
+%   “Pathology of traveling-salesman subtour-elimination algorithms”,
+%   Oper. Res., 19, 278-307 (1972).
+%   [10] D. L. Miller & J. F. Pekny,
+%   “Exact solution of large asymmetric traveling salesman problems”,
+%   Science, 251, 754-761 (1991).
 
 
 %
@@ -121,24 +142,32 @@ we will discuss the result and finally we will conclude in Section~\ref{sec:conc
 \section{Heuristics}
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
-are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lin-kernighan}. We
-will discuss the Lin-Kernighan heuristic and the Lin-Kernighan-Helsgaun variant~\cite{lkh} in
-Section~\ref{sec:lkh}.
-For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms
-\cite{TODO: assuming this is even true, the other one}.
-Unfortunately they often require to finetune a lot of parameters and are focussed on specific
-instances of VRP, rather than giving consistent solutions for all versions \cite{hmmz, where to find
-a good citation for this one}. Other heuristics like the classic savings heuristic or the sweep
-heuristic do give good solutions for all variants of VRP, but they can't get the results one
-gets with the tabu heuristics.
+are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lin-kernighan, NO,
+CITE SOMETHING ABOUT THE COMPETING PART HERE}, most notably the implementation of
+Helsgaun~\cite{lkh2}.
+For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms \cite{TODO:
+assuming this is even true, the other one}.  Unfortunately they often require to finetune a lot of
+parameters and are focussed on specific instances of VRP, rather than giving consistent solutions
+for all versions \cite{hmmz, where to find a good citation for this one}. Other heuristics like the
+classic savings heuristic or the sweep heuristic do give good solutions for all variants of VRP, but
+they can't get the results one gets with the tabu heuristics.
+For the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic because it is one of the best
+heuristics available and is available for academic use in both binary and source code. We will
+discuss the Lin-Kernighan heuristic and the Lin-Kernighan-Helsgaun variant in Section~\ref{sec:lkh}
+and Section~\ref{sec:lk}.
+For the VRP we chose to use one run of the savings heuristic and multiple runs of the sweep
+heuristic, because of their fast running times, reasonable quality of solutions and ease of
+implementation. We will discuss these heuristics in Section~\ref{sec:savings} and
+Section~\ref{sweep}.
+% TODO: With possibly an optimization using LKH - and possibly multiple pertubated runs of savings.
 % SWEEP????????
 
     \subsection{Lin Kernighan}
     \label{sec:lk}
-    % Introduction to Lin-Kernighan
     % TODO: check for the use of 'we' and 'they'
-    The Lin-Kernighan heuristic is an improvement heuristic. That means that the strategy to solve
-    the TSP consists of the following steps:
+    % Improvement heuristics
+    The Lin-Kernighan heuristic~\cite{lin-kernighan} is an improvement heuristic. That means that
+    the strategy to solve the TSP consists of the following steps:
     \begin{enumerate}
         \item Generate a (pseudo-) random initial tour.
         \item Try to find a modification of the tour to improve it.
@@ -148,6 +177,8 @@ gets with the tabu heuristics.
             solution is good enough, the pool of initial tours is deplenished, or a time limit is
             reached).
     \end{enumerate}
+
+    % Fixed-k opt
     The interseting part of this strategy is step 2: how do we improve on the current tour. One way
     of doing this is to use a $k$-opt algorithm. In a $k$-opt algorithm we try to find two disjoint
     sets of edges $X$ and $Y$, both containing $k$ edges, such that when we remove the edges in $X$
@@ -156,43 +187,196 @@ gets with the tabu heuristics.
     effectively while being easy to implement.
     2-opt and 3-opt improvements were proposed for the first time by Croes~\cite{2-opt} and
     Lin~\cite{3-opt}, respecively in 1958 and 1965. $k$-opts with higher values of $k$ have been
-    tried as well, for example by TODO~\cite{TODO}, but are less effective.
+    tried as well, for example by Christofides and Eilon~\cite{2-5-opt}, who tried values for $k$ up
+    to 5.
     However, using $k$-opt for fixed $k$ has its limitations. It is unknown on beforehand which
     value of $k$ will give a good result for the running time involved, as it gets substantially
     harder to find the edge sets and their improvements for increasing values of $k$.
 
-    % The acutal generalized k-opt
+    % The actual generalized k-opt
     The Lin-Kernighan algorithm is a $k$-opt algorithm, but for a dynamic $k$. The edge sets to be
     replaced are equal to a sequence of 2-opt exchanges, possibly preceeded by a single 3-opt. The
     difference between this approach and repeatedly applying 2-opt optimizations is that not every
     part of the sequence has to improve on the cost of the tour; it is the cost of the entire
     sequence that matters.
-    Another difference is that in the 2-opt algorithm we first choose the set $X$ of edges in the
-    original tour (i.e. two crossing edges with the euclidean metric) and then find the
-    corresponding set $Y$ of new edges to be inserted in the tour. In the Lin-Kernighan algorithm,
-    the sets $X$ and $Y$ are built up step by step, as the sequence grows.
+    Another difference with the fixed $k$-opt algorithms is that in the 2-opt algorithm we first
+    choose the set $X$ of edges in the original tour (i.e. two crossing edges with the euclidean
+    metric) and then find the corresponding set $Y$ of new edges to be inserted in the tour. In the
+    Lin-Kernighan algorithm, the sets $X$ and $Y$ are built up step by step, as the sequence grows.
     In the algorithm we start by choosing an initial vertex and choose one of the two adjacent edges
-    $x_1$ in the original tour. After that we choose an edge $y_1$ from a set of \#? nearest
-    neighbours and the accompanying edge $x_2$ (which is uniquely defined most of the time).
+    $x_1$ in the original tour. After that we choose an edge $y_1$ from a set of edges to the 5
+    nearest neighbours and the accompanying edge $x_1$ (which is uniquely defined in most cases, see
+    Figure~\ref{fig:lk-unique}).
     Note that the result after removing the edges in $X$ and adding the edges in $Y$ is not a tour,
-    but a path. It can be closed however by adding the edge between the vertex after $x_2$ and the
-    vertex before $x_1$.
+    but a path. It can be closed however by adding the edge $y_2$ between the vertex after $x_2$ and
+    the vertex before $x_1$.
     We keep adding edges $y_i$ and removing edges $x_{i+1}$, untill either the complete sequence
-    including the edge $y_{i+2}$ that will close the tour if added is shorter than the previous tour
-    (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour even
-    if the next edges would have weight 0 (in which case we failed).
-    If we fail, we can either stop, start again completely, or use backtracking. The latter means
-    that we go back a few steps and try another edge $y_i$ (or occasionally $x_{i+1}$).
-    TODO - more details?
-    % TODO: images
-    \dots
-    We end by remarking that this is only a short description of the main idea in the Lin-Kernighan
-    algorithm. There are many details of importance in the implementation, for whom we refer to the
-    original paper~\cite{lin-kernighan}.
+    (including the edge $y_{i+1}$ that will close the tour if added) is shorter than the previous
+    tour (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour
+    even if the next edges would have weight 0 (in which case we failed). An example is shown in
+    Figure~\ref{fig:lk-example}.
+    If we fail, we can either stop, start again from scratch, or use backtracking. The latter means
+    that we go back a few steps and try another edge $y_i$ (or occasionally another edge $x_{i+1}$).
+
+    This concludes our overview of the Lin-Kernighan heuristic. We remark that this is only a short
+    description of the algorithm and omits many details which are essential for the efficiency
+    of the algorithm, as it is not a simple algorithm to implement~\cite{lkh1}. For a detailed
+    description we refer to the original paper~\cite{lin-kernighan}.
+    % TODO: 4 opt bridge move?
+    % Quote from LKH 1:
+    %   However, the Lin-Kernighan algorithm is not simple to implement. In a survey paper from
+    %   1989 [14] the authors wrote that no other implementation of the algorithm at that time
+    %   had shown as good efficiency as was obtained by Lin and Kernighan.
+
+    % Nice summary in LKH 2 paper: 1-5 on page 5 of 45 (p. 123)
+    % 1: The sequential exchange cirterion
+    % 2: The feasibility criterion
+    % 3: The positive gain criterion
+    % 4: The disjunctivity criterion
+    % 5: The candidate set criterion
+
+    \begin{figure}
+    \centering
+    \begin{tabular}{c c}
+        \begin{tikzpicture}[auto,swap]
+        \node[vertex1] (0) at (1.2, -2.9) {};
+        \node[vertex1] (1) at (1.4, 0.1) {};
+        \node[vertex1] (2) at (2.0, 0.3) {};
+        \node[vertex0] (3) at (4.0, -1.0) {};
+        \node[vertex0] (4) at (4.0, -2.0) {};
+        \node[vertex1] (5) at (1.7, -3.2) {};
+        \path[edge,bend left=48] (0) to (1);
+        \path[edge] (0) to node[below] {$x_1$} (5);
+        \path[edge] (0) to node[right] {$y_1$} (2);
+        \path[edge] (1) to node[above] {$x_2$} (2);
+        \path[edge,dashed] (1) to node[left] {$y_2$} (5);
+        \path[edge,bend left=33] (2) to (3);
+        \path[edge,bend left=12] (3) to (4);
+        \path[edge,bend left=42] (4) to (5);
+        \end{tikzpicture}
+        &
+        \begin{tikzpicture}[auto,swap]
+        \node[vertex1] (0) at (1.2, -2.9) {};
+        \node[vertex1] (1) at (1.4, 0.1) {};
+        \node[vertex1] (2) at (2.0, 0.3) {};
+        \node[vertex1] (3) at (4.1, -1.2) {};
+        \node[vertex1] (4) at (4.1, -1.8) {};
+        \node[vertex1] (5) at (1.7, -3.2) {};
+        \path[edge,bend left=48] (0) to (1);
+        \path[edge] (0) to node[below] {$x_1$} (5);
+        \path[edge] (0) to node[right] {$y_1$} (2);
+        \path[edge] (1) to node[above] {$x_2$} (2);
+        \path[edge] (1) to node[left] {$y_2$} (4);
+        \path[edge,bend left=35] (2) to (3);
+        \path[edge] (3) to node[right] {$x_3$} (4);
+        \path[edge,dashed] (3) to node[left] {$y_3$} (5);
+        \path[edge,bend left=42] (4) to (5);
+        \end{tikzpicture}
+        \\
+    \end{tabular}
+    \caption{An example of a 3-opt move, as constructed by the Lin-Kernighan heuristic. Note that
+    vertices are displayed in a circle in the order they appear in the original tour.}
+    \label{fig:lk-example}
+    \end{figure}
+
+    \begin{figure}
+    \centering
+    \begin{tikzpicture}[auto,swap]
+    \node[vertex1] (0) at (1.2, -2.9) {};
+    \node[vertex1] (1) at (1.4, 0.1) {};
+    \node[vertex1] (2) at (2.0, 0.3) {};
+    \node[vertex1] (3) at (4.2, -1.2) {};
+    \node[vertex1] (4) at (4.2, -1.8) {};
+    \node[vertex1] (5) at (1.7, -3.2) {};
+    \path[edge,bend left=48] (0) to (1);
+    \path[edge] (0) to node[below] {$x_1$} (5);
+    \path[edge] (0) to node[right] {$y_1$} (2);
+    \path[edge] (1) to node[above] {$x_2$} (2);
+    \path[edge] (1) to node[left] {$y_2$} (3);
+    \path[edge,bend left=35] (2) to (3);
+    \path[edge] (3) to node[right] {$x_3$} (4);
+    \path[edge,dashed] (4) to node[left] {$y_3$} (5);
+    \path[edge,bend left=42] (4) to (5);
+    \end{tikzpicture}
+    \caption{An example where the wrong choice for $x_3$ is made, resulting in two disjunct tours.}
+    \label{fig:lk-unique}
+    \end{figure}
 
     \subsection{Lin Kernighan Helsgaun}
     \label{sec:lkh}
-    TODO
+    The Lin-Kernighan-Helsgaun algorithm~\cite{lkh1, lkh2} is based on the algorithm of Lin and
+    Kernighan, but improves on several points.
+
+    % Minimum 1 tree instead of 5 nearest neighbours (section 4.1 (and 4.2 for x_1) in LKH 1 paper)
+    The first major thing that is changed is the candidate set for the edges in $Y$. In the original
+    algorithm the choices for an edge $y_i$ are limited to the edges to the first 5 nearest
+    neighbours. The choice for this candidate set assumes that the shorter an edge is, the higher
+    the chance is that it occurs in a tour. This is reasonable, but it is not always a good
+    estimation. Helsgaun notices that the distance to a minimum 1-tree, called
+    \emph{$\alpha$-nearness}, is a better estimation.
+    A 1-tree for a graph $G=(V, E)$ is a spanning tree on the vertex set $V \setminus \{1\}$
+    combined with two edges from $E$ incident to the 1-vertex. An example of a 1-tree is shown in
+    Figure~\ref{fig:1-tree}. Note that a 1-tree is not a tree (as it contains a cycle) and that the
+    choice of the 1-vertex is arbitrary. A minimum 1-tree is a 1-tree of minimum length. The
+    $\alpha$-nearness of an edge $e$ is defined as the difference between the length of the smallest
+    1-tree containing $e$ and the length of the minimum 1-tree. Or in other words: the increase in
+    length of the minimum 1-tree if it is required to contain the edge $e$.
+    % TODO: subgradient optimization (change the min 1-tree a bit, see bottem of page 23 and below of LKH 1 paper)
+    The candidate set is further modified to always include edges that are in both of the two
+    previous best solutions and try them first.
+
+    The candidate for the edge $x_1$ is also changed so that no edges from the previous best tour
+    are removed in the first level of the improvement step.
+
+    \begin{figure}
+    \centering
+    \begin{tikzpicture}[auto,swap]
+    \node[vertex1] (0) at (5.1, -0.89) {};
+    \node[vertex1] (1) at (4.1, -1.8) {};
+    \node[vertex1] (2) at (2.9, -2.8) {};
+    \node[vertex1] (3) at (4.9, -2.8) {};
+    \node[vertex1] (4) at (4.9, -4.2) {};
+    \node[vertex1] (5) at (6.1, -2.0) {};
+    \node[vertex1] (6) at (7.1, -2.9) {};
+    \node[vertex1] (7) at (8.2, -2.0) {};
+    \node[vertex1] (8) at (8.3, -3.6) {};
+    \node[vertex1] (9) at (7.1, -4.4) {};
+    \node[vertex1,label=0:\;The 1-vertex] (10) at (5.9, -5.3) {};
+    \path[edge] (0) to (1);
+    \path[edge] (0) to (5);
+    \path[edge] (1) to (2);
+    \path[edge] (1) to (3);
+    \path[edge] (3) to (4);
+    \path[edge] (4) to (10);
+    \path[edge] (5) to (6);
+    \path[edge] (6) to (7);
+    \path[edge] (6) to (8);
+    \path[edge] (6) to (9);
+    \path[edge] (9) to (10);
+    \end{tikzpicture}
+    \caption{A 1-tree}
+    \label{fig:1-tree}
+    \end{figure}
+
+    The second major change is the choice of the basic move. In the original Lin-Kernighan algorithm
+    every move was composed as a sequence of 2-opt moves. Helsgaun modified it to use moves that
+    consist of 5-opt moves (unless a $k$-opt move for smaller $k$ results in an improvement
+    already). Later he modified it again to use general $k$-opt moves up to a certain $k$ as the
+    basic step.
+    % - Basic move no longer 2- (or 3-) opt move, but a 5-opt move (but stopped as soon as it
+    %   improves, so it can also do just a 2-opt move for example. Also backtracking removed.
+    %   5-opt as basic step adds quite a lot, as observed by \cite{2-5-opt}.
+    %   Also something with non-sequential moves (no longer just post-optimization). TODO: note in sec:lk.
+    % - General k-opt moves
+
+    % Main points from LKH 1 paper:
+    - Initial tours...
+
+    % Main points from LKH 2 paper:
+    - Partitioning                        (Ignored)
+    - Tour merging                        (Ignored)
+    - Iterative partial transcription     (Ignored)
+    - Backbone-guided search              (Ignored)
 
 
 
@@ -428,12 +612,22 @@ Todo
         \emph{Computer solutions of the traveling salesman problem.}
         Bell System Technical Journal, The, 44(10), 2245-2269.
 
+    \bibitem{2-5-opt}
+        Christofides, N., \& Eilon, S. (1972).
+        \emph{Algorithms for large-scale travelling salesman problems.}
+        Operational Research Quarterly, 511-518.
+
     \bibitem{lin-kernighan}
         Lin, S., \& Kernighan, B. W. (1973).
         \emph{An effective heuristic algorithm for the traveling-salesman problem.}
         Operations research, 21(2), 498-516.
 
-    \bibitem{lkh}
+    \bibitem{lkh1}
+        Helsgaun, K. (2000).
+        \emph{An effective implementation of the Lin–Kernighan traveling salesman heuristic.}
+        European Journal of Operational Research, 126(1), 106-130.
+
+    \bibitem{lkh2}
         Helsgaun, K. (2009).
         \emph{General k-opt submoves for the Lin–Kernighan TSP heuristic.}
         Mathematical Programming Computation, 1(2-3), 119-163.
