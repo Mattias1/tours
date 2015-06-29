@@ -206,17 +206,25 @@ Section~\ref{sweep}.
     In the algorithm we start by choosing an initial vertex and choose one of the two adjacent edges
     $x_1$ in the original tour. After that we choose an edge $y_1$ from a set of edges to the 5
     nearest neighbours and the accompanying edge $x_1$ (which is uniquely defined in most cases, see
-    Figure~\ref{fig:lk-unique}).
+    Figure~\ref{fig:unique-x}).
     Note that the result after removing the edges in $X$ and adding the edges in $Y$ is not a tour,
     but a path. It can be closed however by adding the edge $y_2$ between the vertex after $x_2$ and
     the vertex before $x_1$.
     We keep adding edges $y_i$ and removing edges $x_{i+1}$, untill either the complete sequence
     (including the edge $y_{i+1}$ that will close the tour if added) is shorter than the previous
     tour (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour
-    even if the next edges would have weight 0 (in which case we failed). An example is shown in
-    Figure~\ref{fig:lk-example}.
+    even if the next edges would have weight 0 (in which case we failed).
     If we fail, we can either stop, start again from scratch, or use backtracking. The latter means
     that we go back a few steps and try another edge $y_i$ (or occasionally another edge $x_{i+1}$).
+    An example of this procedure is shown in Figure~\ref{fig:lk-example}.
+
+    After we are done, we also try to apply the double-bridge move (see
+    Figure~\ref{fig:double-bridge}) to improve the tour a bit more. This is the most basic move that
+    cannot be found by Lin-Kernighans normal procedure (because intermediate steps will result in a
+    broken tour) but does produce a valid tour as a whole. Lin and Kernighan found that in some
+    cases this improved the result significantly, while in other cases it did nothing. It doesn't
+    hurt to try though, as it is a relatively cheap optimization.
+    % TODO: is non-sequential defined??? (by me)
 
     This concludes our overview of the Lin-Kernighan heuristic. We remark that this is only a short
     description of the algorithm and omits many details which are essential for the efficiency
@@ -299,7 +307,35 @@ Section~\ref{sweep}.
     \path[edge,bend left=42] (4) to (5);
     \end{tikzpicture}
     \caption{An example where the wrong choice for $x_3$ is made, resulting in two disjunct tours.}
-    \label{fig:lk-unique}
+    \label{fig:unique-x}
+    \end{figure}
+
+    \begin{figure}
+    \centering
+    \begin{tikzpicture}[auto,swap]
+    \node[vertex1] (0) at (6.9, -0.79) {};
+    \node[vertex1] (1) at (7.8, -0.77) {};
+    \node[vertex1] (2) at (6.9, -4.8) {};
+    \node[vertex1] (3) at (7.8, -4.8) {};
+    \node[vertex1] (4) at (9.4, -2.4) {};
+    \node[vertex1] (5) at (9.4, -3.2) {};
+    \node[vertex1] (6) at (5.3, -2.4) {};
+    \node[vertex1] (7) at (5.3, -3.2) {};
+    \path[edge] (0) to node[left] {$y_1$} (2);
+    \path[edge,bend right=30] (0) to (6);
+    \path[edge] (0) to node[above] {$x_2$} (1);
+    \path[edge,bend left=30] (1) to (4);
+    \path[edge] (1) to node[right] {$y_2$} (3);
+    \path[edge] (2) to node[below] {$x_1$} (3);
+    \path[edge,bend left=30] (2) to (7);
+    \path[edge,bend right=30] (3) to (5);
+    \path[edge] (4) to node[right] {$x_4$} (5);
+    \path[edge] (4) to node[above] {$y_3$} (6);
+    \path[edge] (5) to node[below] {$y_4$} (7);
+    \path[edge] (6) to node[left] {$x_3$} (7);
+    \end{tikzpicture}
+    \caption{The double bridge move}
+    \label{fig:double-bridge}
     \end{figure}
 
     \subsection{Lin Kernighan Helsgaun}
@@ -322,11 +358,10 @@ Section~\ref{sweep}.
     1-tree containing $e$ and the length of the minimum 1-tree. Or in other words: the increase in
     length of the minimum 1-tree if it is required to contain the edge $e$.
     % TODO: subgradient optimization (change the min 1-tree a bit, see bottem of page 23 and below of LKH 1 paper)
-    The candidate set is further modified to always include edges that are in both of the two
+    The candidate set then is further modified to always include edges that are in both of the two
     previous best solutions and try them first.
-
-    The candidate for the edge $x_1$ is also changed so that no edges from the previous best tour
-    are removed in the first level of the improvement step.
+    The candidate set for the first edge, $x_1$, is also changed so that no edges from the previous
+    best tour are removed in the first level of the improvement step.
 
     \begin{figure}
     \centering
@@ -362,7 +397,13 @@ Section~\ref{sweep}.
     every move was composed as a sequence of 2-opt moves. Helsgaun modified it to use moves that
     consist of 5-opt moves (unless a $k$-opt move for smaller $k$ results in an improvement
     already). Later he modified it again to use general $k$-opt moves up to a certain $k$ as the
-    basic step.
+    basic step. The steps to do this are rather involved and contain a large case-analysis and won't
+    be described here. For the details we refer to the paper of Helsgaun~\cite{lkh2}. The main idea
+    of his approach however is to allow edges $x_i$ that initially break up the tour (like in
+    Figure~\ref{fig:unique-x}) and restrict the later edges $y_{i+1}$ and $x_{i+1}$ so that the tour
+    can be fixed again. This allows, amoung others, the double bridge move from
+    Figure~\ref{fig:double-bridge} to be included natively in the search.
+    % TODO: double bridge move
     % - Basic move no longer 2- (or 3-) opt move, but a 5-opt move (but stopped as soon as it
     %   improves, so it can also do just a 2-opt move for example. Also backtracking removed.
     %   5-opt as basic step adds quite a lot, as observed by \cite{2-5-opt}.
@@ -370,6 +411,7 @@ Section~\ref{sweep}.
     % - General k-opt moves
 
     % Main points from LKH 1 paper:
+    TODO:
     - Initial tours...
 
     % Main points from LKH 2 paper:
