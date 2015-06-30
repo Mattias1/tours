@@ -61,15 +61,15 @@ heuristics and exact solutions for TSP and VRP.}}
 \label{sec:introduction}
 
 % Heuristics and Cook-Seymour
-For many optimization problems calculating optimal solutions is not feasible in practical
+For many optimization problems calculating provably optimal solutions is not feasible in practical
 applications, because the computation time grows exponentionally with the problem size. Hence,
 heuristics are used to find solutions that are good, but not nescessarily optimal.
 To get more certainty that a solution is good, or to improve the solution even more, the heuristics
 are often applied multiple times and the best solution is selected. Although this works well, Cook
 and Seymour noted in their work on the Traveling Salesman Problem (TSP) \cite{cook-seymour} that by
-discarding the other solutions, possibly valuable information is lost. Hence the idea emerged to
-merge the found approximate solutions and calculate the optimal solution on the merged graph, using
-branch decompositions.
+discarding all but the best solution, possibly valuable information is lost. Hence the idea emerged
+to merge the found approximate solutions and calculate the optimal solution on the merged graph,
+using branch decompositions. % TODO
 
 % Our contribution
 % TODO: is this really at the time of publishing?????
@@ -144,7 +144,8 @@ we will discuss the result and finally we will conclude in Section~\ref{sec:conc
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
 are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lin-kernighan, NO,
 CITE SOMETHING ABOUT THE COMPETING PART HERE}, most notably the implementation of
-Helsgaun~\cite{lkh2}.
+Helsgaun~\cite{lkh2}. In this thesis we use the source code of Helsgaun's
+implementation~\cite{lkh-url}, which is available for academic use.
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms \cite{TODO:
 assuming this is even true, the other one}.  Unfortunately they often require to finetune a lot of
 parameters and are focussed on specific instances of VRP, rather than giving consistent solutions
@@ -344,11 +345,11 @@ Section~\ref{sweep}.
     Kernighan, but improves on several points.
 
     % Minimum 1 tree instead of 5 nearest neighbours (section 4.1 (and 4.2 for x_1) in LKH 1 paper)
-    The first major thing that is changed is the candidate set for the edges in $Y$. In the original
-    algorithm the choices for an edge $y_i$ are limited to the edges to the first 5 nearest
-    neighbours. The choice for this candidate set assumes that the shorter an edge is, the higher
-    the chance is that it occurs in a tour. This is reasonable, but it is not always a good
-    estimation. Helsgaun notices that the distance to a minimum 1-tree, called
+    The first major difference with the Lin-Kernighan algorithm is the candidate set for the edges
+    in $Y$. In the original algorithm the choices for an edge $y_i$ are limited to the edges to the
+    first 5 nearest neighbours. The choice for this candidate set assumes that the shorter an edge
+    is, the higher the chance is that it occurs in a tour. This is reasonable, but it is not always
+    a good estimation. Helsgaun notices that the distance to a minimum 1-tree, called
     \emph{$\alpha$-nearness}, is a better estimation.
     A 1-tree for a graph $G=(V, E)$ is a spanning tree on the vertex set $V \setminus \{1\}$
     combined with two edges from $E$ incident to the 1-vertex. An example of a 1-tree is shown in
@@ -359,9 +360,9 @@ Section~\ref{sweep}.
     length of the minimum 1-tree if it is required to contain the edge $e$.
     % TODO: subgradient optimization (change the min 1-tree a bit, see bottem of page 23 and below of LKH 1 paper)
     The candidate set then is further modified to always include edges that are in both of the two
-    previous best solutions and try them first.
-    The candidate set for the first edge, $x_1$, is also changed so that no edges from the previous
-    best tour are removed in the first level of the improvement step.
+    previous best solutions. These edges are tried first.
+    The candidate set for the first edge to be chosen, $x_1$, is also changed so that no edges from
+    the previous best tour are removed in the first level of the improvement step.
 
     \begin{figure}
     \centering
@@ -394,15 +395,15 @@ Section~\ref{sweep}.
     \end{figure}
 
     The second major change is the choice of the basic move. In the original Lin-Kernighan algorithm
-    every move was composed as a sequence of 2-opt moves. Helsgaun modified it to use moves that
-    consist of 5-opt moves (unless a $k$-opt move for smaller $k$ results in an improvement
-    already). Later he modified it again to use general $k$-opt moves up to a certain $k$ as the
-    basic step. The steps to do this are rather involved and contain a large case-analysis and won't
-    be described here. For the details we refer to the paper of Helsgaun~\cite{lkh2}. The main idea
-    of his approach however is to allow edges $x_i$ that initially break up the tour (like in
-    Figure~\ref{fig:unique-x}) and restrict the later edges $y_{i+1}$ and $x_{i+1}$ so that the tour
-    can be fixed again. This allows, amoung others, the double bridge move from
-    Figure~\ref{fig:double-bridge} to be included natively in the search.
+    every move was composed as a sequence of 2-opt moves (and possibly a 3-opt). Helsgaun modified
+    it to use moves that consist of 5-opt moves (unless a $k$-opt move for smaller $k$ results in an
+    improvement already). Later he modified it again to use general $k$-opt moves up to a certain
+    $k$ that you can choose yourself as the basic step. The steps to do this are rather involved and
+    contain a large case-analysis and won't be described here. For the details we refer to the paper
+    of Helsgaun~\cite{lkh2}. The main idea of his approach however is to allow edges $x_i$ that
+    initially break up the tour (like in Figure~\ref{fig:unique-x}) and restrict the later edges
+    $y_{i+1}$ and $x_{i+1}$ so that the tour can be fixed again. This allows, amoung others, the
+    double bridge move from Figure~\ref{fig:double-bridge} to be included natively in the search.
     % TODO: double bridge move
     % - Basic move no longer 2- (or 3-) opt move, but a 5-opt move (but stopped as soon as it
     %   improves, so it can also do just a 2-opt move for example. Also backtracking removed.
@@ -410,15 +411,39 @@ Section~\ref{sweep}.
     %   Also something with non-sequential moves (no longer just post-optimization). TODO: note in sec:lk.
     % - General k-opt moves
 
-    % Main points from LKH 1 paper:
-    TODO:
-    - Initial tours...
+    % Initial tours
+    As in most improvement heuristics, the Lin-Kernighan algorithm is tried several times on
+    different initial tours. These tours where constructed randomly because construction heuristics
+    where considered unnescessary. Helsgaun notes that even though a good construction heuristic
+    doesn't improve the quality of the final tour a lot, it does improve the running time of the
+    algorithm.
+    The heuristic used by Helsgaun tries to construct a tour greedily by choosing edges that either
+    have an $\alpha$-nearness value of 0 and that are in the previous best tour. If no such edge is
+    found either a random other candidate edge is chosen or, if they are not valid either, an edge
+    to any free vertex.
 
     % Main points from LKH 2 paper:
-    - Partitioning                        (Ignored)
-    - Tour merging                        (Ignored)
-    - Iterative partial transcription     (Ignored)
-    - Backbone-guided search              (Ignored)
+    % Partitioning
+    The Lin-Kernighan-Helsgaun algorithm also adds the possibility of partitioning the original
+    graph into multiple subsets that are solved seperately and then used to improve a given overall
+    tour. Six schemes are allowed: Tour segment, Karp, Delaunay, Rohe, K-means and Space-filling
+    Curve partitioning~\cite{TODO}.
+
+    % Tour merging
+    The heuristic also tries to merge tours. Unlike what we do in this thesis he doesn't solve the
+    merged problem to optimality, but applies the general $k$-opt submoves again, but this time with
+    a larger value of $k$, because the graph is sparse. For this thesis this option is disabled.
+
+    % Iterative partial transcription
+    Another technique used to inmprove the tour is Iterative partial transcription. This attempts to
+    find subchains of different solutions with the same endpoints and replace them with the shorter
+    one. The algorithm used to find these chains is a simplified version of the algorithm by Mobius
+    et al.~\cite{TODO - 29 of LKH2 paper}.
+
+    % Backbone-guided search
+    Lastly the Lin-Kernighan-Helsgaun algorithm implements a simplified version of the algorithm by
+    Zhang and Looks~\cite{TODO - 34 of LKH2 paper} for a backbone-guided search. This means that
+    edges of a fixed number of initial tours are used as candidate edges in later tours.
 
 
 
@@ -441,7 +466,8 @@ the defenition of a tree decomposition.
     \subsection{Tree decomposition and width}
     \label{sec:td-definition}
     A \emph{tree decomposition} of a graph $G=(V, E)$ is a pair $(T=(W, F), X)$, where $T$ is a tree
-    and $X=\{X_i \subset V : i \in W\}$ a set of \emph{bags}, satisfying:
+    with an arbitrary root vertex and $X=\{X_i \subset V : i \in W\}$ a set of \emph{bags},
+    satisfying:
     \begin{enumerate}
         \item $\bigcup_{i \in W} X_i = V,$
         \item for all $(u, v) \in E$ there is an $i \in W$ with $u, v \in X_i$ and
@@ -459,16 +485,16 @@ the defenition of a tree decomposition.
     % Minimum Degree Heuristic
     \subsection{Minimum Degree Heuristic}
     \label{sec:td-heuristic}
-    Calculating the optimal treewidth or the optimal tree decompositions is an NP Hard problem
+    Calculating the optimal treewidth or the optimal tree decomposition is an NP Hard problem
     \cite{find ref}, so finding an optimal decomposition in reasonable time is infeasable unlesss
-    $P=NP$. We also do not nescessarily need a tree decomposition of optimal width, we just need the
+    $P=NP$. We do not nescessarily need a tree decomposition of optimal width, we just need the
     width to be sufficiently small so that our DP algorithm runs fast enough. Therefore, we compute
     our tree decomposition with a heuristic.
 
     Bodlaender and Koster~\cite{tw-upper-bounds} evaluated a number of construction heuristics. We
-    chose the Minimum Degree Heuristic, originally designed by Markowitz~\cite{min-degree}, which is
-    a simple but effective heuristic. It quickly obtains results close to the optimum and is easy to
-    implement.
+    chose to use the Minimum Degree Heuristic, originally designed by Markowitz~\cite{min-degree},
+    which is a simple but effective heuristic. It quickly obtains results close to the optimum and
+    is easy to implement.
     The algorithm consists of the following steps:
     \begin{enumerate}
         \itemsep 0em
@@ -481,8 +507,9 @@ the defenition of a tree decomposition.
     To complete the tree decomposition we choose the first vertex of $W$ to be the root of the tree.
     Finally we remove the last two vertices from $W$, because their bags only contain 1 or 2 vertices
     and are fully contained in another bag. We can do this because the graph $G$ is obtained by merging
-    tours, and therefore every vertex is guaranteed to have at least two neighbours.
-    For the VRP we also add the depot vertex to every bag.
+    tours, and therefore every vertex is guaranteed to have at least two neighbours. This is
+    specific to TSP and VRP.
+    When we are solving the VRP, we also add the depot vertex to every bag.
 
     % TODO: the depot vertex causes G to be not 2-connected! - Make sure this doesn't cause any trouble!
 
@@ -495,9 +522,9 @@ the defenition of a tree decomposition.
 %
 \section{Dynamic programming}
 \label{sec:dp}
-Provided the width is small enough, the optimal solution for the merged graph can be computed using
-a dynamic programming algorithm on the tree decomposition of the graph. In the following sections
-we explain the details of the algorithms.
+Provided the width is small enough, the optimal solution for TSP or VRP on the merged graph can be
+computed using a dynamic programming algorithm on the tree decomposition of the graph. In the
+following sections we explain the details of the algorithms.
 % TODO: roadmap
 
     \subsection{Traveling Salesman}
