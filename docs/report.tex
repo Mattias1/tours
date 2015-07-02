@@ -15,10 +15,10 @@ heuristics and exact solutions for TSP and VRP.}}
 \providecommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
 
 \begin{document}
-\tikzstyle{vertex2} = [circle,fill=black!25,minimum size=18pt,align=center,font=\tiny,inner sep=0pt]
+\tikzstyle{vertex2} = [circle,fill=black!25,minimum size=24pt,align=center,font=\small,inner sep=0pt]
 \tikzstyle{vertex1} = [circle,fill=black!75,minimum size=4pt,align=center,inner sep=0pt]
 \tikzstyle{vertex0} = [circle,fill=black!75,minimum size=1pt,inner sep=0pt]
-\tikzstyle{bag} = [circle,fill=black!25,minimum size=35pt,align=center,text width=35pt,font=\tiny,inner sep=0pt]
+\tikzstyle{bag} = [circle,fill=black!25,minimum size=45pt,align=center,text width=40pt,font=\small,inner sep=0pt]
 \tikzstyle{edge} = [draw=black!75,-]
 \tikzstyle{arc} = [draw,->-]
 \tikzstyle{weight} = [font=\small]
@@ -27,9 +27,11 @@ heuristics and exact solutions for TSP and VRP.}}
 
 % Notes:
 % Whenever I mention a graph, I should call it a complete graph, that will be sufficiently precise.
-% A complete graph is a graph that TODO TODO TODO.
+% A complete graph is a simple undirected graph in which every pair of distinct vertices is
+% connected by a unique edge.
+% A simple graph is an unweighted, undirected graph containing no self loops or multiple edges.
 %
-% TODO: is a cycle defined as a set of edges, or shoulld I define a tour as a set of edges forming a
+% TODO: is a cycle defined as a set of edges, or should I define a tour as a set of edges forming a
 %       cycle, rather then just a cycle.
 %
 % Things to think of:
@@ -66,19 +68,18 @@ applications, because the computation time grows exponentionally with the proble
 heuristics are used to find solutions that are good, but not nescessarily optimal.
 To get more certainty that a solution is good, or to improve the solution even more, the heuristics
 are often applied multiple times and the best solution is selected. Although this works well, Cook
-and Seymour noted in their work on the Traveling Salesman Problem (TSP) \cite{cook-seymour} that by
+and Seymour noted in their work on the Traveling Salesman Problem~\cite{cook-seymour} that by
 discarding all but the best solution, possibly valuable information is lost. Hence the idea emerged
-to merge the found approximate solutions and calculate the optimal solution on the merged graph,
-using branch decompositions. % TODO
+to merge all the found solution tours in a single graph and calculate the optimal solution on the
+branch-decomposition of that graph.
 
-% Our contribution
 % TODO: is this really at the time of publishing?????
 % (1-2 years before - sept 2001), while publish date is 2002 or (2003 according to google scholar)
 % TODO: find reference
-                                                                                    % TODO TODO TODO TODO TODO TODO TODO TODO TODO
+                                                                                    % TODO TODO TODO TODO TODO TODO TODO TODO
 At the time of publishing, the solutions found by Cook and Seymour improved on the best known
-results for instances with almost 25000 vertices \cite{the sweden instance}. Since then other
-heuristics have improved massively and outperform the approach by Cook and Seymour \cite{lkh2}. In
+results for instances with almost 25000 vertices~\cite{the sweden instance}. Since then other
+heuristics have improved massively and outperform the approach by Cook and Seymour~\cite{lkh2}. In
 this thesis, we will try if the strategy for TSP by Cook and Seymour can still improve current
 heuristics even more. Furthermore, we will try to extend it to work for the Vehicle Routing Problem
 (VRP).
@@ -107,19 +108,20 @@ of the scope of this thesis.
 
 % Summary of the entire approach.
 To solve the TSP and VRP we apply the following stragegy: We start by calculating an initial set of
-solutions using heuristics, this gives us a set of promising edges $E \subset E'$. After that we
-merge the solutions into a subgraph $G = (V, E)$. On this graph we (hopefully) find a tree
-decomposition with small width $k$. With that decomposition we can calculate the optimal solution
-in $G$ using a dynamic programming algorithm that has a running time exponential in $k$ but linear
-in the number of vertices. This solution often improves on each of the solutions of the heuristic
-(TODO: OR NOT, WAIT FOR RESULTS!).
+solutions using heuristics. We then merge all the edges of these solutions into a set of promising
+edges $E \subset E'$. After that we merge the solutions into a subgraph $G = (V, E)$. On this graph
+we (hopefully) find a tree decomposition with small width $k$. With that decomposition we can
+calculate the optimal solution in $G$ using a dynamic programming algorithm that has a running time
+exponential in $k$ but linear in the number of vertices. This solution often improves on each of the
+solutions of the heuristic (TODO: OR NOT, WAIT FOR RESULTS!).
+% Our contribution
 
 % Structure
 The paper is organised as follows: in Section~\ref{sec:heuristics} we will discuss the heuristics
 used to generate the initial tours and routes. In Section~\ref{sec:td} we will discuss how the
 solutions are merged and how the treedecomposition is calculated and in Section~\ref{sec:dp} we will
 show the dynamic programming algorithms on the computed decompositions. In Section~\ref{sec:results}
-we will discuss the result and finally we will conclude in Section~\ref{sec:conclusion}.
+we will discuss the result and finally we conclude in Section~\ref{sec:conclusion}.
 
 % TODO: are we (am I) the only one doing something with the cook-seymour approach? (but one recent: yes)
 %   (related work)
@@ -154,8 +156,8 @@ classic savings heuristic or the sweep heuristic do give good solutions for all 
 they can't get the results one gets with the tabu heuristics.
 For the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic because it is one of the best
 heuristics available and is available for academic use in both binary and source code. We will
-discuss the Lin-Kernighan heuristic and the Lin-Kernighan-Helsgaun variant in Section~\ref{sec:lkh}
-and Section~\ref{sec:lk}.
+discuss the Lin-Kernighan heuristic and the Lin-Kernighan-Helsgaun variant in Section~\ref{sec:lk}
+and Section~\ref{sec:lkh}.
 For the VRP we chose to use one run of the savings heuristic and multiple runs of the sweep
 heuristic, because of their fast running times, reasonable quality of solutions and ease of
 implementation. We will discuss these heuristics in Section~\ref{sec:savings} and
@@ -174,7 +176,7 @@ Section~\ref{sweep}.
         \item Try to find a modification of the tour to improve it.
         \item If an improved solution is found, replace the tour and repeat from step 2.
         \item If no improved solutions can be found anymore, we are at a local optimum. We can
-            either start again from step 1 or stop, depending on some stopping criterium (e.g. the
+            either start again from step 1 or stop, depending on some stopping criterium (e.g.\ the
             solution is good enough, the pool of initial tours is deplenished, or a time limit is
             reached).
     \end{enumerate}
@@ -201,7 +203,7 @@ Section~\ref{sweep}.
     part of the sequence has to improve on the cost of the tour; it is the cost of the entire
     sequence that matters.
     Another difference with the fixed $k$-opt algorithms is that in the 2-opt algorithm we first
-    choose the set $X$ of edges in the original tour (i.e. two crossing edges with the euclidean
+    choose the set $X$ of edges in the original tour (i.e.\ two crossing edges with the euclidean
     metric) and then find the corresponding set $Y$ of new edges to be inserted in the tour. In the
     Lin-Kernighan algorithm, the sets $X$ and $Y$ are built up step by step, as the sequence grows.
     In the algorithm we start by choosing an initial vertex and choose one of the two adjacent edges
@@ -251,32 +253,32 @@ Section~\ref{sweep}.
         \node[vertex1] (0) at (1.2, -2.9) {};
         \node[vertex1] (1) at (1.4, 0.1) {};
         \node[vertex1] (2) at (2.0, 0.3) {};
-        \node[vertex0] (3) at (4.0, -1.0) {};
-        \node[vertex0] (4) at (4.0, -2.0) {};
+        \node[vertex0] (3) at (4.1, -1.2) {};
+        \node[vertex0] (4) at (3.9, -2.4) {};
         \node[vertex1] (5) at (1.7, -3.2) {};
         \path[edge,bend left=48] (0) to (1);
         \path[edge] (0) to node[below] {$x_1$} (5);
         \path[edge] (0) to node[right] {$y_1$} (2);
         \path[edge] (1) to node[above] {$x_2$} (2);
         \path[edge,dashed] (1) to node[left] {$y_2$} (5);
-        \path[edge,bend left=33] (2) to (3);
-        \path[edge,bend left=12] (3) to (4);
-        \path[edge,bend left=42] (4) to (5);
+        \path[edge,bend left=36] (2) to (3);
+        \path[edge,bend left=19] (3) to (4);
+        \path[edge,bend left=32] (4) to (5);
         \end{tikzpicture}
         &
         \begin{tikzpicture}[auto,swap]
         \node[vertex1] (0) at (1.2, -2.9) {};
         \node[vertex1] (1) at (1.4, 0.1) {};
         \node[vertex1] (2) at (2.0, 0.3) {};
-        \node[vertex1] (3) at (4.1, -1.2) {};
-        \node[vertex1] (4) at (4.1, -1.8) {};
+        \node[vertex1] (3) at (4.2, -1.2) {};
+        \node[vertex1] (4) at (4.2, -1.8) {};
         \node[vertex1] (5) at (1.7, -3.2) {};
         \path[edge,bend left=48] (0) to (1);
         \path[edge] (0) to node[below] {$x_1$} (5);
         \path[edge] (0) to node[right] {$y_1$} (2);
         \path[edge] (1) to node[above] {$x_2$} (2);
         \path[edge] (1) to node[left] {$y_2$} (4);
-        \path[edge,bend left=35] (2) to (3);
+        \path[edge,bend left=36] (2) to (3);
         \path[edge] (3) to node[right] {$x_3$} (4);
         \path[edge,dashed] (3) to node[left] {$y_3$} (5);
         \path[edge,bend left=42] (4) to (5);
@@ -294,18 +296,18 @@ Section~\ref{sweep}.
     \node[vertex1] (0) at (1.2, -2.9) {};
     \node[vertex1] (1) at (1.4, 0.1) {};
     \node[vertex1] (2) at (2.0, 0.3) {};
-    \node[vertex1] (3) at (4.2, -1.2) {};
-    \node[vertex1] (4) at (4.2, -1.8) {};
+    \node[vertex1] (3) at (4.2, -1.8) {};
+    \node[vertex1] (4) at (4.0, -2.4) {};
     \node[vertex1] (5) at (1.7, -3.2) {};
     \path[edge,bend left=48] (0) to (1);
     \path[edge] (0) to node[below] {$x_1$} (5);
     \path[edge] (0) to node[right] {$y_1$} (2);
     \path[edge] (1) to node[above] {$x_2$} (2);
     \path[edge] (1) to node[left] {$y_2$} (3);
-    \path[edge,bend left=35] (2) to (3);
+    \path[edge,bend left=43] (2) to (3);
     \path[edge] (3) to node[right] {$x_3$} (4);
     \path[edge,dashed] (4) to node[left] {$y_3$} (5);
-    \path[edge,bend left=42] (4) to (5);
+    \path[edge,bend left=32] (4) to (5);
     \end{tikzpicture}
     \caption{An example where the wrong choice for $x_3$ is made, resulting in two disjunct tours.}
     \label{fig:unique-x}
@@ -314,14 +316,14 @@ Section~\ref{sweep}.
     \begin{figure}
     \centering
     \begin{tikzpicture}[auto,swap]
-    \node[vertex1] (0) at (6.9, -0.79) {};
-    \node[vertex1] (1) at (7.8, -0.77) {};
-    \node[vertex1] (2) at (6.9, -4.8) {};
-    \node[vertex1] (3) at (7.8, -4.8) {};
-    \node[vertex1] (4) at (9.4, -2.4) {};
-    \node[vertex1] (5) at (9.4, -3.2) {};
-    \node[vertex1] (6) at (5.3, -2.4) {};
-    \node[vertex1] (7) at (5.3, -3.2) {};
+    \node[vertex1] (0) at (7.0, -0.94) {};
+    \node[vertex1] (1) at (7.7, -0.94) {};
+    \node[vertex1] (2) at (7.0, -4.5) {};
+    \node[vertex1] (3) at (7.7, -4.5) {};
+    \node[vertex1] (4) at (9.1, -2.4) {};
+    \node[vertex1] (5) at (9.1, -3.1) {};
+    \node[vertex1] (6) at (5.5, -2.4) {};
+    \node[vertex1] (7) at (5.5, -3.1) {};
     \path[edge] (0) to node[left] {$y_1$} (2);
     \path[edge,bend right=30] (0) to (6);
     \path[edge] (0) to node[above] {$x_2$} (1);
@@ -417,10 +419,10 @@ Section~\ref{sweep}.
     where considered unnescessary. Helsgaun notes that even though a good construction heuristic
     doesn't improve the quality of the final tour a lot, it does improve the running time of the
     algorithm.
-    The heuristic used by Helsgaun tries to construct a tour greedily by choosing edges that either
-    have an $\alpha$-nearness value of 0 and that are in the previous best tour. If no such edge is
-    found either a random other candidate edge is chosen or, if they are not valid either, an edge
-    to any free vertex.
+    The heuristic used by Helsgaun tries to construct a tour greedily by choosing edges that are in
+    the minimum 1-tree and that are in the previous best tour. If no such edge is found either a
+    random other candidate edge is chosen or, if they are not valid either, an edge to any free
+    vertex.
 
     % Main points from LKH 2 paper:
     % Partitioning
@@ -475,8 +477,40 @@ the defenition of a tree decomposition.
     \end{enumerate}
     The \emph{width} $k$ of the tree decomposition is $\max_{i \in W} |X_i| - 1$. The \emph{treewidth}
     of a graph $G$, is the minimum width among all tree decompositions of $G$.
+    An example of a tree decomposition is shown in Figure~\ref{fig:td}.
 
-    % TODO: example of graph with it's tree decomposition.
+    \begin{figure}
+    \centering
+    \begin{tikzpicture}[auto,swap]
+    \node[vertex2] (0) at (0.59, -3.7) {0};
+    \node[vertex2] (1) at (2.3, -0.78) {1};
+    \node[vertex2] (2) at (3.0, -2.5) {2};
+    \node[vertex2] (3) at (5.2, -2.4) {3};
+    \node[vertex2] (4) at (3.0, -4.2) {4};
+    \node[vertex2] (5) at (4.7, -5.6) {5};
+    \node[vertex2] (6) at (1.6, -6.0) {6};
+    \path[edge] (0) to (1);
+    \path[edge] (0) to (4);
+    \path[edge] (0) to (6);
+    \path[edge] (1) to (2);
+    \path[edge] (1) to (3);
+    \path[edge] (2) to (3);
+    \path[edge] (2) to (4);
+    \path[edge] (3) to (4);
+    \path[edge] (3) to (5);
+    \path[edge] (4) to (5);
+    \path[edge] (5) to (6);
+    \node[bag] (0) at (9.5, -1.2) {0: 0, 1, 3, 4};
+    \node[bag] (1) at (8.0, -3.3) {1: 1, 2, 3, 4};
+    \node[bag] (2) at (1.1e+01, -3.3) {2: 0, 3, 4, 5};
+    \node[bag] (3) at (1.1e+01, -5.8) {3: 0, 5, 6};
+    \path[edge] (0) to (1);
+    \path[edge] (0) to (2);
+    \path[edge] (2) to (3);
+    \end{tikzpicture}
+    \caption{An example of a graph $G$ and its tree decomposition.}
+    \label{fig:td}
+    \end{figure}
 
     Throughout this thesis we often work with the edge set corresponding to the vertex $i \in W$, rather
     than the vertex set $X_i$ itself. To that end we define $Y_i = \{(u,v) \in E: u,v \in X_i \}$.
@@ -493,8 +527,8 @@ the defenition of a tree decomposition.
 
     Bodlaender and Koster~\cite{tw-upper-bounds} evaluated a number of construction heuristics. We
     chose to use the Minimum Degree Heuristic, originally designed by Markowitz~\cite{min-degree},
-    which is a simple but effective heuristic. It quickly obtains results close to the optimum and
-    is easy to implement.
+    because it is a simple but effective heuristic. It is fast, obtains results close to the optimum
+    and is easy to implement.
     The algorithm consists of the following steps:
     \begin{enumerate}
         \itemsep 0em
@@ -508,7 +542,7 @@ the defenition of a tree decomposition.
     Finally we remove the last two vertices from $W$, because their bags only contain 1 or 2 vertices
     and are fully contained in another bag. We can do this because the graph $G$ is obtained by merging
     tours, and therefore every vertex is guaranteed to have at least two neighbours. This is
-    specific to TSP and VRP.
+    specific to TSP and VRP\@.
     When we are solving the VRP, we also add the depot vertex to every bag.
 
     % TODO: the depot vertex causes G to be not 2-connected! - Make sure this doesn't cause any trouble!
@@ -522,8 +556,8 @@ the defenition of a tree decomposition.
 %
 \section{Dynamic programming}
 \label{sec:dp}
-Provided the width is small enough, the optimal solution for TSP or VRP on the merged graph can be
-computed using a dynamic programming algorithm on the tree decomposition of the graph. In the
+Provided the width is small enough, the optimal solution for the TSP or VRP on the merged graph can
+be computed using a dynamic programming algorithm on the tree decomposition of the graph. In the
 following sections we explain the details of the algorithms.
 % TODO: roadmap
 
@@ -605,7 +639,7 @@ following sections we explain the details of the algorithms.
     or in the bag itself by choosing an edge from $Y_i$. Formally this becomes
     \[
         F(X_i, D, M) = \min_{1 \leq p \leq P_i} (
-            \sum_{j \in W :\text{ Parent}(j) = i} F(X_j, D_{p,j}, M_{p,j}) + \sum_{e \in E_p} c_e
+            \sum_{j \in W :\text{\ Parent}(j) = i} F(X_j, D_{p,j}, M_{p,j}) + \sum_{e \in E_p} c_e
         )
     \]
     for all $P_i$ ways of dividing $D$ and $M$ into the $D_{p,j}$ and $M_{p,j}$ sets and the
@@ -633,7 +667,7 @@ following sections we explain the details of the algorithms.
     % TODO: the graph is not 2-connected in this case, maybe note it, maybe not.
 
     \subsection{Speed}
-    Although DP running time upperbounds of $O(n 3^k 2^{k^2}) - TODO???$ and $O(M n 3^k 2^{\dots})$
+    Although DP running time upperbounds of $O(n 3^k 2^{k^2}) - TODO$??? and $O(M n 3^k 2^{\dots})$
     are terrible, in practice these limits are never reached. This is because edges\dots TODO
 
     % Variations:
