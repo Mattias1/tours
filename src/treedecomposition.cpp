@@ -165,6 +165,8 @@ void TreeDecomposition::MinimumDegree() {
 
     // Fix vids
     for (int i=0; i<this->vertices.size(); ++i) {
+        // The original algorithm assigns the vids from the vertices of the original graph.
+        // We fix them here to ensure our that vertices in a list are indexed by their vids.
         this->vertices[i]->vid = i;
     }
 

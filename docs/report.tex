@@ -12,7 +12,10 @@ heuristics and exact solutions for TSP and VRP.}}
 \usepackage{algpseudocode}
 \usepackage[margin=1.5in]{geometry}
 
-\providecommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
+\newcommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
+\newcommand{\ccP}[0]{\textsc{P}}
+\newcommand{\ccNP}[0]{\textsc{NP}}
+
 
 \begin{document}
 \tikzstyle{vertex2} = [circle,fill=black!25,minimum size=24pt,align=center,font=\small,inner sep=0pt]
@@ -30,9 +33,6 @@ heuristics and exact solutions for TSP and VRP.}}
 % A complete graph is a simple undirected graph in which every pair of distinct vertices is
 % connected by a unique edge.
 % A simple graph is an unweighted, undirected graph containing no self loops or multiple edges.
-%
-% TODO: is a cycle defined as a set of edges, or should I define a tour as a set of edges forming a
-%       cycle, rather then just a cycle.
 %
 % Things to think of:
 % - A tour SATISFIES a demand; it doesn't HAVE a demand.
@@ -519,9 +519,9 @@ the defenition of a tree decomposition.
     % Minimum Degree Heuristic
     \subsection{Minimum Degree Heuristic}
     \label{sec:td-heuristic}
-    Calculating the optimal treewidth or the optimal tree decomposition is an NP Hard problem
-    \cite{find ref}, so finding an optimal decomposition in reasonable time is infeasable unlesss
-    $P=NP$. We do not nescessarily need a tree decomposition of optimal width, we just need the
+    Calculating the optimal treewidth or the optimal tree decomposition is an \ccNP-Hard problem
+    \cite{find ref}, so finding an optimal decomposition in reasonable time is infeasable unless
+    \ccP=\ccNP\@. We do not nescessarily need a tree decomposition of optimal width, we just need the
     width to be sufficiently small so that our DP algorithm runs fast enough. Therefore, we compute
     our tree decomposition with a heuristic.
 
@@ -529,20 +529,37 @@ the defenition of a tree decomposition.
     chose to use the Minimum Degree Heuristic, originally designed by Markowitz~\cite{min-degree},
     because it is a simple but effective heuristic. It is fast, obtains results close to the optimum
     and is easy to implement.
-    The algorithm consists of the following steps:
+    A non-recursive version of the algorithm consists of the following steps:
     \begin{enumerate}
         \itemsep 0em
-        \item Take the vertex $v \in V$ with minimum degree and add it to $W$.
-        \item Create a bag $X_v$ with $v$ and all it's neighbours.
-        \item Turn all the neighbours of $v$ into a clique and remove $v$ from $V$.
-        \item Add an edge $(v, w)$ to $F$, where $w$ is the neighbour of $v$ with the smallest degree.
-        \item Repeat step 1 to 4 untill all vertices are processed and $V = \emptyset$.
+        \item
+            Initially let $(T=(W, F), X)$ with $W$, $F$ and $X$ set to $\emptyset$.
+        \item
+        \label{enum:min-degree-begin}
+            Take the vertex $v \in V$ with minimum degree and add it to $W$; i.e.\ add a new
+            vertex to $W$ with the same name as $v$.
+            The reason to give it the same name is that it allows us to add edges ahead of time in
+            step~\ref{enum:min-degree-add-edge}.
+        \item
+            Create a bag $X_v$ with $v$ and all its neighbours in $G$.
+        \item
+        \label{enum:min-degree-add-edge}
+            Add an edge $(v, w)$ to $F$, where $w$ is the neighbour of $v$ in $G$ with the smallest
+            degree. Note that $w$ is not yet added to $W$, but will be added in the future.
+        \item
+        \label{enum:min-degree-end}
+            Modify $G$ by turning all the neighbours of $v$ into a clique and removing $v$ from
+            $V$ (and its incident edges from $E$).
+        \item
+            Repeat step~\ref{enum:min-degree-begin} to~\ref{enum:min-degree-end} untill all vertices
+            are processed (i.e.\ $V = \emptyset$).
     \end{enumerate}
     To complete the tree decomposition we choose the first vertex of $W$ to be the root of the tree.
-    Finally we remove the last two vertices from $W$, because their bags only contain 1 or 2 vertices
-    and are fully contained in another bag. We can do this because the graph $G$ is obtained by merging
-    tours, and therefore every vertex is guaranteed to have at least two neighbours. This is
-    specific to TSP and VRP\@.
+
+    As a small optimization step specific to the TSP and VRP we remove the last two vertices from
+    $W$. The corresponding bags only contain 1 or 2 vertices and are subsets of another bag. We can
+    do this because the graph $G$ is obtained by merging a set of tours, and therefore every vertex
+    is guaranteed to have at least two neighbours.
     When we are solving the VRP, we also add the depot vertex to every bag.
 
     % TODO: the depot vertex causes G to be not 2-connected! - Make sure this doesn't cause any trouble!
