@@ -286,7 +286,7 @@ string dbg(const vector<vector<pair<int, int>>>& pairs) {
     string result = "[";
     for (int i=0; i<pairs.size(); ++i) {
         for (int j=0; j<pairs[i].size(); ++j) {
-        result += to_string(pairs[i][j].first) + "-" + to_string(pairs[i][j].second);
+        result += "(" + to_string(pairs[i][j].first) + "," + to_string(pairs[i][j].second) + ")";
             if (j != pairs[i].size() - 1)
                 result += ",";
         }

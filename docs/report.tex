@@ -11,6 +11,7 @@ heuristics and exact solutions for TSP and VRP.}}
 \usepackage{tikz}
 \usepackage{algpseudocode}
 \usepackage[margin=1.5in]{geometry}
+\usepackage{hyperref}
 
 \newcommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
 \newcommand{\ccP}[0]{\textsc{P}}
@@ -144,26 +145,25 @@ we will discuss the result and finally we conclude in Section~\ref{sec:conclusio
 \section{Heuristics}
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
-are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lin-kernighan, NO,
+are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lkh1,
 CITE SOMETHING ABOUT THE COMPETING PART HERE}, most notably the implementation of
-Helsgaun~\cite{lkh2}. In this thesis we use the source code of Helsgaun's
-implementation~\cite{lkh-url}, which is available for academic use.
+Helsgaun~\cite{lkh2}.
+To find good initial solutions for the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic
+because it is one of the best heuristics available and its source code is available for academic
+use~\cite{lkh-url}. We will discuss the original Lin-Kernighan heuristic in Section~\ref{sec:lk} and
+the modifications on the original algorithm by Helsgaun's implementation in Section~\ref{sec:lkh}.
+
 For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms \cite{TODO:
-assuming this is even true, the other one}.  Unfortunately they often require to finetune a lot of
+assuming this is even true, the other one}. Unfortunately they often require to finetune a lot of
 parameters and are focussed on specific instances of VRP, rather than giving consistent solutions
 for all versions \cite{hmmz, where to find a good citation for this one}. Other heuristics like the
 classic savings heuristic or the sweep heuristic do give good solutions for all variants of VRP, but
 they can't get the results one gets with the tabu heuristics.
-For the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic because it is one of the best
-heuristics available and is available for academic use in both binary and source code. We will
-discuss the Lin-Kernighan heuristic and the Lin-Kernighan-Helsgaun variant in Section~\ref{sec:lk}
-and Section~\ref{sec:lkh}.
 For the VRP we chose to use one run of the savings heuristic and multiple runs of the sweep
 heuristic, because of their fast running times, reasonable quality of solutions and ease of
 implementation. We will discuss these heuristics in Section~\ref{sec:savings} and
-Section~\ref{sweep}.
+Section~\ref{sec:sweep}.
 % TODO: With possibly an optimization using LKH - and possibly multiple pertubated runs of savings.
-% SWEEP????????
 
     \subsection{Lin Kernighan}
     \label{sec:lk}
@@ -172,29 +172,29 @@ Section~\ref{sweep}.
     The Lin-Kernighan heuristic~\cite{lin-kernighan} is an improvement heuristic. That means that
     the strategy to solve the TSP consists of the following steps:
     \begin{enumerate}
-        \item Generate a (pseudo-) random initial tour.
-        \item Try to find a modification of the tour to improve it.
-        \item If an improved solution is found, replace the tour and repeat from step 2.
+        \item Generate a (possibly random) initial tour.
+        \item Try to find a modification of the tour that improves it.
+        \item If an improved solution is found, replace the tour and repeat from step~2.
         \item If no improved solutions can be found anymore, we are at a local optimum. We can
-            either start again from step 1 or stop, depending on some stopping criterium (e.g.\ the
+            either start again from step~1 or stop, depending on some stopping criterium (e.g.\ the
             solution is good enough, the pool of initial tours is deplenished, or a time limit is
             reached).
     \end{enumerate}
 
     % Fixed-k opt
-    The interseting part of this strategy is step 2: how do we improve on the current tour. One way
+    The interseting part of this strategy is step~2: how do we improve on the current tour. One way
     of doing this is to use a $k$-opt algorithm. In a $k$-opt algorithm we try to find two disjoint
     sets of edges $X$ and $Y$, both containing $k$ edges, such that when we remove the edges in $X$
-    from the current tour and replace them the edges from $Y$ the tour will have a lower cost.
+    from the current tour and replace them with the edges from $Y$ the tour will have a lower cost.
     $k$-opt algorithms are well known and often used heuristics because they improve a tour
     effectively while being easy to implement.
     2-opt and 3-opt improvements were proposed for the first time by Croes~\cite{2-opt} and
     Lin~\cite{3-opt}, respecively in 1958 and 1965. $k$-opts with higher values of $k$ have been
     tried as well, for example by Christofides and Eilon~\cite{2-5-opt}, who tried values for $k$ up
     to 5.
-    However, using $k$-opt for fixed $k$ has its limitations. It is unknown on beforehand which
-    value of $k$ will give a good result for the running time involved, as it gets substantially
-    harder to find the edge sets and their improvements for increasing values of $k$.
+    However, using $k$-opt for fixed $k$ has its limitations. It is unknown beforehand which value
+    of $k$ will give a good result for the running time involved, as it costs substantially more
+    time to find the edge sets and their improvements for increasing values of $k$.
 
     % The actual generalized k-opt
     The Lin-Kernighan algorithm is a $k$-opt algorithm, but for a dynamic $k$. The edge sets to be
@@ -202,42 +202,66 @@ Section~\ref{sweep}.
     difference between this approach and repeatedly applying 2-opt optimizations is that not every
     part of the sequence has to improve on the cost of the tour; it is the cost of the entire
     sequence that matters.
-    Another difference with the fixed $k$-opt algorithms is that in the 2-opt algorithm we first
-    choose the set $X$ of edges in the original tour (i.e.\ two crossing edges with the euclidean
-    metric) and then find the corresponding set $Y$ of new edges to be inserted in the tour. In the
-    Lin-Kernighan algorithm, the sets $X$ and $Y$ are built up step by step, as the sequence grows.
-    In the algorithm we start by choosing an initial vertex and choose one of the two adjacent edges
-    $x_1$ in the original tour. After that we choose an edge $y_1$ from a set of edges to the 5
-    nearest neighbours and the accompanying edge $x_1$ (which is uniquely defined in most cases, see
+    Another difference with the fixed $k$-opt algorithms is in how we choose the sets of edges to be
+    removed or inserted. In the 2-opt algorithm we first choose the set $X$ of edges in the original
+    tour to be removed (i.e.\ two crossing edges with the euclidean metric) and then find the
+    corresponding set $Y$ of new edges to be inserted in the tour. In the Lin-Kernighan algorithm,
+    the sets $X$ and $Y$ are built up step by step, as the sequence grows.
+
+    In the algorithm we start by choosing an initial vertex $t_1$ and choose one of the two
+    adjacent edges $x_1 = (t_1, t_2)$ in the original tour.
+    After we have chosen the first edge $x_1$, we repeatedly choose edges $y_i = (t_{2i}, t_{2i+1})$
+    and $x_{i+1} = (t_{2i+1}, t_{2i+2})$, according to some criteria.
+    Note that $X$ contains one edge more than $Y$. Because of that, if we remove the edges in $X$
+    from the current tour and add the edges in $Y$ to it, the result will not be a tour but a path.
+    However, if $X$ and $Y$ are constructed in the right way, we can close the path by adding the
+    edge $y_{i+1} = (t_{2i+2}, t_1)$.
+    We choose an edge $y_i$ from a set of edges to the 5 nearest neighbours of $t_{2i}$. This edge
+    $y_i$ may not be in the original tour already and the current sequence must have a positive
+    gain, i.e.\ $\sum_{j=0}^i x_j - y_j > 0$. Furthermore, $y_i$ should be chosen such that a next
+    edge $x_{i+1}$ exists (i.e.\ $x_{i+1}$ is not chosen already).
+    The edge $x_{i+1}$ is uniquely defined for all $i \geq 1$, as there are only two edges adjacent
+    to $t_{2i}$ in a tour, and if the wrong one is chosen the tour cannot be closed anymore (see
     Figure~\ref{fig:unique-x}).
-    Note that the result after removing the edges in $X$ and adding the edges in $Y$ is not a tour,
-    but a path. It can be closed however by adding the edge $y_2$ between the vertex after $x_2$ and
-    the vertex before $x_1$.
-    We keep adding edges $y_i$ and removing edges $x_{i+1}$, untill either the complete sequence
-    (including the edge $y_{i+1}$ that will close the tour if added) is shorter than the previous
-    tour (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour
-    even if the next edges would have weight 0 (in which case we failed).
+    An exception is made for $x_2$, where the wrong edge choice is allowed as it can be fixed by
+    the choice for $y_3$ and $x_3$.
+    If there are multiple valid choices for $y_i$ or $x_{i+1}$, we initially choose the one with the
+    highest gain. For $y_i$ we look ahead and choose the edge where $x_{i+1} - y_i$ is largest.
+    For $x_{i+1}$ we choose the edge with the largest weight. Other choices are initially ignored
+    but may be examined via backtracking.
+    We keep adding edges $y_i$ and $x_{i+1}$ to the sets, untill either the complete sequence
+    (including the last edge $y_{i+1}$ that will close the tour) is shorter than the previous tour
+    (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour even
+    if the closing edge $y_{i+1}$ would have weight 0 (in which case we failed).
     If we fail, we can either stop, start again from scratch, or use backtracking. The latter means
     that we go back a few steps and try another edge $y_i$ (or occasionally another edge $x_{i+1}$).
-    An example of this procedure is shown in Figure~\ref{fig:lk-example}.
+    As backtracking is quite time consuming, we only allow it at the first two levels ($i \leq 2$).
+    An example of the dynamic $k$-opt procedure is shown in Figure~\ref{fig:lk-example}.
 
-    After we are done, we also try to apply the double-bridge move (see
-    Figure~\ref{fig:double-bridge}) to improve the tour a bit more. This is the most basic move that
-    cannot be found by Lin-Kernighans normal procedure (because intermediate steps will result in a
-    broken tour) but does produce a valid tour as a whole. Lin and Kernighan found that in some
-    cases this improved the result significantly, while in other cases it did nothing. It doesn't
-    hurt to try though, as it is a relatively cheap optimization.
-    % TODO: is non-sequential defined??? (by me)
+    This describes the overview of the Lin-Kernighan heuristic. We will describe two more
+    optimizations below, one to speed up the algorithm, the other to improve the solution. We remark
+    that there are many more details which are essential for the efficiency of the algorithm, as it
+    is not a simple algorithm to implement~\cite{lkh1}. We omit them here as they are not essential
+    to this thesis. For the exact details we refer to the original paper~\cite{lin-kernighan}.
 
-    This concludes our overview of the Lin-Kernighan heuristic. We remark that this is only a short
-    description of the algorithm and omits many details which are essential for the efficiency
-    of the algorithm, as it is not a simple algorithm to implement~\cite{lkh1}. For a detailed
-    description we refer to the original paper~\cite{lin-kernighan}.
-    % TODO: 4 opt bridge move?
-    % Quote from LKH 1:
-    %   However, the Lin-Kernighan algorithm is not simple to implement. In a survey paper from
-    %   1989 [14] the authors wrote that no other implementation of the algorithm at that time
-    %   had shown as good efficiency as was obtained by Lin and Kernighan.
+    The first optimization reduces the choices for the edges. In the first few solutions found by
+    the algorithm there always are a lot of edges that are in every solution. These common edges are
+    recorded and then after the first solutions they are no longer allowed to be broken. This means
+    they cannot be used as choice for $x_{i+1}$ any more, which in turn limits the choices for $y_i$
+    and speeds up the overall algorithm by a factor of 5. Note that in order to not bias the
+    solution too much, we only use this restriction for $i \geq 4$.
+
+    In the second optimization we apply the double bridge move.
+    The dynamic $k$-opt procedure that we described here only allows us to find so called sequential
+    moves: a series of connected edges, alternating inside and outside the original tour. Not all
+    possible $k$-opts consist of such a sequence however, and not considering these moves can
+    sometimes be the difference between a good solution and the optimal solution. The easiest
+    example of a non sequential move is a 4-opt known as the the double-bridge move (see
+    Figure~\ref{fig:double-bridge}).
+    It is tried as a post-optimization after we finished with the entire algorithm and only for
+    edges that are not amoungst the common edges from the previous optimization. Lin and Kernighan
+    found that in some cases this improved the result significantly, while in other cases it did
+    nothing. It doesn't hurt to try though, as it is a relatively cheap optimization.
 
     % Nice summary in LKH 2 paper: 1-5 on page 5 of 45 (p. 123)
     % 1: The sequential exchange cirterion
@@ -312,6 +336,7 @@ Section~\ref{sweep}.
     \caption{An example where the wrong choice for $x_3$ is made, resulting in two disjunct tours.}
     \label{fig:unique-x}
     \end{figure}
+    % TODO: wrong choice for x_2 ??? That's where I refer to it...
 
     \begin{figure}
     \centering
@@ -340,6 +365,7 @@ Section~\ref{sweep}.
     \caption{The double bridge move}
     \label{fig:double-bridge}
     \end{figure}
+
 
     \subsection{Lin Kernighan Helsgaun}
     \label{sec:lkh}
@@ -462,12 +488,12 @@ $G$ we will compute a tree decomposition so that we can compute the optimal tour
 problem.
 % Roadmap:
 Before we show how we compute this decomposition in Section~\ref{sec:td-heuristic}, we first give
-the defenition of a tree decomposition.
+the defenition of a tree decomposition in Section!\ref{sec:td-definition}.
 
     % What is a tree decomposition
     \subsection{Tree decomposition and width}
     \label{sec:td-definition}
-    A \emph{tree decomposition} of a graph $G=(V, E)$ is a pair $(T=(W, F), X)$, where $T$ is a tree
+    A \emph{tree decomposition} of a graph $G=(V, E)$ is a pair $(T=(W, H), X)$, where $T$ is a tree
     with an arbitrary root vertex and $X=\{X_i \subset V : i \in W\}$ a set of \emph{bags},
     satisfying:
     \begin{enumerate}
@@ -516,6 +542,7 @@ the defenition of a tree decomposition.
     than the vertex set $X_i$ itself. To that end we define $Y_i = \{(u,v) \in E: u,v \in X_i \}$.
     We say that a bag contains a vertex $v$ if $v \in X_i$ and that it contains an edge $e$ if $e \in Y_i$.
 
+
     % Minimum Degree Heuristic
     \subsection{Minimum Degree Heuristic}
     \label{sec:td-heuristic}
@@ -533,7 +560,7 @@ the defenition of a tree decomposition.
     \begin{enumerate}
         \itemsep 0em
         \item
-            Initially let $(T=(W, F), X)$ with $W$, $F$ and $X$ set to $\emptyset$.
+            Initially let $(T=(W, H), X)$ with $W$, $H$ and $X$ set to $\emptyset$.
         \item
         \label{enum:min-degree-begin}
             Take the vertex $v \in V$ with minimum degree and add it to $W$; i.e.\ add a new
@@ -544,7 +571,7 @@ the defenition of a tree decomposition.
             Create a bag $X_v$ with $v$ and all its neighbours in $G$.
         \item
         \label{enum:min-degree-add-edge}
-            Add an edge $(v, w)$ to $F$, where $w$ is the neighbour of $v$ in $G$ with the smallest
+            Add an edge $(v, w)$ to $H$, where $w$ is the neighbour of $v$ in $G$ with the smallest
             degree. Note that $w$ is not yet added to $W$, but will be added in the future.
         \item
         \label{enum:min-degree-end}
@@ -582,20 +609,21 @@ following sections we explain the details of the algorithms.
     \label{sec:dp-tsp}
     % 2-connectedness: to make the graph disjoint, you need to remove at least 2 vertices
     % Simle graph: G is unweighted (?); undirected; no double edges; no self loops.
-    Let $G=(V, E)$ be a simple graph with edge-weights $c_e$ and $(T=(W, F), X)$ be the tree
-    decomposition with width $k - 1$ and $X_i$ and $Y_i$ as defined in Section~\ref{sec:td-definition}.
-    Note that because $G$ is the result of a number of merged tours, it is 2-connected. We say that
-    a bag $X_j$ is below a bag $X_i$ (in the tree) if $i$ is on the path from $j$ to the root of $T$.
+    Let $G=(V, E)$ be a simple graph with edge-weights $c_e$ and $(T=(W, H), X)$ be the tree
+    decomposition with width $k - 1$ and $X_i$ and $Y_i$ be the bags with respecitvely vertices or
+    edges as defined in Section~\ref{sec:td-definition}. We say that a bag $X_j$ is below a bag
+    $X_i$ (in the tree) if $i$ is on the path from $j$ to the root of $T$.
+    Note that because $G$ is the result of a number of merged tours, it is 2-connected and all
+    vertices have a degree of at least two.
     The main idea of the algorithm is to find a series of disjoint paths and connect them together
     into a Hamiltonian tour of minimum weight. A series of these paths start and end in a bag, and
     visit all vertices in bags below that bag in the tree. Such a series of paths is encoded using
-    vertex degrees and a matching. Every vertex can have degree 0, 1 or 2. Vertices with degree 2
+    vertex degrees and a matching.  Every vertex can have degree 0, 1 or 2. Vertices with degree 2
     are already \emph{used} in a path, vertices with degree 1 are \emph{endpoints} of a path and
     vertices with degree 0 are \emph{free}, so not yet used in any of the paths. For every pair of
     endpoints we have an edge $\{u, v\}: u,v \in V$ in the \emph{matching} to mark which vertices
     are the endpoints of a path.
 
-    % TODO: F is now both a function AND a set of edges!!!!
     % TODO: what is the degree of an edge set
     We now define the function $F(X_i, D, M)$ to be the minimum total cost of the edges in a series
     of paths starting and ending in bag $X_i$, where $D$ is a set of degrees for the vertices in
@@ -669,6 +697,7 @@ following sections we explain the details of the algorithms.
     child entries.
 
     % Overview:
+    % - Some defenitions
     % - Idea: Disjoint paths
     % - Vertex degrees: 0, 1, 2
     % - Matchings for the 1's
@@ -677,11 +706,31 @@ following sections we explain the details of the algorithms.
     % - Top down approach; recursive
     % - It tabulates the degrees+matchings
 
+
     \subsection{Vehicle Routing}
     \label{sec:dp-vrp}
-    Todo
+    Let $G=(V, E)$ again be a simple graph with edge-weights $c_e$ and $(T=(W, H), X)$ be the tree
+    decomposition with width $k - 1$ and $X_i$ and $Y_i$ be the bags with respecitvely vertices or
+    edges as defined in Section~\ref{sec:td-definition}. We say that a bag $X_j$ is below a bag
+    $X_i$ (in the tree) if $i$ is on the path from $j$ to the root of $T$.
+    Furthermore let $M$ be the number of trucks that we have to use (and therefore te number of
+    tours that we should find) and let $C$ be the capacity of each truck. We denote the demand of
+    all vertices $v_i \in V$ by $d_i$, and the demand $d_0$ of the depot vertex $v_0$ is equal to 0.
+    Note that $G$ is not 2-connected as was the case for the TSP, as removing the depot vertex
+    causes it to be disconnected, but it still holds that all vertices have a degree of two or more.
 
-    % TODO: the graph is not 2-connected in this case, maybe note it, maybe not.
+    The main idea of the algorithm is the same as the algorithm for the TSP\@. We try to find a
+    series paths that together form set of tours. The instruction of how these paths should be
+    delivered by a bag is again done by specifying the degrees of the vertices and a matching. The
+    degrees of all non-depot vertices can be one of $\{0, 1, 2\}$ like before, but the degree of the
+    depot vertex can be any value between 0 and $2M$. Furthermore we have a restriction that the
+    depot can only appear as an endpoint of a path. The matching-edges used to encode a path are
+    extended with an edge-weight $c_{u, v}$, which denotes that the total demand of vertices on the
+    path from $u$ to $v$ can be at most $c_{u, v}$. While they look simple, these changes complicate
+    the algorithm quite a lot.
+
+    TODO
+
 
     \subsection{Speed}
     Although DP running time upperbounds of $O(n 3^k 2^{k^2}) - TODO$??? and $O(M n 3^k 2^{\dots})$
@@ -751,7 +800,11 @@ Todo
         Helsgaun, K. (2009).
         \emph{General k-opt submoves for the Lin–Kernighan TSP heuristic.}
         Mathematical Programming Computation, 1(2-3), 119-163.
-    % url?
+
+    \bibitem{lkh-url}
+        Helsgaun, K.
+        \emph{LKH}
+        \url{http://www.akira.ruc.dk/~keld/research/LKH/}
 
     \bibitem{tw-upper-bounds}
         Bodlaender, H. L., \& Koster, A. M. (2010).

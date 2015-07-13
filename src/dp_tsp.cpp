@@ -42,18 +42,19 @@ bool MatchingEdge::EqualsSortOf(int vid1, int vid2) const {
     return (this->A == vid1 && this->B == vid2) || (this->B == vid1 && this->A == vid2);
 }
 
-bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vector<unique_ptr<MatchingEdge>>& rMatchingsMemoryManager) {
+// TODO: MAKE SURE NOT TO MERGE MATCHING EDGES AT THE DEPOT VERTICES
+bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vector<unique_ptr<MatchingEdge>>& rMatchingsMemoryManager, bool dontMergeDepot /*=false*/) {
     // Find out who's in the list (and where)
     int posA = -1;
     int otherA = -1;
     int posB = -1;
     int otherB = -1;
     for (int i=0; i<rMatching.size(); ++i) {
-        if (posA == -1 && rMatching[i]->IsIncidentTo(a)) {
+        if (posA == -1 && dontMergeDepot == (isDepot(a)) && rMatching[i]->IsIncidentTo(a)) {
             posA = i;
             otherA = rMatching[i]->Other(a);
         }
-        else if (posB == -1 && rMatching[i]->IsIncidentTo(b)) {
+        else if (posB == -1 && dontMergeDepot == (isDepot(b)) && rMatching[i]->IsIncidentTo(b)) {
             posB = i;
             otherB = rMatching[i]->Other(b);
         }
@@ -61,10 +62,11 @@ bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vec
             break;
         }
     }
-    // Two cases (1): only one is already in there (in this case the path (matching) is extended) (branch on which one is new)
+    // There are three cases.
+    // Case 1: only one is already in there (in this case the path (matching) is extended) (branch on which one is new)
     if (posA == -1) {
         if (posB == -1) {
-            // Third case (3): both are not in here - the matching needs to be added in another way
+            // Case 3: both are not in here - the matching needs to be added in another way (in another part of the code: the recurse functions)
             return false;
         }
         rMatchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(otherB, a, rMatching[posB]->Demand)));
@@ -74,7 +76,7 @@ bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vec
         rMatchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(otherA, b, rMatching[posA]->Demand)));
         rMatching[posA] = rMatchingsMemoryManager.back().get();
     }
-    // or (2): both are already in there (in that case merges the two paths (matchings) together)
+    // Case 2: both are already in there (in that case merges the two paths (matchings) together)
     else {
         rMatchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(otherA, b, rMatching[posA]->Demand)));
         rMatching[posB] = rMatchingsMemoryManager.back().get();
@@ -175,7 +177,7 @@ vector<Edge*> tspReconstruct(const Graph& graph, unordered_map<string, int>& rHa
 
 int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, int i, int j, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints) {
     // Select all possible mixes of degrees for all vertices and evaluate them
-    //   i = the vertex we currently analyze, j = the child we currently analyze
+    //   i = the vertex we currently analyze, j = the child-bag we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
     bool debug = false;
     if (debug) {
@@ -195,8 +197,8 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     if (Xi.getParent() == Xi.edges[j]->Other(Xi) || !Xj.ContainsVertex(Xi.vertices[i]))
         return tspRecurse(graph, rHashlist, Xi, Yi, i, j + 1, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints);
 
-    // If the current degree is 2, try letting the child manage it
     int result = numeric_limits<int>::max();
+    // If the current degree is 2, try letting the child manage it
     if (rTargetDegrees[i] == 2 and rChildDegrees[j][i] == 0) {
         vector<int> td = duplicate(rTargetDegrees);
         vector<vector<int>> cds = duplicate(rChildDegrees);
@@ -223,7 +225,7 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
         td[k] -= 1;
         cds[j][k] += 1;
         // Update the endpoints (update when one (or both) of the endpoints are already in the list, otherwise insert)
-        bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2; // TODO
+        bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2; // TODO, make sure it's not merged at the depot vertex!!!
         if (edgeMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
             if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingsMemoryManager))
@@ -236,9 +238,9 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
         }
 
         // We may have to try to analyze the same vertex again if it's degree is higher than 1
-        result = min(result, tspRecurse(graph, rHashlist, Xi, Yi, i, j, td, cds, rEndpoints, eps));
+        result = min(result, tspRecurse(graph, rHashlist, Xi, Yi, i, j + 1, td, cds, rEndpoints, eps));
     }
-    // Also, try not assigning this degree to anyone, we (maybe) can solve it inside Xi
+    // Also, try not assigning this degree right now, it might be solved for for another child, or we (maybe) can solve it inside Xi
     result = min(result, tspRecurse(graph, rHashlist, Xi, Yi, i, j + 1, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints));
     return result;
 }

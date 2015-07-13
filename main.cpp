@@ -274,8 +274,8 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
         // cout << "----------------------------" << endl << "Done LKH; merged " << mergedTours << " tours" << endl;
 
         // Create the tree decomposition
-        // pTD->MinimumDegree();
-        pTD->CreateRoot(); // Remove this once the Minimum degree is called - it roots the tree for us.
+        pTD->MinimumDegree(true);
+        // pTD->CreateRoot(); // Remove this once the Minimum degree is called - it roots the tree for us.
         int treewidth = pTD->GetTreeWidth();
         cout << "Done minimum degree heuristic (treewidth: " << treewidth << ")" << endl;
 
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
     }
     // Run VRP algorithms
     else {
-        vector<string> FILES = { "test-vrp" };
+        vector<string> FILES = { "test-vrp-2" };
         int SAVINGS_RUNS = 1;
         int SWEEP_RUNS = 0;
 
@@ -328,4 +328,6 @@ int main(int argc, char *argv[])
 
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
 // TODO: Make sure the depot vertex is in every bag
+// TODO: Make sure the depot vertex only appears as endpoint in a path
 // TODO: save in a bag the total demand of all vertices in that bag and below, so that we can return early in bad cases
+// TODO: make sure a {0, 0: ?} path gets the correct demand, and does not get included in these exploding methods

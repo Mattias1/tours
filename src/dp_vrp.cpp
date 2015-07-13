@@ -9,14 +9,6 @@
 #include <assert.h>
 using namespace std;
 
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-//
-// TODO: Make sure the depot vertex is in every bag
-//
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-
 
 //
 //  The core functions used to calculate the tour for the VRP problem.
@@ -112,15 +104,16 @@ vector<vector<Edge*>> vrpReconstruct(const Graph& graph, unordered_map<string, i
     return vrpRecurseVector(graph, rHashlist, Xi, Yi, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
 }
 
-int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, int i, int j, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints) {
+int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, int i, int j, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints, bool ignoreD2D /*=false*/) {
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
+    bool debug = true; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
         cout << "(X" << Xi.vid << ": " << i << ", " << j << ")   " << dbg(rTargetDegrees) << "|" << dbg(rEndpoints) << endl;
+        // cout << dbg("  ", i) << "Child endpoints: " << dbg(rChildEndpoints) << endl;
     }
 
     // Final base case.
@@ -134,9 +127,37 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     if (Xi.getParent() == Xi.edges[j]->Other(Xi) || !Xj.ContainsVertex(Xi.vertices[i]))
         return vrpRecurse(graph, rHashlist, Xi, Yi, i, j + 1, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints);
 
-    // If the current degree is 2, try letting the child manage it (it = the i-th vertex in Xi)
     int result = numeric_limits<int>::max();
-    if (rTargetDegrees[i] == 2 and rChildDegrees[j][i] == 0) {
+    // Special case for the depot vertex: try to pass it on (as a matching {0, 0: -1})
+    vector<unique_ptr<MatchingEdge>> matchingsMemoryManager;
+    if (isDepot(i)) {
+        if (!ignoreD2D && rTargetDegrees[i] >= 2) {
+            vector<int> targetDegrees = duplicate(rTargetDegrees);
+            vector<vector<int>> childDegrees = duplicate(rChildDegrees);
+            vector<vector<MatchingEdge*>> childEndpoints = duplicate(rChildEndpoints);
+            for (int k=0; k<rEndpoints.size(); ++k) { // TODO: This is both the cause of an infinite recursion, and a nescessity to have.
+                if (isDepot(rEndpoints[k]->A) && isDepot(rEndpoints[k]->B)) {
+                    if (debug)
+                        cout << "Add {0, 0: ?}" << endl;
+                    targetDegrees[i] -= 2;
+                    childDegrees[j][i] += 2;
+                    matchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[i]->vid)));
+                    childEndpoints[j].push_back(matchingsMemoryManager.back().get()); // No need (nor allowed) to merge matching edges here (a depot is only allowed as endpoint of a path)
+
+                    vector<int> td = duplicate(targetDegrees);
+                    vector<vector<int>> cds = duplicate(childDegrees);
+                    vector<vector<MatchingEdge*>> eps = duplicate(childEndpoints);
+                    result = vrpRecurse(graph, rHashlist, Xi, Yi, i, j, td, cds, rEndpoints, eps, true);
+                    if (debug)
+                        cout << "Added {0, 0: ?}" << endl;
+                    if (targetDegrees[i] < 2)
+                        break;
+                }
+            }
+        }
+    }
+    // If the current degree is 2, try letting the child manage it (it = the i-th vertex in Xi) (not allowed for depot)
+    else if (rTargetDegrees[i] == 2 and rChildDegrees[j][i] == 0) {
         vector<int> td = duplicate(rTargetDegrees);
         vector<vector<int>> cds = duplicate(rChildDegrees);
         td[i] = 0;
@@ -145,7 +166,6 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     }
     // If the current degree is at least 1 (which it is if we get here), try to combine it (for all other vertices) in a hamiltonian path
     // (all these 'hamiltonian paths' are added as single edges, they are merged later, in cycle check (via ???))
-    vector<unique_ptr<MatchingEdge>> matchingMemoryManager;
     for (int k=i+1; k<Xi.vertices.size(); ++k) {
         // Stay in {0, 1, 2} (and make sure child k has the i-th vertex of Xi as well)
         if (rTargetDegrees[k] < 1 || rChildDegrees[j][k] > 1 || !Xj.ContainsVertex(Xi.vertices[k]))
@@ -167,19 +187,17 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
         bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2;
         if (edgeMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
-            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingMemoryManager))
+            if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingsMemoryManager, true))
                 edgeMightExistAlready = false;
         }
         if (!edgeMightExistAlready) {
             // So now both are new in the list, so we just add (insert) them
-            matchingMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid, -1)));
-            eps[j].push_back(matchingMemoryManager.back().get());
+            matchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[k]->vid)));
+            eps[j].push_back(matchingsMemoryManager.back().get());
         }
-
-        // We may have to try to analyze the same vertex again if it's degree is higher than 1
-        result = min(result, vrpRecurse(graph, rHashlist, Xi, Yi, i, j, td, cds, rEndpoints, eps));
+        result = min(result, vrpRecurse(graph, rHashlist, Xi, Yi, i, isDepot(i) ? j:j+1, td, cds, rEndpoints, eps, true));
     }
-    // Also, try not assigning this degree to anyone, we (maybe) can solve it inside Xi
+    // Also, try not assigning this degree right now, it might be solved for for another child, or we (maybe) can solve it inside Xi
     result = min(result, vrpRecurse(graph, rHashlist, Xi, Yi, i, j + 1, rTargetDegrees, rChildDegrees, rEndpoints, rChildEndpoints));
     return result;
 }
@@ -194,6 +212,9 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     // This method is exactly the same as tspChildEvaluation, except that it calls the vrpEdgeSelect AND vrpTable
     bool debug = Xi.vid==0; // debug = true;
+    if (debug) {
+        cout << dbg("  ", Xi.vertices.size()) << "Child endpoints (child eval): " << dbg(rChildEndpoints) << endl;
+    }
 
     // Check: all bags (except the root) are not allowed to be a cycle.
     if (rEndpoints.size() == 0 and Xi.getParent() != nullptr) {
@@ -511,17 +532,22 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     }
 
     // Empty case
-    if (endpoints.size() == 0) {
-        // TODO - I DON'T KNOW WHAT TO DO HERE RIGHT NOW!!! (this case shouldn't actually occur)
-        // (Probably not return but go on with max capacity value, but also add some initial somethings,
-        //  so that at least there is a pV to get.)
-        if (debug)
-            cout << "ERROR: allChildMatchings - endpoints is empty" << endl;
-        return vector<vector<vector<MatchingEdge>>>();
-    }
+    assert(endpoints.size() > 0);
+    // if (endpoints.size() == 0) { // TODO: remove this commented code???
+    //     // TODO - I DON'T KNOW WHAT TO DO HERE RIGHT NOW!!! (this case shouldn't actually occur)
+    //     // (Probably not return but go on with max capacity value, but also add some initial somethings,
+    //     //  so that at least there is a pV to get.)
+    //     if (debug)
+    //         cout << "ERROR: allChildMatchings - endpoints is empty" << endl;
+    //     return vector<vector<vector<MatchingEdge>>>();
+    // }
 
     // Inits
     vector<vector<pair<int, int>>> pathList = vector<vector<pair<int, int>>>(endpoints.size());
+    // pathList:
+    //     vector, size = nr of paths
+    //       vector, size = nr of subpaths for this path
+    //         pair: (child-index, matching-index (in the child's matching list))
     vector<int> pathDemands = vector<int>(endpoints.size());
     int progressCounter = -1;
     int lastChild = -1;
@@ -556,7 +582,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
 
                 // Check if there is not obviously too little capacity for the sub-paths
                 for (int i=0; i<pathDemands.size(); ++i) {
-                    if (pathDemands[i] < 2 * pathList[i].size()) {
+                    if (pathDemands[i] < 2 * pathList[i].size()) { // TODO: what's that 2 doing here?
                         // TODO: Ehhhh, yeah, what now? How to return an error (int::max) here?
                         if (debug)
                             cout << "Too little capacity for the sub path " << i << endl;
@@ -567,8 +593,10 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                 // Get the numbers for the sub-path demands
                 vector<vector<vector<int>>> allSubPathDemands = vector<vector<vector<int>>>(pathDemands.size());
                 for (int i=0; i<pathDemands.size(); ++i) {
-                    vector<int> loop = vector<int>(pathList[i].size(), 0);
-                    distributeDemands(allSubPathDemands[i], loop, pathDemands[i], pathList[i].size());
+                    if (pathList[i].size() > 0) {
+                        vector<int> loop = vector<int>(pathList[i].size(), 0);
+                        distributeDemands(allSubPathDemands[i], loop, pathDemands[i], pathList[i].size());
+                    }
                 }
                 if (debug) {
                     cout << "  allSubPathDemands: " << endl;

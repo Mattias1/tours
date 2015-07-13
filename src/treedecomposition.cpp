@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "utils.h"
 #include <iostream>
+#include <assert.h>
 using namespace std;
 
 //
@@ -119,9 +120,7 @@ bool TreeDecomposition::CreateRoot(Bag* pRoot, bool adjustCoordinates) {
     return true;
 }
 
-void TreeDecomposition::MinimumDegree() {
-    // TODO: Add depot to every bag (if VRP)
-
+void TreeDecomposition::MinimumDegree(bool depotInAllBags /*= false*/) {
     // Check if the treedecompoistion is empty
     if (this->vertices.size() != 0 || this->pRoot != nullptr) {
         cout << "ERROR!!! - MinimumDegree called on a non empty tree decomposition" << endl;
@@ -141,7 +140,7 @@ void TreeDecomposition::MinimumDegree() {
     vector<int> edgeList = vector<int>();
 
     // Create a tree decomposition (with wrong vids)
-    this->permutationToTreeDecomposition(vertexList, edgeList);
+    this->permutationToTreeDecomposition(vertexList, edgeList, depotInAllBags);
 
     // Add edges
     Vertex* pA;
@@ -174,7 +173,7 @@ void TreeDecomposition::MinimumDegree() {
     this->CreateRoot(true);
 }
 
-void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList) {
+void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList, bool depotInAllBags) {
     // vertexList:   The vid's sorted in order of smallest degree,
     // rEdgeList:    This list will be filled with int-pairs that should become the edges in the final tree decomposition
     //               (but the bags might not be created yet) - provide it with an empty list.
@@ -190,13 +189,16 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
         unique_ptr<Bag> pUniqueBag = unique_ptr<Bag>(new Bag(pV->vid, 240, 60 + 120 * i));
         Bag* pBag = pUniqueBag.get();
 
-        // Add the neighbourhood (in vertexList) of pV to the bag
+        // Add the neighbourhood (in vertexList) of pV to the bag (and, when solving the VRP, the depot as first one)
+        if (depotInAllBags && !isDepot(pV))
+            pBag->vertices.push_back(this->pOriginalGraph->vertices[0].get());
         pBag->vertices.push_back(pV);
         for (int j=i + 1; j<vertexList.size(); ++j)
             for (int k=0; k<pVCopy->edges.size(); ++k)
                 if (pVCopy->edges[k]->Other(*pVCopy)->vid == vertexList[j]) {
                     // We found a vertex that is both a 'neighbour' of pV and still in the vertex list - so add it
-                    pBag->vertices.push_back(this->pOriginalGraph->vertices[ pVCopy->edges[k]->Other(*pVCopy)->vid ].get());
+                    if (!depotInAllBags || !isDepot(pVCopy->edges[k]->Other(*pVCopy)))
+                        pBag->vertices.push_back(this->pOriginalGraph->vertices[ pVCopy->edges[k]->Other(*pVCopy)->vid ].get());
                     break;
                 }
 
@@ -209,7 +211,7 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
             for (int b=a; b<pBag->vertices.size(); ++b) {
                 Vertex* pBCopy = pGraphCopy->vertices[pBag->vertices[b]->vid].get();
                 if (!pACopy->IsConnectedTo(pBCopy)) {
-                    // Ok, a and b are not connected - add the edge (to the copied graph ofcourse - we're not modding the original graph)
+                    // Ok, a and b are not connected - add the edge (to the copied graph of course - we're not modding the original graph)
                     shared_ptr<Edge> pECopy = shared_ptr<Edge>(new Edge(pACopy, pBCopy));
                     pACopy->edges.push_back(pECopy);
                     pBCopy->edges.push_back(pECopy);
@@ -308,8 +310,9 @@ vector<Edge*> Bag::GetBagEdges() const {
         return pEdgeA->Cost < pEdgeB->Cost;
     };
     sort(Yi.begin(), Yi.end(), sortLambda);
-    if (Yi.size() > sizeof(int)) {
-        cout << "ASSERTION ERROR (getBagEdges): There are more edges in bag X" << this->vid << " then there are bits in an int: " << sizeof(int) << endl;
+    if (Yi.size() > sizeof(int) * 8) {
+        cout << "ASSERTION ERROR (getBagEdges): There are more edges in bag X" << this->vid << " then there are bits in an int: " << sizeof(int) << " bytes" << endl;
+        assert(false);
     }
     return Yi;
 }

@@ -45,13 +45,13 @@ class TreeDecomposition : public Graph
         bool CreateRoot(bool adjustCoordinates=false);
         bool CreateRoot(Bag* pRoot, bool adjustCoordinates=false);
 
-        void MinimumDegree();
+        void MinimumDegree(bool depotInAllBags = false);
 
     private:
         Bag* pRoot;
         unique_ptr<Graph> pOriginalGraph;
 
-        void permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList);
+        void permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList, bool depotInAllBags);
 };
 
 #endif // TREEDECOMPOSITION_H
