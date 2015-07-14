@@ -148,7 +148,7 @@ Although many different heuristics have been tried to solve the Traveling Salesm
 are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lkh1,
 CITE SOMETHING ABOUT THE COMPETING PART HERE}, most notably the implementation of
 Helsgaun~\cite{lkh2}.
-To find good initial solutions for the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic
+To find initial solutions for the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic
 because it is one of the best heuristics available and its source code is available for academic
 use~\cite{lkh-url}. We will discuss the original Lin-Kernighan heuristic in Section~\ref{sec:lk} and
 the modifications on the original algorithm by Helsgaun's implementation in Section~\ref{sec:lkh}.
@@ -172,7 +172,7 @@ Section~\ref{sec:sweep}.
     The Lin-Kernighan heuristic~\cite{lin-kernighan} is an improvement heuristic. That means that
     the strategy to solve the TSP consists of the following steps:
     \begin{enumerate}
-        \item Generate a (possibly random) initial tour.
+        \item Generate a (random) initial tour.
         \item Try to find a modification of the tour that improves it.
         \item If an improved solution is found, replace the tour and repeat from step~2.
         \item If no improved solutions can be found anymore, we are at a local optimum. We can
@@ -215,7 +215,7 @@ Section~\ref{sec:sweep}.
     Note that $X$ contains one edge more than $Y$. Because of that, if we remove the edges in $X$
     from the current tour and add the edges in $Y$ to it, the result will not be a tour but a path.
     However, if $X$ and $Y$ are constructed in the right way, we can close the path by adding the
-    edge $y_{i+1} = (t_{2i+2}, t_1)$.
+    edge $y_{i+1} = (t_{2i+2}, t_1)$ to get a tour.
     We choose an edge $y_i$ from a set of edges to the 5 nearest neighbours of $t_{2i}$. This edge
     $y_i$ may not be in the original tour already and the current sequence must have a positive
     gain, i.e.\ $\sum_{j=0}^i x_j - y_j > 0$. Furthermore, $y_i$ should be chosen such that a next
@@ -224,31 +224,32 @@ Section~\ref{sec:sweep}.
     to $t_{2i}$ in a tour, and if the wrong one is chosen the tour cannot be closed anymore (see
     Figure~\ref{fig:unique-x}).
     An exception is made for $x_2$, where the wrong edge choice is allowed as it can be fixed by
-    the choice for $y_3$ and $x_3$.
+    the choice for $y_3$ and $x_4$.
     If there are multiple valid choices for $y_i$ or $x_{i+1}$, we initially choose the one with the
     highest gain. For $y_i$ we look ahead and choose the edge where $x_{i+1} - y_i$ is largest.
-    For $x_{i+1}$ we choose the edge with the largest weight. Other choices are initially ignored
+    For $x_{i+1}$ we choose the edge with the largest weight. Other choices are ignored at first,
     but may be examined via backtracking.
     We keep adding edges $y_i$ and $x_{i+1}$ to the sets, untill either the complete sequence
     (including the last edge $y_{i+1}$ that will close the tour) is shorter than the previous tour
     (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour even
     if the closing edge $y_{i+1}$ would have weight 0 (in which case we failed).
-    If we fail, we can either stop, start again from scratch, or use backtracking. The latter means
-    that we go back a few steps and try another edge $y_i$ (or occasionally another edge $x_{i+1}$).
+    If we fail, we can either stop, start again from scratch (with a different vertex for $t_1$), or
+    use backtracking. The latter means that we go back a few steps and try another edge $y_i$ (or
+    occasionally another edge $x_{i+1}$).
     As backtracking is quite time consuming, we only allow it at the first two levels ($i \leq 2$).
     An example of the dynamic $k$-opt procedure is shown in Figure~\ref{fig:lk-example}.
 
     This describes the overview of the Lin-Kernighan heuristic. We will describe two more
-    optimizations below, one to speed up the algorithm, the other to improve the solution. We remark
-    that there are many more details which are essential for the efficiency of the algorithm, as it
-    is not a simple algorithm to implement~\cite{lkh1}. We omit them here as they are not essential
-    to this thesis. For the exact details we refer to the original paper~\cite{lin-kernighan}.
+    optimizations below, one to speed up the algorithm, the other to improve the solution. There are
+    many more details which are essential for the efficiency of the algorithm however, as it is not
+    a simple algorithm to implement~\cite{lkh1}. We omit them here as they are not essential to this
+    thesis. For the exact details we refer to the original paper~\cite{lin-kernighan}.
 
     The first optimization reduces the choices for the edges. In the first few solutions found by
-    the algorithm there always are a lot of edges that are in every solution. These common edges are
-    recorded and then after the first solutions they are no longer allowed to be broken. This means
-    they cannot be used as choice for $x_{i+1}$ any more, which in turn limits the choices for $y_i$
-    and speeds up the overall algorithm by a factor of 5. Note that in order to not bias the
+    the algorithm there always are a lot of edges that appear in every solution. These common edges
+    are recorded and then they are no longer allowed to be broken for the other solutions. This
+    means they cannot be used as choice for $x_{i+1}$ any more, which in turn limits the choices for
+    $y_i$ and speeds up the overall algorithm significantly. Note that in order to not bias the
     solution too much, we only use this restriction for $i \geq 4$.
 
     In the second optimization we apply the double bridge move.
@@ -384,8 +385,8 @@ Section~\ref{sec:sweep}.
     Figure~\ref{fig:1-tree}. Note that a 1-tree is not a tree (as it contains a cycle) and that the
     choice of the 1-vertex is arbitrary. A minimum 1-tree is a 1-tree of minimum length. The
     $\alpha$-nearness of an edge $e$ is defined as the difference between the length of the smallest
-    1-tree containing $e$ and the length of the minimum 1-tree. Or in other words: the increase in
-    length of the minimum 1-tree if it is required to contain the edge $e$.
+    1-tree containing $e$ and the length of the minimum 1-tree. Or in other words: $\alpha$-nearness
+    is the increase in length of the minimum 1-tree if it is required to contain the edge $e$.
     % TODO: subgradient optimization (change the min 1-tree a bit, see bottem of page 23 and below of LKH 1 paper)
     The candidate set then is further modified to always include edges that are in both of the two
     previous best solutions. These edges are tried first.
@@ -423,15 +424,19 @@ Section~\ref{sec:sweep}.
     \end{figure}
 
     The second major change is the choice of the basic move. In the original Lin-Kernighan algorithm
-    every move was composed as a sequence of 2-opt moves (and possibly a 3-opt). Helsgaun modified
-    it to use moves that consist of 5-opt moves (unless a $k$-opt move for smaller $k$ results in an
-    improvement already). Later he modified it again to use general $k$-opt moves up to a certain
-    $k$ that you can choose yourself as the basic step. The steps to do this are rather involved and
-    contain a large case-analysis and won't be described here. For the details we refer to the paper
-    of Helsgaun~\cite{lkh2}. The main idea of his approach however is to allow edges $x_i$ that
-    initially break up the tour (like in Figure~\ref{fig:unique-x}) and restrict the later edges
-    $y_{i+1}$ and $x_{i+1}$ so that the tour can be fixed again. This allows, amoung others, the
-    double bridge move from Figure~\ref{fig:double-bridge} to be included natively in the search.
+    every move was composed as a sequence of 2-opt moves (and possibly a 3-opt).
+    Helsgaun~\cite{lkh1} modified it to use moves that consist of 5-opt moves (unless a $k$-opt move
+    for smaller $k$ results in an improvement already). Later he modified it again to use general
+    $k$-opt moves up to a certain $k$ that we can choose ourselves as the basic step. The steps to
+    do this are rather involved and contain a large case-analysis and won't be described here in
+    detail. For the details we refer to the paper of Helsgaun~\cite{lkh2}.
+    The main idea of his approach however is that we allow edges $x_i$ that initially break up the
+    tour (like in Figure~\ref{fig:unique-x}). We then look ahead to the following edges $y_{i+1}$
+    and $x_{i+1}$ to make sure that acceptable edges exist that can fix the tour. These edges in
+    their turn do not have to be chosen; we can choose edges with higher gain that break up the tour
+    again, providing we look ahead and find acceptable edges that can fix the tour. This allows,
+    amoung others, the double bridge move from Figure~\ref{fig:double-bridge} to be included
+    natively in the search.
     % TODO: double bridge move
     % - Basic move no longer 2- (or 3-) opt move, but a 5-opt move (but stopped as soon as it
     %   improves, so it can also do just a 2-opt move for example. Also backtracking removed.
@@ -440,38 +445,51 @@ Section~\ref{sec:sweep}.
     % - General k-opt moves
 
     % Initial tours
+    The third change is not aimed at improving the quality of the solutions, but aims to speed up
+    the algorithm.
     As in most improvement heuristics, the Lin-Kernighan algorithm is tried several times on
-    different initial tours. These tours where constructed randomly because construction heuristics
-    where considered unnescessary. Helsgaun notes that even though a good construction heuristic
-    doesn't improve the quality of the final tour a lot, it does improve the running time of the
-    algorithm.
+    different initial tours. These tours where constructed randomly because Lin and Kernighan
+    considered construction heuristics to be unnescessary. Helsgaun notes that even though a good
+    construction heuristic does not significantly improve the quality of the final tour, it does
+    improve the running time of the algorithm.
     The heuristic used by Helsgaun tries to construct a tour greedily by choosing edges that are in
     the minimum 1-tree and that are in the previous best tour. If no such edge is found either a
     random other candidate edge is chosen or, if they are not valid either, an edge to any free
     vertex.
 
-    % Main points from LKH 2 paper:
-    % Partitioning
-    The Lin-Kernighan-Helsgaun algorithm also adds the possibility of partitioning the original
-    graph into multiple subsets that are solved seperately and then used to improve a given overall
-    tour. Six schemes are allowed: Tour segment, Karp, Delaunay, Rohe, K-means and Space-filling
-    Curve partitioning~\cite{TODO}.
+    % Other points from LKH 2 paper:
+    Amoungst some more additions added by Helsgaun is the option of merging tours.
+    Similar to what we do in this thesis he merges the edges of a few solutions in a single graph
+    and on this merged graph he solves the TSP again.
+    Unlike what we do in this thesis he doesn't solve the merged problem to optimality, but applies
+    the general $k$-opt submoves again. This time he uses larger value of $k$, which he can do
+    because the graph is sparse. We disable this option in our experiments, as we perform this
+    calculation ourselves.
+    There are some more additions, but Helsgaun doesn't go into much detail on them, so for these we
+    refer to Helsgaun's paper~\cite{lkh2}.
 
-    % Tour merging
-    The heuristic also tries to merge tours. Unlike what we do in this thesis he doesn't solve the
-    merged problem to optimality, but applies the general $k$-opt submoves again, but this time with
-    a larger value of $k$, because the graph is sparse. For this thesis this option is disabled.
+    % % Original text of me
+    % % Partitioning
+    % The Lin-Kernighan-Helsgaun algorithm also adds the possibility of partitioning the original
+    % graph into multiple subsets that are solved seperately and then used to improve a given overall
+    % tour. Six schemes are allowed: Tour segment, Karp, Delaunay, Rohe, K-means and Space-filling
+    % Curve partitioning~\cite{TODO}.
 
-    % Iterative partial transcription
-    Another technique used to inmprove the tour is Iterative partial transcription. This attempts to
-    find subchains of different solutions with the same endpoints and replace them with the shorter
-    one. The algorithm used to find these chains is a simplified version of the algorithm by Mobius
-    et al.~\cite{TODO - 29 of LKH2 paper}.
+    % % Tour merging
+    % The heuristic also tries to merge tours. Unlike what we do in this thesis he doesn't solve the
+    % merged problem to optimality, but applies the general $k$-opt submoves again, but this time with
+    % a larger value of $k$, because the graph is sparse. For this thesis this option is disabled.
 
-    % Backbone-guided search
-    Lastly the Lin-Kernighan-Helsgaun algorithm implements a simplified version of the algorithm by
-    Zhang and Looks~\cite{TODO - 34 of LKH2 paper} for a backbone-guided search. This means that
-    edges of a fixed number of initial tours are used as candidate edges in later tours.
+    % % Iterative partial transcription
+    % Another technique used to inmprove the tour is Iterative partial transcription. This attempts to
+    % find subchains of different solutions with the same endpoints and replace them with the shorter
+    % one. The algorithm used to find these chains is a simplified version of the algorithm by Mobius
+    % et al.~\cite{TODO - 29 of LKH2 paper}.
+
+    % % Backbone-guided search
+    % Lastly the Lin-Kernighan-Helsgaun algorithm implements a simplified version of the algorithm by
+    % Zhang and Looks~\cite{TODO - 34 of LKH2 paper} for a backbone-guided search. This means that
+    % edges of a fixed number of initial tours are used as candidate edges in later tours.
 
 
 
@@ -729,7 +747,12 @@ following sections we explain the details of the algorithms.
     path from $u$ to $v$ can be at most $c_{u, v}$. While they look simple, these changes complicate
     the algorithm quite a lot.
 
-    TODO
+    TODO:
+    - Instead of considering child bags, consider all paths in all childs.
+    - Try all different demand combinations on these paths.
+    - Changed edge selection.
+    - Merge paths in root bag.
+    - Extra requirements (depot vertex only as endpoints, \dots).
 
 
     \subsection{Speed}
