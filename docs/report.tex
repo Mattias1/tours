@@ -1,7 +1,7 @@
 \documentclass[12pt]{article}
 
 \title{Tour merging via tree decomposition \\ \vspace{2mm} \small{A hybrid approach between
-heuristics and exact solutions for TSP and VRP.}}
+heuristics and exact solutions for the TSP and VRP.}}
 \author{Mattias Beimers - 3672565}
 
 \usepackage{amsmath}
@@ -23,6 +23,7 @@ heuristics and exact solutions for TSP and VRP.}}
 \tikzstyle{vertex1} = [circle,fill=black!75,minimum size=4pt,align=center,inner sep=0pt]
 \tikzstyle{vertex0} = [circle,fill=black!75,minimum size=1pt,inner sep=0pt]
 \tikzstyle{bag} = [circle,fill=black!25,minimum size=45pt,align=center,text width=40pt,font=\small,inner sep=0pt]
+\tikzstyle{hugebag} = [circle,fill=black!35,minimum size=99pt,align=center,text width=40pt,font=\small,inner sep=0pt]
 \tikzstyle{edge} = [draw=black!75,-]
 \tikzstyle{arc} = [draw,->-]
 \tikzstyle{weight} = [font=\small]
@@ -62,7 +63,6 @@ heuristics and exact solutions for TSP and VRP.}}
 %
 \section{Introduction}
 \label{sec:introduction}
-
 % Heuristics and Cook-Seymour
 For many optimization problems calculating provably optimal solutions is not feasible in practical
 applications, because the computation time grows exponentionally with the problem size. Hence,
@@ -406,7 +406,7 @@ Section~\ref{sec:sweep}.
     \node[vertex1] (7) at (8.2, -2.0) {};
     \node[vertex1] (8) at (8.3, -3.6) {};
     \node[vertex1] (9) at (7.1, -4.4) {};
-    \node[vertex1,label=0:\;The 1-vertex] (10) at (5.9, -5.3) {};
+    \node[vertex1,label=0:\;$\leftarrow$ the 1-vertex] (10) at (5.9, -5.3) {};
     \path[edge] (0) to (1);
     \path[edge] (0) to (5);
     \path[edge] (1) to (2);
@@ -672,7 +672,59 @@ following sections we explain the details of the algorithms.
     part of the requirements. Selecting some edges from $Y_i$ is mostly used to stitch the different
     paths from the child bags together so that the complete series of paths meets the requirements
     of $D$ and $M$.
-    % TODO: picture
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[auto,swap]
+\node[hugebag] (0) at (7.0, -3.1) {};
+\node[hugebag] (1) at (9.6, -6.4) {};
+\node[hugebag] (2) at (4.2, -6.7) {};
+\node[vertex0] (3) at (7.0, -0.79) {};
+\node[vertex0] (4) at (9.6, -8.7) {};
+\path[edge] (0) to (2);
+\path[edge] (0) to (1);
+\path[edge] (0) to (3);
+\path[edge] (1) to (4);
+
+\node[vertex2] (0) at (6.29, -2.34) {0};
+\node[vertex2] (1) at (7.81, -2.34) {1};
+\node[vertex2] (2) at (7.64, -3.91) {2};
+\node[vertex2] (3) at (6.53, -4.19) {3};
+\node[vertex2] (4) at (3.96, -5.81) {0};
+\node[vertex2] (5) at (5.33, -6.84) {3};
+\node[vertex2] (6) at (4.04, -7.75) {6};
+\node[vertex2] (7) at (3.11, -6.68) {7};
+\node[vertex2] (8) at (8.83, -6.54) {2};
+\node[vertex2] (9) at (10.26, -5.59) {1};
+\node[vertex2] (10) at (10.60, -6.86) {10};
+\node[vertex0] (11) at (6.29, -0.99) {};
+\node[vertex0] (12) at (7.81, -0.99) {};
+\node[vertex0] (13) at (8.83, -8.44) {};
+\node[vertex0] (14) at (10.60, -8.44) {};
+\node[vertex2] (15) at (5.81, -3.38) {7};
+\path[edge,dashed] (0) to (4);
+\path[edge,dashed] (1) to (9);
+\path[edge,dashed] (2) to (8);
+\path[edge,dashed] (3) to (5);
+\path[edge] (2) to (3);
+\path[edge] (4) to (6);
+\path[edge] (5) to (6);
+\path[edge] (9) to (10);
+\path[edge,dashed] (0) to (11);
+\path[edge,dashed] (1) to (12);
+\path[edge,dashed] (8) to (13);
+\path[edge,dashed] (10) to (14);
+
+\node[text width=50] at (2,0.5) {
+    $F(X_{top}, \; (v_0,1), (v_1,1), (v_2,2), (v_3,2), (v_7,0), \; \{v_0, v_1\})$,
+    $F(X_{left}, \; (v_0,1), (v_3,1), (v_6,2), (v_7,0), \; \{v_0, v_3\})$,
+    $F(X_{right}, \; (v_2,1), (v_1,1), (v_{10},2), \; \{v_2, v_1\})$
+};
+
+\end{tikzpicture}
+\caption{An example of paths through a part of the tree decomposition.}
+\label{fig:dp-example-tsp}
+\end{figure}
 
     To find the different ways of dividing the requirements for a bag over it's children, we focus
     solely on the degrees. We also have to decide on the edges in the matching of the children, but
