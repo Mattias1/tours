@@ -43,6 +43,8 @@ heuristics and exact solutions for the TSP and VRP.}}
 % - The word Section with a capital letter
 % - Don't use the word treewidth when you mean 'width of the decomposition'.
 %
+% TODO: some background of what is there for TSP / VRP?
+%
 % Plot graphs with MathPlotLib: http://matplotlib.org/ (possibly ask Chiel for example)
 %
 
@@ -643,18 +645,18 @@ following sections we explain the details of the algorithms.
     are the endpoints of a path.
 
     % TODO: what is the degree of an edge set
-    We now define the function $F(X_i, D, M)$ to be the minimum total cost of the edges in a series
-    of paths starting and ending in bag $X_i$, where $D$ is a set of degrees for the vertices in
-    $X_i$ and $M$ a matching. If there is an edge $\{u, v\} \in M$ then there should be a path that
-    starts in $u$ and ends in $v$. All vertices in $X_i$ itself should have degrees as given in the
-    degrees parameter, and the vertices that occur only in the bags below $X_i$ in the tree should
-    all be used (have a degree of 2).
+    We now define the function $F(X_i, D_i, M_i)$ to be the minimum total cost of the edges in a
+    series of paths starting and ending in bag $X_i$, where $D_i$ is a set of degrees for the
+    vertices in $X_i$ and $M_i$ a matching. If there is an edge $\{u, v\} \in M_i$ then there should
+    be a path that starts in $u$ and ends in $v$. All vertices in $X_i$ itself should have degrees
+    as given in the degrees parameter, and the vertices that occur only in the bags below $X_i$ in
+    the tree should all be used (have a degree of 2).
 
-    One way of looking at this is to see the set of degrees $D$ as an instruction to a specific part
-    of the tree (the bag $X_i$ and all bags below in the tree) to deliver a set of edges, together
-    forming a series of disjoint paths, such that all the degrees of vertices in this bag match with
-    the degrees in $D$ and that all vertices that occur only in bags below $X_i$ in the tree are
-    used.
+    One way of looking at this is to see the set of degrees $D_i$ as an instruction to a specific
+    part of the tree (the bag $X_i$ and all bags below in the tree) to deliver a set of edges,
+    together forming a series of disjoint paths, such that all the degrees of vertices in this bag
+    match with the degrees in $D$ and that all vertices that occur only in bags below $X_i$ in the
+    tree are used.
     Of course, we do not just want any set of edges, we want the edges that can do it with the
     minimum cost. To get the cost of a tour through the entire graph, we can now call
     $F(X_0, D_0=\{(v, 2),$ for $v \in X_0\}, \emptyset)$. The root of the tree is the special case
@@ -672,63 +674,66 @@ following sections we explain the details of the algorithms.
     part of the requirements. Selecting some edges from $Y_i$ is mostly used to stitch the different
     paths from the child bags together so that the complete series of paths meets the requirements
     of $D$ and $M$.
+    An example of a path through a part of a tree decomposition is depicted in
+    Figure~\ref{fig:dp-tsp-example}.
 
-\begin{figure}
-\centering
-\begin{tikzpicture}[auto,swap]
-\node[hugebag] (0) at (7.0, -3.1) {};
-\node[hugebag] (1) at (9.6, -6.4) {};
-\node[hugebag] (2) at (4.2, -6.7) {};
-\node[vertex0] (3) at (7.0, -0.79) {};
-\node[vertex0] (4) at (9.6, -8.7) {};
-\path[edge] (0) to (2);
-\path[edge] (0) to (1);
-\path[edge] (0) to (3);
-\path[edge] (1) to (4);
+    \begin{figure}
+    \centering
+    \begin{tikzpicture}[auto,swap]
+    \node[hugebag] (b-0) at (7.0, -3.1) {};
+    \node[hugebag] (b-1) at (9.6, -6.4) {};
+    \node[hugebag] (b-2) at (4.2, -6.7) {};
+    \node[vertex0] (b-3) at (7.0, -0.79) {};
+    \node[vertex0] (b-4) at (9.6, -8.7) {};
+    \path[edge] (b-0) to (b-2);
+    \path[edge] (b-0) to (b-1);
+    \path[edge] (b-0) to (b-3);
+    \path[edge] (b-1) to (b-4);
 
-\node[vertex2] (0) at (6.29, -2.34) {0};
-\node[vertex2] (1) at (7.81, -2.34) {1};
-\node[vertex2] (2) at (7.64, -3.91) {2};
-\node[vertex2] (3) at (6.53, -4.19) {3};
-\node[vertex2] (4) at (3.96, -5.81) {0};
-\node[vertex2] (5) at (5.33, -6.84) {3};
-\node[vertex2] (6) at (4.04, -7.75) {6};
-\node[vertex2] (7) at (3.11, -6.68) {7};
-\node[vertex2] (8) at (8.83, -6.54) {2};
-\node[vertex2] (9) at (10.26, -5.59) {1};
-\node[vertex2] (10) at (10.60, -6.86) {10};
-\node[vertex0] (11) at (6.29, -0.99) {};
-\node[vertex0] (12) at (7.81, -0.99) {};
-\node[vertex0] (13) at (8.83, -8.44) {};
-\node[vertex0] (14) at (10.60, -8.44) {};
-\node[vertex2] (15) at (5.81, -3.38) {7};
-\path[edge,dashed] (0) to (4);
-\path[edge,dashed] (1) to (9);
-\path[edge,dashed] (2) to (8);
-\path[edge,dashed] (3) to (5);
-\path[edge] (2) to (3);
-\path[edge] (4) to (6);
-\path[edge] (5) to (6);
-\path[edge] (9) to (10);
-\path[edge,dashed] (0) to (11);
-\path[edge,dashed] (1) to (12);
-\path[edge,dashed] (8) to (13);
-\path[edge,dashed] (10) to (14);
+    \node[vertex2] (0) at (6.29, -2.34) {0};
+    \node[vertex2] (1) at (7.81, -2.34) {1};
+    \node[vertex2] (2) at (7.64, -3.91) {2};
+    \node[vertex2] (3) at (6.53, -4.19) {3};
+    \node[vertex2] (4) at (3.96, -5.81) {0};
+    \node[vertex2] (5) at (5.33, -6.84) {3};
+    \node[vertex2] (6) at (4.04, -7.75) {6};
+    \node[vertex2] (7) at (3.11, -6.68) {7};
+    \node[vertex2] (8) at (8.83, -6.54) {2};
+    \node[vertex2] (9) at (10.26, -5.59) {1};
+    \node[vertex2] (10) at (10.60, -6.86) {10};
+    \node[vertex0] (11) at (6.29, -0.99) {};
+    \node[vertex0] (12) at (7.81, -0.99) {};
+    \node[vertex0] (13) at (8.83, -8.44) {};
+    \node[vertex0] (14) at (10.60, -8.44) {};
+    \node[vertex2] (15) at (5.81, -3.38) {7};
+    \path[edge,dashed] (0) to (4);
+    \path[edge,dashed] (1) to (9);
+    \path[edge,dashed] (2) to (8);
+    \path[edge,dashed] (3) to (5);
+    \path[edge] (2) to (3);
+    \path[edge] (4) to (6);
+    \path[edge] (5) to (6);
+    \path[edge] (9) to (10);
+    \path[edge,dashed] (0) to (11);
+    \path[edge,dashed] (1) to (12);
+    \path[edge,dashed] (8) to (13);
+    \path[edge,dashed] (10) to (14);
 
-\node[text width=50] at (2,0.5) {
-    $F(X_{top}, \; (v_0,1), (v_1,1), (v_2,2), (v_3,2), (v_7,0), \; \{v_0, v_1\})$,
-    $F(X_{left}, \; (v_0,1), (v_3,1), (v_6,2), (v_7,0), \; \{v_0, v_3\})$,
-    $F(X_{right}, \; (v_2,1), (v_1,1), (v_{10},2), \; \{v_2, v_1\})$
-};
+    \node[text width=50] at (2,0.5){$
+         F(X_{top}, \; \{(v_0,1), (v_1,1), (v_2,2), (v_3,2), (v_7,0)\}, \; \{\{v_0, v_1\}\})$,
+        $F(X_{left}, \; \{(v_0,1), (v_3,1), (v_6,2), (v_7,0)\}, \; \{\{v_0, v_3\}\})$,
+        $F(X_{right}, \; \{(v_2,1), (v_1,1), (v_{10},2)\}, \; \{\{v_2, v_1\}\})$
+    };
 
-\end{tikzpicture}
-\caption{An example of paths through a part of the tree decomposition.}
-\label{fig:dp-example-tsp}
-\end{figure}
+    \end{tikzpicture}
+    \caption{An example of a path through a part of the tree decomposition, together with the
+    instructions per bag.}
+    \label{fig:dp-tsp-example}
+    \end{figure}
 
     To find the different ways of dividing the requirements for a bag over it's children, we focus
     solely on the degrees. We also have to decide on the edges in the matching of the children, but
-    we will find them as we set the requirements on the degrees.
+    we will find them as a side effect while we set the requirements on the degrees.
     We try all possible combinations of dividing the degrees per vertex. For a given vertex $v$,
     assuming we are required to give it a degree of 2, we first try to give it to each of the
     children. So for possibility $p$ and child bag $j$ we try to set the degree of $v$ in $D_{p,j}$
@@ -742,8 +747,8 @@ following sections we explain the details of the algorithms.
 
     For the remaining degrees that are not handled by any of the child bags we calculate a subset
     $E_p$ of $Y_i$. For non-leaf bags these edges mainly glue paths from the children together in
-    the paths as required by the $D$ and $M$ parameters. For the leaf bags there are of course no child
-    bags to delegate the degrees to so it all has to be solved using the bags own edges.
+    the paths as required by the $D_i$ and $M_i$ parameters. For the leaf bags there are of course
+    no child bags to delegate the degrees to so it all has to be solved using the bags own edges.
     Note that the edge set is not allowed to introduce cycles, so in particular two endpoints in an
     edge of a matching are not allowed to be connected. This is the reason why we need to give the
     matching as parameter to $F$, without it we do not have sufficient information to determine
@@ -753,13 +758,13 @@ following sections we explain the details of the algorithms.
     In summary, a vertex' degree can be satisfied by passing it on to one (or two) of the child bags
     or in the bag itself by choosing an edge from $Y_i$. Formally this becomes
     \[
-        F(X_i, D, M) = \min_{1 \leq p \leq P_i} (
+        F(X_i, D_i, M_i) = \min_{1 \leq p \leq P_i} (
             \sum_{j \in W :\text{\ Parent}(j) = i} F(X_j, D_{p,j}, M_{p,j}) + \sum_{e \in E_p} c_e
         )
     \]
-    for all $P_i$ ways of dividing $D$ and $M$ into the $D_{p,j}$ and $M_{p,j}$ sets and the
+    for all $P_i$ ways of dividing $D_i$ and $M_i$ into the $D_{p,j}$ and $M_{p,j}$ sets and the
     corresponding $E_p \subset Y_i$.
-    If no valid edge set is found, $F(X_i, D, M) = \infty$.
+    If no valid edge set is found, $F(X_i, D_i, M_i) = \infty$.
 
     The overall algorithm then consists of a top down approach where we tabulate all entries for
     the function $F$, starting at the root and then recursively work downwards in the tree. Then the
@@ -769,42 +774,117 @@ following sections we explain the details of the algorithms.
     % Overview:
     % - Some defenitions
     % - Idea: Disjoint paths
-    % - Vertex degrees: 0, 1, 2
-    % - Matchings for the 1's
-    % - Talk about subproblems / partial tours / table-entries / functions
+    %   - Vertex degrees: 0, 1, 2
+    %   - Matchings for the 1's
+    % - Define F
+    % - F looks like Instructions
     % - The root bag
-    % - Top down approach; recursive
-    % - It tabulates the degrees+matchings
+    % - Pass on the instructions
+    % - How to divide the requirements amoung child bags
+    % - Remaining vertices: find edge set inside Yi
+    % - Formal defenition of F
+    % - Top down approach; recursive + it tabulates the degrees+matchings
+
+    %
+    % TODO: do I tell why the matchings are nescessary, and how the non-cycle requirement is checked???
+    %
 
 
     \subsection{Vehicle Routing}
     \label{sec:dp-vrp}
     Let $G=(V, E)$ again be a simple graph with edge-weights $c_e$ and $(T=(W, H), X)$ be the tree
-    decomposition with width $k - 1$ and $X_i$ and $Y_i$ be the bags with respecitvely vertices or
-    edges as defined in Section~\ref{sec:td-definition}. We say that a bag $X_j$ is below a bag
-    $X_i$ (in the tree) if $i$ is on the path from $j$ to the root of $T$.
+    decomposition with width $k - 1$ and $X_i$ and $Y_i$ be the bags with respectively vertices or
+    edges as defined in Section~\ref{sec:td-definition}.
+    % We say that a bag $X_j$ is below a bag
+    % $X_i$ (in the tree) if $i$ is on the path from $j$ to the root of $T$.
+    The defenition of the instruction-function $F(X_i, D_i, M_i)$ remains the same except that the
+    edges $e \in M_i$ now have an edge weight $c_e$ as well.
     Furthermore let $M$ be the number of trucks that we have to use (and therefore te number of
     tours that we should find) and let $C$ be the capacity of each truck. We denote the demand of
-    all vertices $v_i \in V$ by $d_i$, and the demand $d_0$ of the depot vertex $v_0$ is equal to 0.
+    all vertices $v_i \in V$ by $d_i$, where the demand $d_0$ of the depot vertex $v_0$ is equal to 0.
     Note that $G$ is not 2-connected as was the case for the TSP, as removing the depot vertex
     causes it to be disconnected, but it still holds that all vertices have a degree of two or more.
+    With the demand of a path, we mean the total demand of all the vertices on this path.
+    When the matching edge of a path is in the instruction function $F$ for the current bag $X_i$,
+    we call this path a \emph{main path}.
+    Whenever two vertices in a main path are connected with a matching edge, rather than a normal
+    edge from $Y_i$, this edge of the matching encodes the start and end vertices of a
+    \emph{subpath} through a child bag of $X_i$.
+    For example, the bag $X_{top}$ in Figure~\ref{fig:dp-tsp-example} has one main path and two
+    subpaths.
 
-    The main idea of the algorithm is the same as the algorithm for the TSP\@. We try to find a
-    series paths that together form set of tours. The instruction of how these paths should be
-    delivered by a bag is again done by specifying the degrees of the vertices and a matching. The
-    degrees of all non-depot vertices can be one of $\{0, 1, 2\}$ like before, but the degree of the
-    depot vertex can be any value between 0 and $2M$. Furthermore we have a restriction that the
-    depot can only appear as an endpoint of a path. The matching-edges used to encode a path are
-    extended with an edge-weight $c_{u, v}$, which denotes that the total demand of vertices on the
-    path from $u$ to $v$ can be at most $c_{u, v}$. While they look simple, these changes complicate
-    the algorithm quite a lot.
+    The main idea of the algorithm is similar to that of the algorithm for the TSP\@. We try to find
+    a series of paths that together form not one, but a set of $M$ tours. The instruction of how
+    these paths should be delivered by a bag is again done by specifying the degrees of the vertices
+    and a matching. The degrees of all non-depot vertices can be between 0 and 2 like before, but
+    the degree of the depot vertex can be any value between 0 and $2M$. Furthermore we add the
+    restriction that the depot can only appear as an endpoint of a path. This restriction makes the
+    final merging of the paths easier and effectively ensures that the depot is part of every tour.
+    The greatest difference however lies in the fact that we need to restrict the total demand of
+    the vertices in each of the tours to be at most $C$, the capacity of a truck.
+    To do this we need to be able to enforce this restriction on each of the paths seperately in the
+    parameters of the function $F$.
+    As an edge in the matching relates one to one to a path, it comes natural to extended the edge
+    with an edge-weight $c_{\{u, v\}}$, which denotes that the demand of path from $u$ to $v$ can be
+    at most $c_{\{u, v\}}$.
+    To get the solution for a VRP instance we call $F(X_0, D_0, M_0)$, where $D_0$ contains the
+    maximum degree for all vertices, and $M_0$ contains $M$ times the edge $\{0, 0\}$ with weight $C$.
+    % To get the final value we call $F(X_0, D_0, M_0)$, with $D_0 = (v_0, M) \cup \{(v, 2), \forall v
+    % \in X_0 \setminus \{v_0\}\}$ and with $M_0 = \{\{0, 0\}\}^M)$, with all edge-weights equal to
+    % $M$.
 
-    TODO:
-    - Instead of considering child bags, consider all paths in all childs.
-    - Try all different demand combinations on these paths.
-    - Changed edge selection.
-    - Merge paths in root bag.
-    - Extra requirements (depot vertex only as endpoints, \dots).
+    The difficulty lies in how to divide the demand from the main paths in the current bag $X_i$,
+    over the demands for the subpaths through the child bags.
+    Note here that the focus has shifted from the bags to the individual paths through the bags. In
+    the DP algorithm for the TSP the main difficulty lay at dividing the degrees over the bags, but
+    we didn't care which vertex was included in which path. We only had to ensure that there was
+    some path satisfying the degree of a vertex as was instructed; for as long as its endpoints
+    coincided with the matching of course.
+    Likewise, for the VRP algorithm, we first try to divide the degrees over the bags while initially
+    ignoring the individual paths. As before we find the edges in the matchings as a side effect of
+    finding the degrees, but at this point we don't know the weight of the edges yet. Once we
+    divided both the degrees and found the matchings, we try, like before, to find an edge selection
+    to support these choices of $D_i$ and $M_i$.
+    Only after we are done with all these steps we try to find the weight of the matching. If a main
+    path only has one subpath, this is quite simple. The demand of the subpath is the demand of the
+    main path minus the demand of the vertices already visited inside the current bag.
+    Each main path can have multiple subpaths however, and these subpaths are independend of the
+    bags. Multiple subpaths from the same main path can be spread over multiple bags (but don't have
+    to), and there can be subpaths from different main paths in the same bag.
+    Because we don't know how much capacity is needed for the subpaths yet, we simply have to try
+    all possibilities. In the example of Figure~\ref{fig:dp-tsp-example} the bag $X_{top}$ might
+    be allowed to have a demand of at most 6 (if all vertices have a demand of 1 and the child bag
+    of $X_{right}$ has no additional vertices not in $X_{right}$ itself this is just enough). We now
+    need to try to give one bag a demand of 6 and the other 0 (and the other way around), then try
+    to give one 5 and the other 1, then 4 and 2 and finally we need to try giving both bags a demand
+    of 3.
+
+    Another effect of the capacity constraint is the choice of the edge sets $E_p \subset Y_i$,
+    which are constructed after the degrees and matching are chosen. For the TSP algorithm we just
+    have to find a path that uses all vertices that we instructed it to use, but it doesn't matter
+    whether a vertex is used in one path or another. For the VRP placing a vertex in one path rather
+    than in another might mean that the demand of that path is more than the capacity of a truck,
+    leaving the solution invalid. As a consequence we do not have to evaluate just the cheepest edge
+    selection, but all of them.
+
+    % Overview:
+    % - Some defenitions
+    %   - Mostly the same as for the VRP, but with some additions.
+    %   - Define main paths and subpaths (and independendness).
+    % - Idea: same as TSP, but with demands (matching-edge weight)
+    %                      and a depot (2M degree + endpoint of path only)
+    % - Focus on paths rather than bags
+    %   - Recap from TSP: first divide degrees, find matchings as side effect, then edges follow,
+    %   - After that we divide demands
+    %   - Each path can have multiple subpaths, subpaths are independend of bags: multiple subpaths
+    %     from the same main path can be spread over multiple bags, there can be subpaths from
+    %     different main paths in the same bag.
+    %   - Try all different combinations of the main-path-demand on all subpaths
+    % - The edge sets
+    % - Overview:
+    %   - Root bag
+    % TODO: checks on cycle extended with check on demand length
+    % TODO: wording: demand or capacity?
 
 
     \subsection{Speed}
