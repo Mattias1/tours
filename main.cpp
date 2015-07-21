@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
     }
     // Run VRP algorithms
     else {
-        vector<string> FILES = { "test-vrp-2" };
+        vector<string> FILES = { "test-vrp-3" };
         int SAVINGS_RUNS = 1;
         int SWEEP_RUNS = 0;
 

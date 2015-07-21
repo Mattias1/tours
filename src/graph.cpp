@@ -240,13 +240,27 @@ Vertex::Vertex(int vid, int x, int y, int demand /*=0*/)
 Vertex::~Vertex()
 { }
 
-bool Vertex::IsConnectedTo(Vertex* other) const {
+bool Vertex::IsConnectedTo(Vertex* pOther) const {
     // Return whether or not this vertex is connected to another vertex (a vertex is considered to be connected to himself)
-    if (this == other)
+    if (this == pOther)
         return true;
     for (int i=0; i<this->edges.size(); ++i)
-        if (this->edges[i]->Other(*this) == other)
+        if (this->edges[i]->Other(*this) == pOther)
             return true;
+    return false;
+}
+
+bool Vertex::RemoveEdgeTo(Vertex* pOther) {
+    // Removes the edge to the other vertex (if it doesn't exists, return false)
+    // WARNING: DOES NOT REMOVE THE EDGE THE OTHER WAY AROUND!!! (from pOther to this)
+    for (int j=0; j<this->edges.size(); ++j) {
+        if (this->edges[j]->Other(*this) == pOther) {
+            this->edges.erase(this->edges.begin() + j);
+            cout << "DEBUG REMOVE EDGE TO - TRUE" << endl;
+            return true;
+        }
+    }
+    cout << "DEBUG REMOVE EDGE TO - FALSE" << endl;
     return false;
 }
 

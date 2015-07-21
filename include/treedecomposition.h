@@ -6,7 +6,10 @@
 using namespace std;
 
 
-// Import in this order, as they all depend on eachother.
+// Forward declaration, because Bag is going to need it (but only using pointers)
+class TreeDecomposition;
+
+// Import in this order, as they all depend on each other.
 class Bag : public Vertex
 {
     friend class TreeDecomposition;
@@ -21,6 +24,8 @@ class Bag : public Vertex
         bool ContainsEdge(Edge* pE) const;
 
         void SetParentsRecursive(Bag* pParent, bool adjustCoordinates=false);
+
+        void TrimBagsRecursive(TreeDecomposition* pTD);
 
         vector<Edge*> GetBagEdges() const;
 

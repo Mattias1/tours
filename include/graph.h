@@ -52,6 +52,8 @@ class Vertex
         virtual ~Vertex();
 
         bool IsConnectedTo(Vertex* other) const;
+
+        bool RemoveEdgeTo(Vertex* other);
 };
 
 

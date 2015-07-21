@@ -153,14 +153,17 @@ void TreeDecomposition::MinimumDegree(bool depotInAllBags /*= false*/) {
             if (pBag->vid == edgeList[i + 1])
                 pB = pBag;
         }
-        if (pA == pB)  {
-            // What happends here is that it doesn't find pA or pB, so it just uses the old one - which happends to be equal... not so funny.
-            cout << "AAAAAAAAAAAAAAAAAAAAAAAAAHHH!!!! (error in Minimum Degree Heuristic: pA == pB)" << endl;
-        }
+        assert(pA != pB || "(error in Minimum Degree Heuristic: pA == pB)"); // What happends here is that it doesn't find pA or pB, so it just uses the old one - which happends to be equal...
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
         pA->edges.push_back(pE);
         pB->edges.push_back(pE);
     }
+
+    // Root the tree and give the bags some nice coordinates so that it actually draws like a tree with the root on top.
+    this->CreateRoot(true);
+
+    // Optimization: if a bag is contained in its parent, we don't really need it
+    this->pRoot->TrimBagsRecursive(this);
 
     // Fix vids
     for (int i=0; i<this->vertices.size(); ++i) {
@@ -168,9 +171,6 @@ void TreeDecomposition::MinimumDegree(bool depotInAllBags /*= false*/) {
         // We fix them here to ensure our that vertices in a list are indexed by their vids.
         this->vertices[i]->vid = i;
     }
-
-    // Root the tree and give the bags some nice coordinates so that it actually draws like a tree with the root on top.
-    this->CreateRoot(true);
 }
 
 void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList, bool depotInAllBags) {
@@ -180,10 +180,7 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
     // Note: correct the vid's from each bag later; once the edges in the edge list are added
     unique_ptr<Graph> pGraphCopy = this->pOriginalGraph->DeepCopy();
 
-    // Skip the last two bags, because LKH will give us complete tours anyway, we're never going to need those.
-    int skipAmount = 2;
-
-    for (int i = 0; i<vertexList.size() - skipAmount; ++i) {
+    for (int i = 0; i<vertexList.size(); ++i) {
         Vertex* pV = this->pOriginalGraph->vertices[vertexList[i]].get();
         Vertex* pVCopy = pGraphCopy->vertices[pV->vid].get();
         unique_ptr<Bag> pUniqueBag = unique_ptr<Bag>(new Bag(pV->vid, 240, 60 + 120 * i));
@@ -193,7 +190,7 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
         if (depotInAllBags && !isDepot(pV))
             pBag->vertices.push_back(this->pOriginalGraph->vertices[0].get());
         pBag->vertices.push_back(pV);
-        for (int j=i + 1; j<vertexList.size(); ++j)
+        for (int j=i + 1; j<vertexList.size(); ++j) {
             for (int k=0; k<pVCopy->edges.size(); ++k)
                 if (pVCopy->edges[k]->Other(*pVCopy)->vid == vertexList[j]) {
                     // We found a vertex that is both a 'neighbour' of pV and still in the vertex list - so add it
@@ -201,6 +198,7 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
                         pBag->vertices.push_back(this->pOriginalGraph->vertices[ pVCopy->edges[k]->Other(*pVCopy)->vid ].get());
                     break;
                 }
+        }
 
         // Only use this bag if there are at least two vertices inside (otherwise it's a bit useless - and the DP can't handle this :P)
         this->vertices.push_back(move(pUniqueBag));
@@ -220,7 +218,7 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
         }
 
         // And find the right edge for in the tree decomposition (an edge to the first next neighbour of v in the vertex list)
-        for (int j=i + 1; j<vertexList.size() - skipAmount; ++j)
+        for (int j=i + 1; j<vertexList.size(); ++j) {
             for (int k=0; k<pVCopy->edges.size(); ++k)
                 if (pVCopy->edges[k]->Other(*pVCopy)->vid == vertexList[j]) {
                     // We found the (future?) bag that our new bag should connect to - save it to add the edge later
@@ -230,6 +228,7 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
                     j = vertexList.size();
                     break;
                 }
+        }
     }
 }
 
@@ -272,6 +271,7 @@ void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
     // Update all bags recursively (the parent, the coordinates (optinally) and the order (vid 0 always in front))
     int diameter = 120;
     this->pParent = pParent;
+    // Make sure the depot vertex is at the front of the list
     for (int i=1; i<this->vertices.size(); ++i) {
         if (isDepot(this->vertices[i])) {
             Vertex* pTemp = this->vertices[i];
@@ -280,15 +280,64 @@ void Bag::SetParentsRecursive(Bag* pParent, bool adjustCoordinates) {
             break;
         }
     }
-    for (int i=0; i<this->edges.size(); ++i) {
-        Bag* pBag = dynamic_cast<Bag*>(this->edges[i]->Other(*this));
+    // Adjust coords and recurse
+    for (int j=0; j<this->edges.size(); ++j) {
+        Bag* pBag = dynamic_cast<Bag*>(this->edges[j]->Other(*this));
         if (this->pParent == pBag)
             continue;
         if (adjustCoordinates) {
             pBag->y = this->y + diameter;
-            pBag->x = this->x + (i - this->edges.size() / 2) * diameter;
+            pBag->x = this->x + (j - this->edges.size() / 2) * diameter;
         }
         pBag->SetParentsRecursive(this, adjustCoordinates);
+    }
+}
+
+void Bag::TrimBagsRecursive(TreeDecomposition* pTD) {
+    // First go in recursion (we won't want to delete bags first and then do something with them do we?)
+    for (int j=this->edges.size()-1; j>=0; --j) {
+        Bag* pBag = dynamic_cast<Bag*>(this->edges[j]->Other(*this));
+        if (this->pParent != pBag)
+            pBag->TrimBagsRecursive(pTD);
+    }
+
+    // Then check if this bag is a subset of its parent
+    if (this->pParent != nullptr) {
+        vector<Vertex*> v = this->pParent->vertices;
+        bool noBreak = true;
+        for (int i=0; i<this->vertices.size(); ++i) {
+            if (find(v.begin(), v.end(), this->vertices[i]) == v.end()) {
+                noBreak = false;
+                break;
+            }
+        }
+        if (noBreak) {
+            // So it is a subset of its parent
+            for (int j=0; j<this->edges.size(); ++j) {
+                shared_ptr<Edge> pE = this->edges[j];
+                // Remove it as child from its parent
+                if (pE->Other(*this) == this->pParent) {
+                    this->pParent->RemoveEdgeTo(this);
+                    continue;
+                }
+                // Make all its children children of its parent
+                Bag* pChildBag = dynamic_cast<Bag*>(pE->Other(*this));
+                pChildBag->pParent = this->pParent;
+                if (pE->pA == this)
+                    pE->pA = this->pParent;
+                else if (pE->pB == this)
+                    pE->pB = this->pParent;
+                // Add edges to the parent
+                this->pParent->edges.push_back(pE);
+            }
+            // Delete the unnescessary bag
+            for (int i=0; i<pTD->vertices.size(); ++i) {
+                if (pTD->vertices[i].get() == this) {
+                    pTD->vertices.erase(pTD->vertices.begin() + i);
+                    return; // From here on 'this' is a pointer to a non-existing bag, so better return quickly.
+                }
+            }
+        }
     }
 }
 
