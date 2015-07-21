@@ -256,11 +256,9 @@ bool Vertex::RemoveEdgeTo(Vertex* pOther) {
     for (int j=0; j<this->edges.size(); ++j) {
         if (this->edges[j]->Other(*this) == pOther) {
             this->edges.erase(this->edges.begin() + j);
-            cout << "DEBUG REMOVE EDGE TO - TRUE" << endl;
             return true;
         }
     }
-    cout << "DEBUG REMOVE EDGE TO - FALSE" << endl;
     return false;
 }
 
