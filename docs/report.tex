@@ -42,6 +42,7 @@ heuristics and exact solutions for the TSP and VRP.}}
 % - Don't say this PAPER, but say this THESIS
 % - The word Section with a capital letter
 % - Don't use the word treewidth when you mean 'width of the decomposition'.
+% - DefInition, not defEnition.
 %
 % TODO: some background of what is there for TSP / VRP?
 %
@@ -87,7 +88,7 @@ this thesis, we will try if the strategy for TSP by Cook and Seymour can still i
 heuristics even more. Furthermore, we will try to extend it to work for the Vehicle Routing Problem
 (VRP).
 
-% TSP and VRP; desription and defenition
+% TSP and VRP; desription and definition
 The Traveling Salesman Problem (TSP) is one of the most well studied NP-hard problems, where a
 merchant wants to visit a number of cities and get back at his starting point in the shortest
 possible amount of time.
@@ -198,6 +199,9 @@ Section~\ref{sec:sweep}.
     of $k$ will give a good result for the running time involved, as it costs substantially more
     time to find the edge sets and their improvements for increasing values of $k$.
 
+    % TODO: COMMENT: it might be better to not explain fixed k-opt, and then explain LK by showing
+    % the differences, but actually explain it itself, from the base.
+
     % The actual generalized k-opt
     The Lin-Kernighan algorithm is a $k$-opt algorithm, but for a dynamic $k$. The edge sets to be
     replaced are equal to a sequence of 2-opt exchanges, possibly preceeded by a single 3-opt. The
@@ -241,11 +245,15 @@ Section~\ref{sec:sweep}.
     As backtracking is quite time consuming, we only allow it at the first two levels ($i \leq 2$).
     An example of the dynamic $k$-opt procedure is shown in Figure~\ref{fig:lk-example}.
 
-    This describes the overview of the Lin-Kernighan heuristic. We will describe two more
+    This completes the overview of the Lin-Kernighan heuristic. We will describe two more
     optimizations below, one to speed up the algorithm, the other to improve the solution. There are
     many more details which are essential for the efficiency of the algorithm however, as it is not
     a simple algorithm to implement~\cite{lkh1}. We omit them here as they are not essential to this
     thesis. For the exact details we refer to the original paper~\cite{lin-kernighan}.
+
+    % TODO: COMMENT: use 'we do' everywhere instead of 'this is done' - apart from that, make sure
+    % that the 'we' here again is different from the 'we' above. As that is the we from the writer
+    % (me) and the we below is from the algorithm explanation (so use "in the algorithm we do..."
 
     The first optimization reduces the choices for the edges. In the first few solutions found by
     the algorithm there always are a lot of edges that appear in every solution. These common edges
@@ -253,6 +261,9 @@ Section~\ref{sec:sweep}.
     means they cannot be used as choice for $x_{i+1}$ any more, which in turn limits the choices for
     $y_i$ and speeds up the overall algorithm significantly. Note that in order to not bias the
     solution too much, we only use this restriction for $i \geq 4$.
+
+    % TODO: COMMENT: "?" - I assume it might be better to explain the biasing part a bit more, but
+    % maybe something else needs improving as well
 
     In the second optimization we apply the double bridge move.
     The dynamic $k$-opt procedure that we described here only allows us to find so called sequential
@@ -373,7 +384,12 @@ Section~\ref{sec:sweep}.
     \subsection{Lin Kernighan Helsgaun}
     \label{sec:lkh}
     The Lin-Kernighan-Helsgaun algorithm~\cite{lkh1, lkh2} is based on the algorithm of Lin and
-    Kernighan, but improves on several points.
+    Kernighan, but improves it on several points.
+
+    % TODO: COMMENT: Split the alinea. First explain alpha-nearness (and 1-tree etc) and THEN
+    % explain the candidate set
+    % TODO: COMMENT: how fast is alpha nearness computed (n^3 easy, but n^2 the hard way -> point to
+    % lkh paper...)?
 
     % Minimum 1 tree instead of 5 nearest neighbours (section 4.1 (and 4.2 for x_1) in LKH 1 paper)
     The first major difference with the Lin-Kernighan algorithm is the candidate set for the edges
@@ -428,10 +444,10 @@ Section~\ref{sec:sweep}.
     The second major change is the choice of the basic move. In the original Lin-Kernighan algorithm
     every move was composed as a sequence of 2-opt moves (and possibly a 3-opt).
     Helsgaun~\cite{lkh1} modified it to use moves that consist of 5-opt moves (unless a $k$-opt move
-    for smaller $k$ results in an improvement already). Later he modified it again to use general
-    $k$-opt moves up to a certain $k$ that we can choose ourselves as the basic step. The steps to
-    do this are rather involved and contain a large case-analysis and won't be described here in
-    detail. For the details we refer to the paper of Helsgaun~\cite{lkh2}.
+    for smaller $k$ results in an improvement already). Later~\cite{lkh2} he modified it again to
+    use general $k$-opt moves up to a certain $k$ that we can choose ourselves as the basic step.
+    The steps to do this are rather involved and contain a large case-analysis and won't be
+    described here in detail. For the details we refer to the paper of Helsgaun~\cite{lkh2}.
     The main idea of his approach however is that we allow edges $x_i$ that initially break up the
     tour (like in Figure~\ref{fig:unique-x}). We then look ahead to the following edges $y_{i+1}$
     and $x_{i+1}$ to make sure that acceptable edges exist that can fix the tour. These edges in
@@ -439,6 +455,11 @@ Section~\ref{sec:sweep}.
     again, providing we look ahead and find acceptable edges that can fix the tour. This allows,
     amoung others, the double bridge move from Figure~\ref{fig:double-bridge} to be included
     natively in the search.
+
+    % TODO: COMMENT: needs another picture (with 3 dashed lines)
+
+
+    % What is this todo below doing here???
     % TODO: double bridge move
     % - Basic move no longer 2- (or 3-) opt move, but a 5-opt move (but stopped as soon as it
     %   improves, so it can also do just a 2-opt move for example. Also backtracking removed.
@@ -467,8 +488,9 @@ Section~\ref{sec:sweep}.
     the general $k$-opt submoves again. This time he uses larger value of $k$, which he can do
     because the graph is sparse. We disable this option in our experiments, as we perform this
     calculation ourselves.
-    There are some more additions, but Helsgaun doesn't go into much detail on them, so for these we
-    refer to Helsgaun's paper~\cite{lkh2}.
+    There are some more additions, for which we refer to Helsgaun's paper~\cite{lkh2}.
+    % TODO: possibly write about these additions, that they are not LK improvements, but general
+    % improvements.
 
     % % Original text of me
     % % Partitioning
@@ -508,7 +530,7 @@ $G$ we will compute a tree decomposition so that we can compute the optimal tour
 problem.
 % Roadmap:
 Before we show how we compute this decomposition in Section~\ref{sec:td-heuristic}, we first give
-the defenition of a tree decomposition in Section!\ref{sec:td-definition}.
+the definition of a tree decomposition in Section!\ref{sec:td-definition}.
 
     % What is a tree decomposition
     \subsection{Tree decomposition and width}
@@ -647,10 +669,12 @@ following sections we explain the details of the algorithms.
     % TODO: what is the degree of an edge set
     We now define the function $F(X_i, D_i, M_i)$ to be the minimum total cost of the edges in a
     series of paths starting and ending in bag $X_i$, where $D_i$ is a set of degrees for the
-    vertices in $X_i$ and $M_i$ a matching. If there is an edge $\{u, v\} \in M_i$ then there should
-    be a path that starts in $u$ and ends in $v$. All vertices in $X_i$ itself should have degrees
-    as given in the degrees parameter, and the vertices that occur only in the bags below $X_i$ in
-    the tree should all be used (have a degree of 2).
+    vertices in $X_i$ and $M_i$ a matching on the vertices of degree 1. If there is an edge
+    $\{u, v\} \in M_i$ then there should be a path that starts in $u$ and ends in $v$. All vertices
+    in $X_i$ itself should have degrees as given in the degrees parameter, and the vertices that
+    occur only in the bags below $X_i$ in the tree should all be used (have a degree of 2) in the set of paths.
+    % TODO: COMMENT: Don't define the function. Name the function and define below.
+    % TODO: COMMENT: in the set of paths (needs rewording with the braces before it).
 
     One way of looking at this is to see the set of degrees $D_i$ as an instruction to a specific
     part of the tree (the bag $X_i$ and all bags below in the tree) to deliver a set of edges,
@@ -664,12 +688,14 @@ following sections we explain the details of the algorithms.
     root bag $X_0$ to give us a set of edges such that all the vertices inside $X_0$ itself have
     degree 2 (as required by the set $D_0$) and all vertices in bags below the root have degree 2 as
     well (by specification of the function $F$), we actually give the instruction to find the weight
-    ofa set of edges that visits all the vertices of $G$ in a single cycle. And because this set of
+    of a set of edges that visits all the vertices of $G$ in a single cycle. And because this set of
     edges should have minimum cost, this gives us the cost of the TSP tour through $G$.
 
     Of course, for a good tree decomposition not all the edges are contained in a single bag. The
     main problem for a non-leaf bag $X_i$ now is not how to find a subset of edges in $Y_i$ that
     satisfy all the requirements for the degrees (and the matching), but how to divide the degrees
+    % TODO: COMMENT (in the middle of "how to" and "divide"): Compute this from that values of F for
+    % it's child bags. This means that we want to ...
     over it's children so that they (recursively) can find the right edge sets that satisfy their
     part of the requirements. Selecting some edges from $Y_i$ is mostly used to stitch the different
     paths from the child bags together so that the complete series of paths meets the requirements
@@ -734,6 +760,8 @@ following sections we explain the details of the algorithms.
     To find the different ways of dividing the requirements for a bag over it's children, we focus
     solely on the degrees. We also have to decide on the edges in the matching of the children, but
     we will find them as a side effect while we set the requirements on the degrees.
+    % TODO: COMMENT: side effect is not a proper description, it's a 'main effect'. Maybe use: "at
+    % the same time" or something similar.
     We try all possible combinations of dividing the degrees per vertex. For a given vertex $v$,
     assuming we are required to give it a degree of 2, we first try to give it to each of the
     children. So for possibility $p$ and child bag $j$ we try to set the degree of $v$ in $D_{p,j}$
@@ -765,6 +793,7 @@ following sections we explain the details of the algorithms.
     for all $P_i$ ways of dividing $D_i$ and $M_i$ into the $D_{p,j}$ and $M_{p,j}$ sets and the
     corresponding $E_p \subset Y_i$.
     If no valid edge set is found, $F(X_i, D_i, M_i) = \infty$.
+    % TODO: subject to constraints: ? (no cycles)
 
     The overall algorithm then consists of a top down approach where we tabulate all entries for
     the function $F$, starting at the root and then recursively work downwards in the tree. Then the
@@ -772,7 +801,7 @@ following sections we explain the details of the algorithms.
     child entries.
 
     % Overview:
-    % - Some defenitions
+    % - Some definitions
     % - Idea: Disjoint paths
     %   - Vertex degrees: 0, 1, 2
     %   - Matchings for the 1's
@@ -782,7 +811,7 @@ following sections we explain the details of the algorithms.
     % - Pass on the instructions
     % - How to divide the requirements amoung child bags
     % - Remaining vertices: find edge set inside Yi
-    % - Formal defenition of F
+    % - Formal definition of F
     % - Top down approach; recursive + it tabulates the degrees+matchings
 
     %
@@ -792,12 +821,14 @@ following sections we explain the details of the algorithms.
 
     \subsection{Vehicle Routing}
     \label{sec:dp-vrp}
+    % TODO: COMMENT: other symbol for matching-edge weight (maybe w or lower case \omega)
+    % TODO: COMMENT: at description of G, remember what it is (merging of tour-sets)
     Let $G=(V, E)$ again be a simple graph with edge-weights $c_e$ and $(T=(W, H), X)$ be the tree
     decomposition with width $k - 1$ and $X_i$ and $Y_i$ be the bags with respectively vertices or
     edges as defined in Section~\ref{sec:td-definition}.
     % We say that a bag $X_j$ is below a bag
     % $X_i$ (in the tree) if $i$ is on the path from $j$ to the root of $T$.
-    The defenition of the instruction-function $F(X_i, D_i, M_i)$ remains the same except that the
+    The definition of the instruction-function $F(X_i, D_i, M_i)$ remains the same except that the
     edges $e \in M_i$ now have an edge weight $c_e$ as well.
     Furthermore let $M$ be the number of trucks that we have to use (and therefore te number of
     tours that we should find) and let $C$ be the capacity of each truck. We denote the demand of
@@ -825,6 +856,7 @@ following sections we explain the details of the algorithms.
     To do this we need to be able to enforce this restriction on each of the paths seperately in the
     parameters of the function $F$.
     As an edge in the matching relates one to one to a path, it comes natural to extended the edge
+    % TODO: COMMENT: 'one to one' properly wrong proverb / wording
     with an edge-weight $c_{\{u, v\}}$, which denotes that the demand of path from $u$ to $v$ can be
     at most $c_{\{u, v\}}$.
     To get the solution for a VRP instance we call $F(X_0, D_0, M_0)$, where $D_0$ contains the
@@ -866,9 +898,14 @@ following sections we explain the details of the algorithms.
     than in another might mean that the demand of that path is more than the capacity of a truck,
     leaving the solution invalid. As a consequence we do not have to evaluate just the cheepest edge
     selection, but all of them.
+    % TODO: COMMENT: "one per value of F"
+    % TODO: COMMENT: maybe F(X_i, D, M, W) (or whatever symbol I should use for edge weights)
+
+    % TODO: COMEMNT: most important comment of all, there seem to be 3 (TSP) or 4 (VRP) steps.
+    % Degrees, Matchings, Edges and Demands. Write down these steps (1. x\n 2. Y....)
 
     % Overview:
-    % - Some defenitions
+    % - Some definitions
     %   - Mostly the same as for the VRP, but with some additions.
     %   - Define main paths and subpaths (and independendness).
     % - Idea: same as TSP, but with demands (matching-edge weight)
@@ -904,6 +941,7 @@ following sections we explain the details of the algorithms.
 \section{Results}
 \label{sec:results}
 Todo
+% Dutch: "Test opstelling en resultaten" - dus welke grafen getest, waarvandaan, waarom die grafen?
 
 
 
