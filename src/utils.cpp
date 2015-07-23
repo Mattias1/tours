@@ -233,6 +233,16 @@ string dbg(const vector<vector<int>>& v) {
     }
     return result + "]";
 }
+string dbg(const vector<vector<vector<int>>>& v) {
+    // Output the vector of vectors of int vectors
+    string result = "[";
+    for (int i=0; i<v.size(); ++i) {
+        result += dbg(v[i]);
+        if (i != v[i].size() - 1)
+            result += ", \n";
+    }
+    return result + "]";
+}
 string dbg(const vector<MatchingEdge>& matchings) {
     // Output the matchings
     string result = "[";

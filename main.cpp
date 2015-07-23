@@ -131,23 +131,68 @@ void runWrapper() {
 //
 bool unitTests() {
     // Run some unit tests
-    bool debug = false;
+    bool debug = true;
 
     bool testResult = true;
     if (debug)
         cout << "Unit tests:\n------------------------" << endl;
 
+
     // Distribute demands 1:
     // void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int sizeLeft) {
     // Find all permutations of demands (or capacities, w/e - int's with min value 2) for a single path and store them in the result array.
     // So for a given demand of 6 and a size of 2, this will add [4,2], [3,3] and [2,4] to the rResult list (rLoop initialized as vector of size 2).
-    vector<vector<int>> result;
+    vector<vector<vector<int>>> allSubPathDemands = vector<vector<vector<int>>>(1);
     vector<int> loop = vector<int>(2, 0);
-    distributeDemands(result, loop, 6, 2);
+    distributeDemands(allSubPathDemands[0], loop, 6, 2);
     if (debug)
-        cout << "distribute demands 1: " << dbg(result) << endl;
-    if (dbg(result) != "[6,0 - 5,1 - 4,2 - 3,3 - 2,4 - 1,5 - 0,6]")
+        cout << "distribute demands 1: " << dbg(allSubPathDemands[0]) << endl;
+    if (dbg(allSubPathDemands[0]) != "[6,0 - 5,1 - 4,2 - 3,3 - 2,4 - 1,5 - 0,6]")
         testResult = false;
+
+
+
+
+
+    cout << "DEBUG: " << endl << allSubPathDemands[0][0][0] << endl << " :DEBUG" << endl;
+
+
+
+
+    // Find all child matchings 1:
+
+    // childEndpoints:
+    //     vector, size = nr of bags
+    //       matchings-list, size = nr of matchings (or paths) for this child
+    // result:
+    //     vector, size = nr of child bags (+1 for parent bag)
+    //       vector, size = nr of combinations (I don't know the amount, but it increases every time)
+    //         matchings-list, size = nr of matchings (or paths) for this child
+    // pathList:
+    //     vector, size = nr of paths
+    //       vector, size = nr of subpaths for this path
+    //         pair: (child-index, matching-index (in the child's matching list))
+    // allSubPathDemands:
+    //     vector, size = nr of paths
+    //       vector, size = nr of possibilities
+    //         vector, size = nr of subpaths for this path
+    MatchingEdge main1 = MatchingEdge(1, 2, 6);
+    MatchingEdge sub1 = MatchingEdge(1, 3, -1);
+    MatchingEdge sub2 = MatchingEdge(2, 3, -1);
+    vector<vector<MatchingEdge*>> childEndpoints = {{ &sub1 }, { &sub2 }};
+    vector<vector<pair<int, int>>> pathList = {{ make_pair(0, 0) }, { make_pair(1, 0) }};
+    vector<vector<vector<MatchingEdge>>> result = vector<vector<vector<MatchingEdge>>>(childEndpoints.size());
+    vector<vector<MatchingEdge>> loop2 = vector<vector<MatchingEdge>>(childEndpoints.size());
+    for (int j=0; j<loop2.size(); ++j)
+        loop2[j] = vector<MatchingEdge>(childEndpoints[j].size());
+    fillAllChildMatchings(result, loop2, 0, childEndpoints, pathList, allSubPathDemands);
+    if (debug) {
+        cout << "  result: " << endl;
+        for (int j=0; j<result.size(); ++j)
+            cout << "    " << j << ": " << dbg(result[j]) << endl;
+        cout << endl;
+    }
+
 
     // Finish
     cout << "Unit tests completed.\n------------------------" << endl;
@@ -308,6 +353,7 @@ int main(int argc, char *argv[])
 
     // DEBUG
     assert(unitTests());
+    return 0;
 
     // Run TSP algorithms
     if (TSP) {

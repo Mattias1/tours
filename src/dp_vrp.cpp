@@ -141,7 +141,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
                         cout << "Add {0, 0: ?}" << endl;
                     targetDegrees[i] -= 2;
                     childDegrees[j][i] += 2;
-                    matchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[i]->vid)));
+                    matchingsMemoryManager.push_back(unique_ptr<MatchingEdge>(new MatchingEdge(Xi.vertices[i]->vid, Xi.vertices[i]->vid, rEndpoints[k]->Demand)));
                     childEndpoints[j].push_back(matchingsMemoryManager.back().get()); // No need (nor allowed) to merge matching edges here (a depot is only allowed as endpoint of a path)
 
                     vector<int> td = duplicate(targetDegrees);
@@ -267,6 +267,9 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                 // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+                // TODO: there's another problem: I also need to check main paths that have no subpaths, but are not in leaf bags (because another main path goes to leaf bags)
                 return edgeValue;
             else
                 continue;
@@ -282,6 +285,8 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
         // Loop all possible demands in the matchings
         if (possibleMatchings.size() == 0)
             continue;
+        if (debug)
+            cout << "DEBUG possibleMatchings[0] size: " << possibleMatchings[0].size() << endl;
         for (int i=0; i<possibleMatchings[0].size(); ++i) {
             if (edgeValue < numeric_limits<int>::max()) {
                 if (debug) {
@@ -525,7 +530,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     // - Then get all the combinations and store it in the vectors (recursive???)
 
     // Assumes cycleCheck method has already been called??? Is this a good assumption??? Probably not... :S
-    bool debug = false;
+    bool debug = true;
 
     if (debug) {
         cout << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl;
@@ -548,7 +553,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     //     vector, size = nr of paths
     //       vector, size = nr of subpaths for this path
     //         pair: (child-index, matching-index (in the child's matching list))
-    vector<int> pathDemands = vector<int>(endpoints.size());
+    vector<int> pathDemands = vector<int>(endpoints.size()); // The demands left to distribute for the main paths (after the edge selection).
     int progressCounter = -1;
     int lastChild = -1;
     int lastChildEndpoint = -1;
@@ -704,7 +709,6 @@ void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int dem
 
     // Normal case
     // for (int d = demandLeft - 2*(sizeLeft - 1); d>=2; --d) { // No minimum of 2, depot vertex can be endpoint(s).
-    // TODO: minimum of 1 is valid???
     for (int d = demandLeft; d>=0; --d) {
         rLoop[rLoop.size() - sizeLeft] = d;
         distributeDemands(rResult, rLoop, demandLeft - d, sizeLeft - 1);
@@ -712,14 +716,22 @@ void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int dem
 }
 
 void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector<vector<MatchingEdge>>& rLoop, int pathIndex, const vector<vector<MatchingEdge*>>& childEndpoints, const vector<vector<pair<int, int>>>& pathList, const vector<vector<vector<int>>>& allSubPathDemands) {
-    // Now we have all the building blocks, fill the allChildMatchings vector (result).
+    // Now we have all the building blocks, fill the allChildMatchings vector (result):
+    // So, we have a list of paths, a list of child bags and a list of demands (per path).
+    // Paths and bags are kind of independend, so now we have to sort of merge them, but not quite.... (I THINK OK, I DONT KNOW MY OWN FUNCTION ANYMORE).
+
     // This is huge, no really, huge.
     // Basically: do a recursive for-loop for every sub-path demand list.
+    bool debug = true;
+    if (debug) {
+        cout << "result size: " << rResult.size() << ", loop: " << dbg(rLoop) << ", pathidx: " << pathIndex << ", ceps: " << dbg(childEndpoints);
+        cout << ", pathlist: " << dbg(pathList) << ", all subpath demands size: " << allSubPathDemands.size() << endl;
+    }
 
     // The arguments:
     // result:
     //     vector, size = nr of child bags (+1 for parent bag)
-    //       vector, size = nr of combinations
+    //       vector, size = nr of combinations (I don't know the amount, but it increases every time)
     //         matchings-list, size = nr of matchings (or paths) for this child
     // pathList:
     //     vector, size = nr of paths
@@ -747,7 +759,10 @@ void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector
         for (int subPath=0; subPath<pathList[pathIndex].size(); ++subPath) {
             int j = pathList[pathIndex][subPath].first;   // The first int in the pair is the child-index in the bag's edgelist
             int i = pathList[pathIndex][subPath].second;  // The second int in the pair is the matching-index in the child's endpoints list
-            rLoop[j][i] = MatchingEdge(childEndpoints[j][i]->A, childEndpoints[j][i]->B, allSubPathDemands[pathIndex][possibility][subPath]);
+            rLoop[j][i] = MatchingEdge(childEndpoints[j][i]->A, childEndpoints[j][i]->B, allSubPathDemands[pathIndex][possibility][
+                    subPath
+                ] // <-- TODO: error (j=1, i=0, pathIndex=0, possibility=0)
+            );
         }
         fillAllChildMatchings(rResult, rLoop, pathIndex + 1, childEndpoints, pathList, allSubPathDemands);
     }

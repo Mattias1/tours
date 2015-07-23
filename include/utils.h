@@ -80,6 +80,7 @@ bool isInt(const string& s, bool allowNegative=false);
 string dbg(const string& s, int i);
 string dbg(const vector<int>& v);
 string dbg(const vector<vector<int>>& v);
+string dbg(const vector<vector<vector<int>>>& v);
 string dbg(const vector<MatchingEdge>& matchings);
 string dbg(const vector<vector<MatchingEdge>>& matchings);
 string dbg(const vector<MatchingEdge*>& matchings);
