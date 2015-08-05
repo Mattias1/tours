@@ -131,7 +131,7 @@ void runWrapper() {
 //
 bool unitTests() {
     // Run some unit tests
-    bool debug = true;
+    bool debug = false;
 
     bool testResult = true;
     if (debug)
@@ -150,16 +150,29 @@ bool unitTests() {
     if (dbg(allSubPathDemands[0]) != "[6,0 - 5,1 - 4,2 - 3,3 - 2,4 - 1,5 - 0,6]")
         testResult = false;
 
-
-
-
-
-    cout << "DEBUG: " << endl << allSubPathDemands[0][0][0] << endl << " :DEBUG" << endl;
-
-
-
-
     // Find all child matchings 1:
+    // MatchingEdge main1 = MatchingEdge(1, 2, 6);
+    MatchingEdge sub1 = MatchingEdge(1, 3, -1);
+    MatchingEdge sub2 = MatchingEdge(2, 3, -1);
+    vector<vector<MatchingEdge*>> childEndpoints = {{ &sub1 }, { &sub2 }};
+    vector<vector<pair<int, int>>> pathList = {{ make_pair(0, 0), make_pair(1, 0) }};
+    vector<vector<vector<MatchingEdge>>> result = vector<vector<vector<MatchingEdge>>>(childEndpoints.size());
+    vector<vector<MatchingEdge>> loop2 = vector<vector<MatchingEdge>>(childEndpoints.size());
+    for (int j=0; j<loop2.size(); ++j)
+        loop2[j] = vector<MatchingEdge>(childEndpoints[j].size());
+    fillAllChildMatchings(result, loop2, 0, childEndpoints, pathList, allSubPathDemands);
+    if (debug) {
+        cout << "  result: " << endl;
+        for (int j=0; j<result.size(); ++j)
+            cout << "    " << j << ": " << dbg(result[j]) << endl;
+        cout << endl;
+    }
+    if (result.size() != 2 || dbg(result[0]) != "[1-3:6 - 1-3:5 - 1-3:4 - 1-3:3 - 1-3:2 - 1-3:1 - 1-3:0]"
+                           || dbg(result[1]) != "[2-3:0 - 2-3:1 - 2-3:2 - 2-3:3 - 2-3:4 - 2-3:5 - 2-3:6]") {
+        testResult = false;
+    }
+
+    // Find all child matchings 2:
 
     // childEndpoints:
     //     vector, size = nr of bags
@@ -176,23 +189,6 @@ bool unitTests() {
     //     vector, size = nr of paths
     //       vector, size = nr of possibilities
     //         vector, size = nr of subpaths for this path
-    MatchingEdge main1 = MatchingEdge(1, 2, 6);
-    MatchingEdge sub1 = MatchingEdge(1, 3, -1);
-    MatchingEdge sub2 = MatchingEdge(2, 3, -1);
-    vector<vector<MatchingEdge*>> childEndpoints = {{ &sub1 }, { &sub2 }};
-    vector<vector<pair<int, int>>> pathList = {{ make_pair(0, 0) }, { make_pair(1, 0) }};
-    vector<vector<vector<MatchingEdge>>> result = vector<vector<vector<MatchingEdge>>>(childEndpoints.size());
-    vector<vector<MatchingEdge>> loop2 = vector<vector<MatchingEdge>>(childEndpoints.size());
-    for (int j=0; j<loop2.size(); ++j)
-        loop2[j] = vector<MatchingEdge>(childEndpoints[j].size());
-    fillAllChildMatchings(result, loop2, 0, childEndpoints, pathList, allSubPathDemands);
-    if (debug) {
-        cout << "  result: " << endl;
-        for (int j=0; j<result.size(); ++j)
-            cout << "    " << j << ": " << dbg(result[j]) << endl;
-        cout << endl;
-    }
-
 
     // Finish
     cout << "Unit tests completed.\n------------------------" << endl;
@@ -294,7 +290,7 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
         cout << "Done graph from file" << endl << "----------------------------" << endl;
 
         // Run heuristics and merge the tours
-        int mergedTours = 1;
+        // int mergedTours = 1;
         // vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
         // mainWrapper(lkhArgs);
         // int tourLength = tourFromFile(*pG, tempFile + ".tour");
@@ -353,7 +349,6 @@ int main(int argc, char *argv[])
 
     // DEBUG
     assert(unitTests());
-    return 0;
 
     // Run TSP algorithms
     if (TSP) {

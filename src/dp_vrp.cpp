@@ -759,10 +759,13 @@ void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector
         for (int subPath=0; subPath<pathList[pathIndex].size(); ++subPath) {
             int j = pathList[pathIndex][subPath].first;   // The first int in the pair is the child-index in the bag's edgelist
             int i = pathList[pathIndex][subPath].second;  // The second int in the pair is the matching-index in the child's endpoints list
-            rLoop[j][i] = MatchingEdge(childEndpoints[j][i]->A, childEndpoints[j][i]->B, allSubPathDemands[pathIndex][possibility][
-                    subPath
-                ] // <-- TODO: error (j=1, i=0, pathIndex=0, possibility=0)
-            );
+
+            if (debug)
+                cout << "DEBUG HERE - size(): " << allSubPathDemands.size() << ", pathIdx: " << pathIndex <<
+                    ", [pathIndex].size(): " << allSubPathDemands[pathIndex].size() << ", possibility: " << possibility << endl;
+
+            int demand = allSubPathDemands[pathIndex][possibility][subPath]; // <-- TODO: error (j=1, i=0, pathIndex=0, possibility=0)
+            rLoop[j][i] = MatchingEdge(childEndpoints[j][i]->A, childEndpoints[j][i]->B, demand);
         }
         fillAllChildMatchings(rResult, rLoop, pathIndex + 1, childEndpoints, pathList, allSubPathDemands);
     }
