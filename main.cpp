@@ -131,7 +131,7 @@ void runWrapper() {
 //
 bool unitTests() {
     // Run some unit tests
-    bool debug = false;
+    bool debug = true;
 
     bool testResult = true;
     if (debug)
@@ -162,9 +162,9 @@ bool unitTests() {
         loop2[j] = vector<MatchingEdge>(childEndpoints[j].size());
     fillAllChildMatchings(result, loop2, 0, childEndpoints, pathList, allSubPathDemands);
     if (debug) {
-        cout << "  result: " << endl;
+        cout << "all child matchings 1: " << endl;
         for (int j=0; j<result.size(); ++j)
-            cout << "    " << j << ": " << dbg(result[j]) << endl;
+            cout << "  " << j << ": " << dbg(result[j]) << endl;
         cout << endl;
     }
     if (result.size() != 2 || dbg(result[0]) != "[1-3:6 - 1-3:5 - 1-3:4 - 1-3:3 - 1-3:2 - 1-3:1 - 1-3:0]"
@@ -172,7 +172,43 @@ bool unitTests() {
         testResult = false;
     }
 
+    // Distribute demands 2:
+    allSubPathDemands = vector<vector<vector<int>>>(2);
+    vector<int>pathDemands = {3, 1};
+    pathList = {{ make_pair(0, 0) }, {}};
+    for (int i=0; i<pathDemands.size(); ++i) {
+        if (pathList[i].size() > 0) {
+            loop = vector<int>(pathList[i].size(), 0);
+            distributeDemands(allSubPathDemands[i], loop, pathDemands[i], pathList[i].size());
+        }
+    }
+    if (debug) {
+        cout << "distribute demands 2: " << endl;
+        for (int i=0; i<allSubPathDemands.size(); ++i)
+            cout << "    " << i << ": " << dbg(allSubPathDemands[i]) << ", size: " << allSubPathDemands[i].size() << endl;
+    }
+    if (allSubPathDemands.size() != 2 || dbg(allSubPathDemands[0]) != "[3]" || dbg(allSubPathDemands[1]) != "[]" || allSubPathDemands[1].size() != 1)
+        testResult = false;
+    // [[[3], []] vs [[[3], [[]]]
+
     // Find all child matchings 2:
+    allSubPathDemands = {{ {3} }, { {} }}; // <-- note the empty array here, so the 2nd row array has a size of 1, not 0. In the original algorithm it actually has size 0, and therefore goes wrong.
+    sub1 = MatchingEdge(0, 0, 3);
+    childEndpoints = {{ &sub1 }};
+    pathList = {{ make_pair(0, 0)}, {}};
+    result = vector<vector<vector<MatchingEdge>>>(childEndpoints.size());
+    loop2 = vector<vector<MatchingEdge>>(childEndpoints.size());
+    for (int j=0; j<loop2.size(); ++j)
+        loop2[j] = vector<MatchingEdge>(childEndpoints[j].size());
+    fillAllChildMatchings(result, loop2, 0, childEndpoints, pathList, allSubPathDemands);
+    if (debug || true) {
+        cout << "all child matchings 2: " << endl;
+        for (int j=0; j<result.size(); ++j)
+            cout << "  " << j << ": " << dbg(result[j]) << endl;
+        cout << endl;
+    }
+    if (result.size() != 1 || dbg(result[0]) != "[0-0:3]")
+        testResult = false;
 
     // childEndpoints:
     //     vector, size = nr of bags
@@ -349,6 +385,7 @@ int main(int argc, char *argv[])
 
     // DEBUG
     assert(unitTests());
+    return 0;
 
     // Run TSP algorithms
     if (TSP) {

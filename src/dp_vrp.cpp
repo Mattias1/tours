@@ -606,7 +606,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                 if (debug) {
                     cout << "  allSubPathDemands: " << endl;
                     for (int i=0; i<allSubPathDemands.size(); ++i)
-                        cout << "    " << i << ": " << dbg(allSubPathDemands[i]) << endl;
+                        cout << "    " << i << ": " << dbg(allSubPathDemands[i]) << ", size: " << allSubPathDemands[i].size() << endl;
                 }
 
                 // Create all possible child endpoint possibilities
@@ -619,7 +619,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                 if (debug) {
                     cout << "  result: " << endl;
                     for (int j=0; j<result.size(); ++j)
-                        cout << "    " << j << ": " << dbg(result[j]) << endl;
+                        cout << "    " << j << ": " << dbg(result[j]) << ", size: " << result[j].size() << endl;
                     cout << endl;
                 }
                 return result;
