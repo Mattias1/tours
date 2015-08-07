@@ -722,7 +722,7 @@ void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector
 
     // This is huge, no really, huge.
     // Basically: do a recursive for-loop for every sub-path demand list.
-    bool debug = true;
+    bool debug = false;
     if (debug) {
         cout << "result size: " << rResult.size() << ", loop: " << dbg(rLoop) << ", pathidx: " << pathIndex << ", ceps: " << dbg(childEndpoints);
         cout << ", pathlist: " << dbg(pathList) << ", all subpath demands size: " << allSubPathDemands.size() << endl;
@@ -759,14 +759,14 @@ void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector
         for (int subPath=0; subPath<pathList[pathIndex].size(); ++subPath) {
             int j = pathList[pathIndex][subPath].first;   // The first int in the pair is the child-index in the bag's edgelist
             int i = pathList[pathIndex][subPath].second;  // The second int in the pair is the matching-index in the child's endpoints list
-
-            if (debug)
-                cout << "DEBUG HERE - size(): " << allSubPathDemands.size() << ", pathIdx: " << pathIndex <<
-                    ", [pathIndex].size(): " << allSubPathDemands[pathIndex].size() << ", possibility: " << possibility << endl;
-
-            int demand = allSubPathDemands[pathIndex][possibility][subPath]; // <-- TODO: error (j=1, i=0, pathIndex=0, possibility=0)
+            int demand = allSubPathDemands[pathIndex][possibility][subPath];
             rLoop[j][i] = MatchingEdge(childEndpoints[j][i]->A, childEndpoints[j][i]->B, demand);
         }
+        fillAllChildMatchings(rResult, rLoop, pathIndex + 1, childEndpoints, pathList, allSubPathDemands);
+    }
+
+    // In case of a main path that has no subpaths, continue with the next main path
+    if (allSubPathDemands[pathIndex].size() == 0) {
         fillAllChildMatchings(rResult, rLoop, pathIndex + 1, childEndpoints, pathList, allSubPathDemands);
     }
 }
