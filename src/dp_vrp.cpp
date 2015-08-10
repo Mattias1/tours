@@ -147,7 +147,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
                     vector<int> td = duplicate(targetDegrees);
                     vector<vector<int>> cds = duplicate(childDegrees);
                     vector<vector<MatchingEdge*>> eps = duplicate(childEndpoints);
-                    result = vrpRecurse(graph, rHashlist, Xi, Yi, i, j, td, cds, rEndpoints, eps, true);
+                    result = min(result, vrpRecurse(graph, rHashlist, Xi, Yi, i, j, td, cds, rEndpoints, eps, true));
                     if (debug)
                         cout << "Added {0, 0: ?}" << endl;
                     if (targetDegrees[i] < 2)
@@ -270,6 +270,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
 
 
                 // TODO: there's another problem: I also need to check main paths that have no subpaths, but are not in leaf bags (because another main path goes to leaf bags)
+                // Solution: check in edgeSelect (or more precise: vrpCycleCheck)
                 return edgeValue;
             else
                 continue;
@@ -280,13 +281,13 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
         vector<vector<vector<MatchingEdge>>> possibleMatchings = allChildMatchings(graph, Xi, Yi, edgeList, rEndpoints, rChildEndpoints);
 
         if (debug)
-            cout << "DEBUG possibleMatchings size: " << possibleMatchings.size() << ", endpoints: " << dbg(rEndpoints) << ", childEps: " << dbg(rChildEndpoints) << endl; // TODO
+            cout << dbg("  ", Xi.vertices.size()) << "possibleMatchings size: " << possibleMatchings.size() << ", endpoints: " << dbg(rEndpoints) << ", childEps: " << dbg(rChildEndpoints) << endl; // TODO
 
         // Loop all possible demands in the matchings
         if (possibleMatchings.size() == 0)
             continue;
         if (debug)
-            cout << "DEBUG possibleMatchings[0] size: " << possibleMatchings[0].size() << endl;
+            cout << dbg("  ", Xi.vertices.size()) << "possibleMatchings[0] size: " << possibleMatchings[0].size() << endl;
         for (int i=0; i<possibleMatchings[0].size(); ++i) {
             if (edgeValue < numeric_limits<int>::max()) {
                 if (debug) {
@@ -530,7 +531,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     // - Then get all the combinations and store it in the vectors (recursive???)
 
     // Assumes cycleCheck method has already been called??? Is this a good assumption??? Probably not... :S
-    bool debug = true;
+    bool debug = false;
 
     if (debug) {
         cout << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl;
