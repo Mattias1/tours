@@ -10,8 +10,9 @@ using namespace std;
 
 // Forward declaration, because edge is going to need vertices (but only using pointers)
 class Vertex;
-// Header file declaration of small compare function, because it's also used in the tree decomposition file
+// Header file declaration of two small functions, used elsewhere as well
 bool comp(const string& line, const string& firstPart);
+int calculateEuclidean(const Vertex* const pA, const Vertex* const pB);
 
 // Import in this order, as they all depend on each other.
 class Edge
@@ -29,9 +30,6 @@ class Edge
         Vertex* Other(const Vertex& v) const;
 
         bool IsIncidentTo(Vertex* pV) const;
-
-    private:
-        void updateEuclideanCost();
 };
 
 ostream &operator<<(ostream &os, const Edge& edge);

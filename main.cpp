@@ -62,7 +62,7 @@ int tourFromFile(Graph& rGraph, string path) {
         vids.push_back(stoi(line));
     }
     // Complete the cycle
-    vids.push_back(vids[0]); // This seems to be the problem...
+    vids.push_back(vids[0]);
     // Now let the graph add its edges
     if (rGraph.AddTourFromFile(vids))
         return tourLength;
@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
     }
     // Run VRP algorithms
     else {
-        vector<string> FILES = { "test-vrp-3" };
+        vector<string> FILES = { "test-vrp-2" };
         int SAVINGS_RUNS = 1;
         int SWEEP_RUNS = 0;
 
@@ -427,6 +427,5 @@ int main(int argc, char *argv[])
 }
 
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
-// TODO: Make sure the depot vertex only appears as endpoint in a path
 // TODO: save in a bag the total demand of all vertices in that bag and below, so that we can return early in bad cases
-// TODO: make sure a {0, 0: ?} path gets the correct demand, and does not get included in these exploding methods
+// TODO: 'exactly k' or 'at most k' trucks? (savings does 'at most k' right now)

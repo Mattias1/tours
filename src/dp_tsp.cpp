@@ -10,7 +10,7 @@
 using namespace std;
 
 //
-// The matching class
+// The matching-edge class
 //
 MatchingEdge::MatchingEdge()
 {}
@@ -50,11 +50,11 @@ bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vec
     int posB = -1;
     int otherB = -1;
     for (int i=0; i<rMatching.size(); ++i) {
-        if (posA == -1 && dontMergeDepot == (isDepot(a)) && rMatching[i]->IsIncidentTo(a)) {
+        if (posA == -1 && !(dontMergeDepot && isDepot(a)) && rMatching[i]->IsIncidentTo(a)) {
             posA = i;
             otherA = rMatching[i]->Other(a);
         }
-        else if (posB == -1 && dontMergeDepot == (isDepot(b)) && rMatching[i]->IsIncidentTo(b)) {
+        else if (posB == -1 && !(dontMergeDepot && isDepot(b)) && rMatching[i]->IsIncidentTo(b)) {
             posB = i;
             otherB = rMatching[i]->Other(b);
         }

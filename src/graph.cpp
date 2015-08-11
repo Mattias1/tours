@@ -8,13 +8,24 @@ using namespace std;
 //  Graph
 //
 Graph::Graph()
+    :name(),
+    capacity(-1),
+    trucks(-1),
+    vertices()
 { }
 Graph::~Graph()
 { }
 
-// This is a small function used by ReadFileLine.
+// This is a small function used by ReadFileLine (both in graph and in treedecomposition).
 bool comp(const string& line, const string& firstPart) {
     return line.substr(0, firstPart.size()) == firstPart;
+}
+
+// This is a small function (used in graph and in savings).
+int calculateEuclidean(const Vertex* const pA, const Vertex* const pB) {
+    int x = pA->x - pB->x;
+    int y = pA->y - pB->y;
+    return sqrt(x*x + y*y);
 }
 
 bool Graph::ReadFileLine(int& rState, string line) {
@@ -178,7 +189,6 @@ unique_ptr<Graph> Graph::DeepCopy() const {
         }
     }
 
-    // This'll probably be optimized by the compiler to just copy once (this creation) and not again at the return call.
     return move(pGraph);
 }
 
@@ -267,11 +277,9 @@ bool Vertex::RemoveEdgeTo(Vertex* pOther) {
 //
 Edge::Edge(Vertex* pA, Vertex* pB)
     :pA(pA),
-    pB(pB)
-{
-    // I don't think I can initialize this, so lets just assign t.
-    this->updateEuclideanCost();
-}
+    pB(pB),
+    Cost(calculateEuclidean(pA, pB))
+{ }
 
 Vertex* Edge::Other(const Vertex& v) const {
     if (v.vid == this->pA->vid)
@@ -284,12 +292,6 @@ Vertex* Edge::Other(const Vertex& v) const {
 
 bool Edge::IsIncidentTo(Vertex* pV) const {
     return this->pA == pV || this->pB == pV;
-}
-
-void Edge::updateEuclideanCost() {
-    int x = this->pA->x - this->pB->x;
-    int y = this->pA->y - this->pB->y;
-    this->Cost = sqrt(x*x + y*y);
 }
 
 ostream &operator<<(ostream &os, const Edge& edge) {

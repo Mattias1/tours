@@ -9,7 +9,7 @@
 using namespace std;
 
 //
-// The matching class
+// The matching-edge class
 //
 class MatchingEdge
 {
