@@ -7,7 +7,7 @@
 //
 // The saving class
 //
-Saving::Saving(int i, int j, Graph& graph, vector<int> costDepot2i)
+Saving::Saving(int i, int j, const Graph& graph, vector<int> costDepot2i)
     :I(i),
     J(j),
     Value(costDepot2i[i] + costDepot2i[j] + calculateEuclidean(graph.vertices[i].get(), graph.vertices[j].get()))
@@ -33,18 +33,18 @@ inline bool concatenatePaths(int i, int j, bool frontI, bool frontJ, vector<pair
     return false;
 }
 
-int savings(Graph& graph) {
+int savings(Graph& rGraph) {
     // Precompute all edge costs (0, i)
-    Vertex* pDepot = graph.vertices[0].get();
-    vector<int> costDepot2i = vector<int>(graph.vertices.size());
+    Vertex* pDepot = rGraph.vertices[0].get();
+    vector<int> costDepot2i = vector<int>(rGraph.vertices.size());
     for (int i=0; i<costDepot2i.size(); ++i)
-        costDepot2i[i] = calculateEuclidean(pDepot, graph.vertices[i].get());
+        costDepot2i[i] = calculateEuclidean(pDepot, rGraph.vertices[i].get());
 
     // Calculate and sort all savings
     vector<Saving> savings;
-    for (int i=0; i<graph.vertices.size() - 1; ++i) {
-        for (int j=i+1; j<graph.vertices.size(); ++j)
-            savings.push_back(Saving(i, j, graph, costDepot2i));
+    for (int i=0; i<rGraph.vertices.size() - 1; ++i) {
+        for (int j=i+1; j<rGraph.vertices.size(); ++j)
+            savings.push_back(Saving(i, j, rGraph, costDepot2i));
     }
     auto sortLambda = [&](const Saving& a, const Saving& b) {
         return a.Value > b.Value;
@@ -54,8 +54,8 @@ int savings(Graph& graph) {
     // Initialize all tours (way too many of them)
     vector<pair<int, list<int>>> pathsMemoryManager;    // Memory manager of all the seperate paths
     vector<pair<int, list<int>>*> paths;                // Each index i points to the path that contains the i-th vertex
-    for (int i=0; i<graph.vertices.size(); ++i) {
-        pathsMemoryManager.push_back(make_pair(graph.vertices[i]->demand, list<int>(1, i)));
+    for (int i=0; i<rGraph.vertices.size(); ++i) {
+        pathsMemoryManager.push_back(make_pair(rGraph.vertices[i]->demand, list<int>(1, i)));
         paths.push_back(&pathsMemoryManager[i]);
     }
 
@@ -76,7 +76,7 @@ int savings(Graph& graph) {
         else
             continue;
         // Make sure the paths don't exceed the capacity of a truck
-        if (paths[i]->first + paths[j]->first > graph.capacity)
+        if (paths[i]->first + paths[j]->first > rGraph.capacity)
             continue;
         // So now we know that the current saving makes for a feasible merge, go merge it
         if (!concatenatePaths(i, j, frontI, frontJ, paths)) {
@@ -94,27 +94,27 @@ int savings(Graph& graph) {
         }
     }
 
-    // Determine the tour-edges for the graph
-    int truckCounter = 0;
+    // Determine the tour-edges (strictly speaking: the order of the vertices) for the graph
     vector<vector<int>> vids;
     for (int i=0; i<paths.size(); ++i) {
         // Test if this tour isn't processed already
-        if (pDepot->IsConnectedTo(graph.vertices[paths[i]->second.front()].get()))
+        if (pDepot->IsConnectedTo(rGraph.vertices[paths[i]->second.front()].get()))
             continue;
         // Collect the vertex ids
         vids.push_back({ 0 });
         for (auto iterVid = paths[i]->second.begin(); iterVid != paths[i]->second.end(); iterVid++) {
-            ++truckCounter;
             vids.back().push_back(*iterVid);
         }
         vids.back().push_back(0);
     }
 
     // Add the tour-edges to the graph
-    if (vids.size() > graph.trucks)
+    if (vids.size() > rGraph.trucks)
         return -1;
     for (int i=0; i<vids.size(); ++i)
-        graph.AddTourFromFile(vids[i]);
+        rGraph.AddTourFromFile(vids[i]);
+
+    return 0; // TODO: return tour value?
 }
 
 

@@ -11,7 +11,7 @@
 #include "dp_vrp.h"
 using namespace std;
 
-// The header for the renamed main and run functions ~Matty
+// The header for the renamed main and run functions (for LKH)
 extern "C" {
     #include "LKH.h"
     int main_lkh(int argc, char *argv[]);
@@ -429,3 +429,4 @@ int main(int argc, char *argv[])
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
 // TODO: save in a bag the total demand of all vertices in that bag and below, so that we can return early in bad cases
 // TODO: 'exactly k' or 'at most k' trucks? (savings does 'at most k' right now)
+// TODO: does the for loop in the tsp actually work? It might crash LKH, as it's initialized in the for loops body...

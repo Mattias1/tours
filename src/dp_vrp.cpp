@@ -418,15 +418,6 @@ vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimu
 //
 // Some helper functions
 //
-bool isDepot(Vertex* pV) {
-    // return whether or not this vertex is the depot
-    return isDepot(pV->vid);
-}
-bool isDepot(int vid) {
-    // return whether or not this vertex is the depot
-    return vid == 0;
-}
-
 vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector<Edge*>& edgeList, const vector<MatchingEdge*>& endpoints, const vector<MatchingEdge*>& allChildEndpoints) {
     // Loop through the chosen edges and save the demand per path (and the corresponding endpoints: int_ep, int_ep, int_d)
     // What we compute here is the total demand of all vertices per path,

@@ -3,7 +3,6 @@
 
 #include "graph.h"
 #include <vector>
-// #include <utility> // NECESSARY???
 
 //
 // The saving class
@@ -13,12 +12,12 @@ class Saving
     public:
         int I, J, Value;
 
-        Saving(int i, int j, Graph& graph, vector<int> costDepot2i);
+        Saving(int i, int j, const Graph& graph, vector<int> costDepot2i);
 };
 
 //
 // The algotithm
 //
-int savings();
+int savings(Graph& rGraph);
 
 #endif // SAVINGS_H
