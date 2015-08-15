@@ -102,4 +102,8 @@ int stoi(const string& str, size_t* pos = 0, int base = 10);
 string to_string(int n);
 #endif // defined
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
 #endif // UTILS_H

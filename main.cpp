@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -343,7 +345,7 @@ int main(int argc, char *argv[])
     // Run TSP algorithms
     if (TSP) {
         vector<string> FILES = { "mod502" };
-        int LKH_RUNS = 50;
+        int LKH_RUNS = 5;
 
         return runTSP(FILES, LKH_RUNS);
     }
