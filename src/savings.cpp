@@ -111,8 +111,11 @@ int savings(Graph& rGraph) {
     // Add the tour-edges to the graph
     if (vids.size() > rGraph.trucks)
         return -1;
-    for (int i=0; i<vids.size(); ++i)
+    int totalValue = 0;
+    for (int i=0; i<vids.size(); ++i) {
+        // TODO: LKH optimization?
         rGraph.AddTourFromFile(vids[i]);
+    }
 
     return 0; // TODO: return tour value?
 }

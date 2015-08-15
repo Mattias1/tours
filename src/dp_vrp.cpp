@@ -15,7 +15,7 @@ using namespace std;
 //
 vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     // Compute the smallest tour using DP on a tree decomposition.
-    bool debug = true;
+    bool debug = false;
 
     // Make sure there is a proper graph and decomposition
     const Bag* pXroot = TD.getRoot();
@@ -108,7 +108,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = true; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
+    bool debug = false; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
@@ -211,7 +211,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     // This method is the base case for the calculate vrp recurse method - it is the same as tspChildEval, except that it calls the vrpEdgeSelect and vrpTable [TODO?].
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     // This method is exactly the same as tspChildEvaluation, except that it calls the vrpEdgeSelect AND vrpTable
-    bool debug = Xi.vid==0; // debug = true;
+    bool debug = false;
     if (debug) {
         cout << dbg("  ", Xi.vertices.size()) << "Child endpoints (child eval): " << dbg(rChildEndpoints) << endl;
     }

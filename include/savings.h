@@ -3,6 +3,7 @@
 
 #include "graph.h"
 #include <vector>
+using namespace std;
 
 //
 // The saving class
