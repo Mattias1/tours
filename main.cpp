@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
     // The main entry-point for this application. Here we load the graph (they should only contain vertices),
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
     vector<string> args(argv, argv + argc); // Currently not used
-    bool TSP = true;
+    bool TSP = false;
 
     // DEBUG
     assert(unitTests());
