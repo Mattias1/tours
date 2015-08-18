@@ -49,9 +49,9 @@ class Vertex
         Vertex(int vid, int x, int y, int demand = 0);
         virtual ~Vertex();
 
-        bool IsConnectedTo(Vertex* other) const;
+        bool IsConnectedTo(Vertex* pOther) const;
 
-        bool RemoveEdgeTo(Vertex* other);
+        bool RemoveEdgeTo(Vertex* pOther);
 };
 
 

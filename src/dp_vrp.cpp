@@ -30,12 +30,15 @@ vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=t
     unordered_map<string, int> hashlist;
     vector<int> degrees = vector<int>(pXroot->vertices.size(), 2);
     degrees[0] = TRUCKS * 2;
-    vector<MatchingEdge> endpointsMemoryManager = vector<MatchingEdge>(TRUCKS);
+    int singleCityTourCost = singleCityTourSpecialCaseManager(*TD.getOriginalGraph(), degrees);
+    vector<MatchingEdge> endpointsMemoryManager = vector<MatchingEdge>(degrees[0] / 2);
     for (int i=0; i<endpointsMemoryManager.size(); ++i) {
         endpointsMemoryManager[i] = MatchingEdge(0, 0, CAPACITY);
     }
     string S = toTableEntry(*pXroot, degrees, pointerize(endpointsMemoryManager));
     int value = vrpTable(*TD.getOriginalGraph(), hashlist, S, *pXroot);
+    if (value != numeric_limits<int>::max())
+        value += singleCityTourCost;
     if (consoleOutput)
         cout << "VRP cost: " << value << endl;
     if (debug) {
@@ -415,9 +418,6 @@ vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimu
     return result;
 }
 
-//
-// Some helper functions
-//
 vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector<Edge*>& edgeList, const vector<MatchingEdge*>& endpoints, const vector<MatchingEdge*>& allChildEndpoints) {
     // Loop through the chosen edges and save the demand per path (and the corresponding endpoints: int_ep, int_ep, int_d)
     // What we compute here is the total demand of all vertices per path,
@@ -761,4 +761,21 @@ void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector
     if (allSubPathDemands[pathIndex].size() == 0) {
         fillAllChildMatchings(rResult, rLoop, pathIndex + 1, childEndpoints, pathList, allSubPathDemands);
     }
+}
+
+int singleCityTourSpecialCaseManager(const Graph& graph, vector<int>& rDegrees) {
+    // There is a special case for the tours with a single city. These cannot be solved by the DP, because it has as assumption that every city has at least two neighbours.
+    // However, this case is trivial to manage up front, so we'll just exclude them from the DP and then add the cost for these tours afterwards.
+    // In this method, we exclude them from the degrees list, and we give the cost for just these tours.
+    int totalWeight = 0;
+    for (int i=0; i<graph.vertices.size(); ++i) {
+        const Vertex& v = *graph.vertices[i];
+        if (v.edges.size() < 2) {
+            assert(v.edges.size() == 1 && v.IsConnectedTo(graph.vertices[0].get()) && "ERROR: There is a vertex with degree < 2 and it's not a single city-tour case.");
+            rDegrees[0] -= 2;
+            rDegrees[i] = 0;
+            totalWeight += v.edges[0]->Cost;
+        }
+    }
+    return totalWeight;
 }

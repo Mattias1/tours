@@ -16,6 +16,8 @@ class Saving
         Saving(int i, int j, const Graph& graph, vector<int> costDepot2i);
 };
 
+ostream &operator<<(ostream &os, const Saving& s);
+
 //
 // The algotithm
 //

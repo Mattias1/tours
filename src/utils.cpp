@@ -325,7 +325,7 @@ string dbg(const vector<Edge*>& edges) {
     }
     return result + "]";
 }
-string dbg(vector<Edge*>* pEdges) {
+string dbg(const vector<Edge*>* const pEdges) {
     // Output null or the edges
     if (pEdges == nullptr)
         return "null";
@@ -340,6 +340,23 @@ string dbg(const vector<Vertex*>& vertices) {
             result += ",";
     }
     return result + "]";
+}
+string dbg(const vector<pair<int, list<int>>*> paths) {
+    // Output the path (linked-)list
+    string result = "";
+    for (int p=0; p<paths.size(); ++p) {
+        if (paths[p] == nullptr)
+            continue;
+        result += "  " + to_string(p) + ": ";
+        for (auto iterVid = paths[p]->second.begin(); iterVid != paths[p]->second.end(); iterVid++) {
+            if (iterVid != paths[p]->second.begin())
+                result += ", ";
+            result += to_string(*iterVid);
+        }
+        if (p != paths.size() - 1)
+            result += "\n";
+    }
+    return result;
 }
 
 

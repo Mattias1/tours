@@ -145,17 +145,16 @@ string Graph::ToFileString() const {
 
 bool Graph::AddTourFromFile(const vector<int>& vids) {
     // Add all edges from the cycle
-    int startVid = 1;
     bool result = false;
     for (int i=0; i<vids.size() - 1; ++i) {
         // Assert that the vertices exist
-        if (vids[i] - startVid >= this->vertices.size() || vids[i + 1] - startVid >= this->vertices.size()) {
-            cout << "ERROR, the vertex requested by the AddTourFromFile doesn't exist - " << vids[i] - startVid << ", " << vids[i + 1] - startVid << endl;
+        if (vids[i] >= this->vertices.size() || vids[i + 1] >= this->vertices.size()) {
+            cout << "ERROR, the vertex requested by the AddTourFromFile doesn't exist - " << vids[i] << ", " << vids[i + 1] << endl;
             return false;
         }
         // Add the actual edge (if it's not there already).
-        Vertex* pA = this->vertices[vids[i] - startVid].get();
-        Vertex* pB = this->vertices[vids[i + 1] - startVid].get();
+        Vertex* pA = this->vertices[vids[i]].get();
+        Vertex* pB = this->vertices[vids[i + 1]].get();
         if (pA->IsConnectedTo(pB))
             continue;
         shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));

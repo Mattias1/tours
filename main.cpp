@@ -13,6 +13,8 @@
 #include "dp_tsp.h"
 #include "dp_vrp.h"
 #include "use_lkh.h"
+#include "savings.h"
+#include "sweep.h"
 using namespace std;
 
 //
@@ -31,7 +33,8 @@ void graphsFromFile(Graph& rGraph, TreeDecomposition& rTreeDecomposition, string
 
 int tourFromFile(Graph& rGraph, string path) {
     // Read the tour file
-    pair<int, vector<int>> result = readTourFile(path);
+    int startVid = 1;
+    pair<int, vector<int>> result = readTourFile(path, startVid);
     int tourLength = result.first;
     vector<int> vids = result.second;
 
@@ -72,9 +75,6 @@ bool unitTests() {
 
 
     // Distribute demands 1:
-    // void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int demandLeft, int sizeLeft) {
-    // Find all permutations of demands (or capacities, w/e - int's with min value 2) for a single path and store them in the result array.
-    // So for a given demand of 6 and a size of 2, this will add [4,2], [3,3] and [2,4] to the rResult list (rLoop initialized as vector of size 2).
     vector<vector<vector<int>>> allSubPathDemands = vector<vector<vector<int>>>(1);
     vector<int> loop = vector<int>(2, 0);
     distributeDemands(allSubPathDemands[0], loop, 6, 2);
@@ -212,17 +212,14 @@ int runTSP(vector<string> FILES, int LKH_RUNS) {
         Graph* pG = new Graph(); // pTD will be the owner of pG.
         unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
         graphsFromFile(*pG, *pTD, file + ".tsp");
-        cout << "Done graph from file" << endl << "----------------------------" << endl;
+        cout << "Done graph from file (" << FILES[i] << ")" << endl << "----------------------------" << endl;
 
         // Run LKH and merge the tours
         int mergedTours = 1;
         vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
         mainWrapper(lkhArgs);
         int tourLength = tourFromFile(*pG, tempFile + ".tour");
-        if (tourLength == -1) {
-            cout << "ERROR: The first tour is not added, whut?" << endl;
-            return 1;
-        }
+        assert(tourLength != -1 && "The first tour is not added, whut?");
         graphsToFile(*pG, tempFile + "_0.txt");
         cout << "Added first tour (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
         for (int r=1; r<LKH_RUNS; ++r) {
@@ -234,7 +231,7 @@ int runTSP(vector<string> FILES, int LKH_RUNS) {
                 ++mergedTours;
             }
             else {
-                cout << "LKH found identical tour" << endl;
+                cout << "LKH found no new edges" << endl;
             }
         }
         cout << "----------------------------" << endl << "Done LKH; merged " << mergedTours << " tours" << endl;
@@ -279,32 +276,34 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
             cout << "ERROR in file " << file << ".vrp: TRUCKS = " << pG->trucks << " and CAPACITY = " << pG->capacity << endl;
             continue;
         }
-        cout << "Done graph from file" << endl << "----------------------------" << endl;
+        cout << "Done graph from file (" << FILES[i] << ")" << endl << "----------------------------" << endl;
 
         // Run heuristics and merge the tours
-        // int mergedTours = 1;
-        // vector<string> lkhArgs = { "", file + ".par" }; // The first argument is the programs name, though the empty string should be fine.
-        // mainWrapper(lkhArgs);
-        // int tourLength = tourFromFile(*pG, tempFile + ".tour");
-        // if (tourLength == -1) {
-        //     cout << "ERROR: The first tour is not added, whut?" << endl;
-        //     return 1;
-        // }
-        // graphsToFile(*pG, tempFile + "_0.txt");
-        // cout << "Added first tour (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
-        // for (int r=1; r<LKH_RUNS; ++r) {
-        //     runWrapper();
-        //     tourLength = tourFromFile(*pG, tempFile + ".tour");
-        //     if (tourLength != -1) {
-        //         graphsToFile(*pG, tempFile + "_" + to_string(r) + ".txt");
-        //         cout << "Added new tour   (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
-        //         ++mergedTours;
-        //     }
-        //     else {
-        //         cout << "LKH found identical tour" << endl;
-        //     }
-        // }
-        // cout << "----------------------------" << endl << "Done LKH; merged " << mergedTours << " tours" << endl;
+        int mergedTours = 0;
+        int tourLength = -1;
+        if (SAVINGS_RUNS > 0) {
+            tourLength = savings(*pG);
+            if (tourLength != -1) {
+                graphsToFile(*pG, tempFile + "_0.txt");
+                cout << "Added saving tours (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
+                ++mergedTours;
+            }
+            else {
+                cout << "Savings could not find a solution" << endl; // This is possible if TRUCKS is very strict (or just too small)
+            }
+        }
+        for (int r=1; r<=SWEEP_RUNS; ++r) {
+            tourLength = sweep(*pG);
+            if (tourLength != -1) {
+                graphsToFile(*pG, tempFile + "_" + to_string(r) + ".txt");
+                cout << "Added sweep tours  (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
+                ++mergedTours;
+            }
+            else {
+                cout << "Sweep found no new edges" << endl;
+            }
+        }
+        cout << "----------------------------" << endl << "Done heuristics; merged " << mergedTours << " tours" << endl;
 
         // Create the tree decomposition
         pTD->MinimumDegree(true);
@@ -351,7 +350,7 @@ int main(int argc, char *argv[])
     }
     // Run VRP algorithms
     else {
-        vector<string> FILES = { "test-vrp-2" };
+        vector<string> FILES = { "full-vrp-1" };
         int SAVINGS_RUNS = 1;
         int SWEEP_RUNS = 0;
 
@@ -366,3 +365,4 @@ int main(int argc, char *argv[])
 // TODO: does the for loop in the main functions (tsp) actually work? It might crash LKH, as it's initialized in the for loops body...
 // TODO: lkh optimization in savings
 // TODO: check demands in vrp edge select (!)
+// TODO: check minimum degree heuristic

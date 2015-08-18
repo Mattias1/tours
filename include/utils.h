@@ -6,6 +6,7 @@
 #include "dp_vrp.h"
 #include <string>
 #include <vector>
+#include <list>
 #include <tuple>
 using namespace std;
 
@@ -87,8 +88,9 @@ string dbg(const vector<MatchingEdge*>& matchings);
 string dbg(const vector<vector<MatchingEdge*>>& matchings);
 string dbg(const vector<vector<pair<int, int>>>& pairs);
 string dbg(const vector<Edge*>& edges);
-string dbg(vector<Edge*>* pEdges);
+string dbg(const vector<Edge*>* const pEdges);
 string dbg(const vector<Vertex*>& vertices);
+string dbg(const vector<pair<int, list<int>>*> paths);
 
 
 //

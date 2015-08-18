@@ -51,7 +51,7 @@ void runWrapper() {
     WriteTour(TourFileName, BestTour, cost);
 }
 
-pair<int, vector<int>> readTourFile(string path) {
+pair<int, vector<int>> readTourFile(string path, int startVid) {
     // Read tour integers from file, add them to the graph and return the length of the found tour (or -1 if it didn't add any edges).
     ifstream in(path);
     bool inTourSection = false; // Make sure it is an actual tour file, that doesn't have integers lying around not part of the tour...
@@ -79,7 +79,7 @@ pair<int, vector<int>> readTourFile(string path) {
             break;
         }
         // We are in the tour section part
-        vids.push_back(stoi(line));
+        vids.push_back(stoi(line) - startVid);
     }
     // Complete the cycle
     vids.push_back(vids[0]);
@@ -127,8 +127,8 @@ pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, 
     mainWrapper({ "", parameterFile });
 
     // Read from file
-    pair<int, vector<int>> result = readTourFile(parameterFile);
     int startVid = 1;
+    pair<int, vector<int>> result = readTourFile(parameterFile, startVid);
     vector<int> vids;
     for (int i=0; i<result.second.size(); ++i)
         vids.push_back(tourVids[result.second[i]]); // Correct the 'wrong' vids
