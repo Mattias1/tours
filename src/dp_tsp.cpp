@@ -42,7 +42,6 @@ bool MatchingEdge::EqualsSortOf(int vid1, int vid2) const {
     return (this->A == vid1 && this->B == vid2) || (this->B == vid1 && this->A == vid2);
 }
 
-// TODO: MAKE SURE NOT TO MERGE MATCHING EDGES AT THE DEPOT VERTICES
 bool MatchingEdge::MergeInto(int a, int b, vector<MatchingEdge*>& rMatching, vector<unique_ptr<MatchingEdge>>& rMatchingsMemoryManager, bool dontMergeDepot /*=false*/) {
     // Find out who's in the list (and where)
     int posA = -1;
@@ -225,7 +224,7 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
         td[k] -= 1;
         cds[j][k] += 1;
         // Update the endpoints (update when one (or both) of the endpoints are already in the list, otherwise insert)
-        bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2; // TODO, make sure it's not merged at the depot vertex!!!
+        bool edgeMightExistAlready = cds[j][i] == 2 || cds[j][k] == 2;
         if (edgeMightExistAlready) {
             // So now at least one of the two is not new in the list, so we update it (or them)
             if (!MatchingEdge::MergeInto(Xi.vertices[i]->vid, Xi.vertices[k]->vid, eps[j], matchingsMemoryManager))

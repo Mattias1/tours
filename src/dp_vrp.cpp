@@ -242,7 +242,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
         cout << dbg("  ", Xi.vertices.size()) << "Nr of edge selections: " << edgeSelectEps.size() << endl;
     }
 
-    // TODO: filter edge selections to remove overrated demands
+    // TODO: filter edge selections to remove overrated demands (is it that nescessary?)
 
     // Loop all possible edge selctions
     int resultT = 0;
@@ -282,9 +282,8 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
         vector<Edge*> edgeList;
         addToEdgeListFromBits(Yi, &edgeList, edgeListBits);
         vector<vector<vector<MatchingEdge>>> possibleMatchings = allChildMatchings(graph, Xi, Yi, edgeList, rEndpoints, rChildEndpoints);
-
         if (debug)
-            cout << dbg("  ", Xi.vertices.size()) << "possibleMatchings size: " << possibleMatchings.size() << ", endpoints: " << dbg(rEndpoints) << ", childEps: " << dbg(rChildEndpoints) << endl; // TODO
+            cout << dbg("  ", Xi.vertices.size()) << "possibleMatchings size: " << possibleMatchings.size() << ", endpoints: " << dbg(rEndpoints) << ", childEps: " << dbg(rChildEndpoints) << endl;
 
         // Loop all possible demands in the matchings
         if (possibleMatchings.size() == 0)
@@ -520,24 +519,14 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     //   Example: Path 0: Has matching 0 and 2 from child 0, and matching 2 from child 2
     //            So pathList[0] = ((0,0), (0,2), (2,2);
     // - Then get all the combinations and store it in the vectors (recursive???)
-
-    // Assumes cycleCheck method has already been called??? Is this a good assumption??? Probably not... :S
     bool debug = false;
 
     if (debug) {
-        cout << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl;
+        cout << endl << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl << endl;
     }
 
     // Empty case
     assert(endpoints.size() > 0);
-    // if (endpoints.size() == 0) { // TODO: remove this commented code???
-    //     // TODO - I DON'T KNOW WHAT TO DO HERE RIGHT NOW!!! (this case shouldn't actually occur)
-    //     // (Probably not return but go on with max capacity value, but also add some initial somethings,
-    //     //  so that at least there is a pV to get.)
-    //     if (debug)
-    //         cout << "ERROR: allChildMatchings - endpoints is empty" << endl;
-    //     return vector<vector<vector<MatchingEdge>>>();
-    // }
 
     // Inits
     vector<vector<pair<int, int>>> pathList = vector<vector<pair<int, int>>>(endpoints.size());
@@ -549,6 +538,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     int progressCounter = -1;
     int lastChild = -1;
     int lastChildEndpoint = -1;
+    int tourMatchingEdgeCounter = 0;
     int lastEdge = -1;
     Vertex* pV = nullptr;
     int targetVid = -1;
@@ -561,8 +551,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         if (debug) {
             cout << "all child ep-possibilities dump:" << endl;
             cout << "  endpoints: " << dbg(endpoints) << ", lastChild: " << lastChild << ", lastChildEp: " << lastChildEndpoint << ", lastEdge: " << lastEdge << endl;
-            cout << "  targetVid: " << targetVid << "  progress: " << progressCounter << " - v: " << (pV==nullptr ? -1 : pV->vid ) << endl << endl;
-            //cout << "  pathList: " << dbg(pathList) << endl;
+            cout << "  targetVid: " << targetVid << ", progress: " << progressCounter << ", v: " << (pV==nullptr ? -1 : pV->vid ) << ", pathList: " << dbg(pathList) << endl << endl;
         }
 
         // If we completed a path
@@ -631,9 +620,16 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
 
         // Find the next vertex
         bool noBreak = true;
+        int tempTourMatchingEdgeCounter = 0;
         for (int j=0; j<childEndpoints.size(); ++j) {
             for (int i=0; i<childEndpoints[j].size(); ++i) {
-                if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && (lastChild != j || lastChildEndpoint != i)) { // The depot vertex might make this an infinite loop, pay attention here - TODO
+                if (isDepot(childEndpoints[j][i]->A) && isDepot(childEndpoints[j][i]->B)) {
+                    // Because there can be multiple matching edges {0, 0} this needs a special counter, to make sure we don't use the same one twice
+                    ++tempTourMatchingEdgeCounter;
+                    if (tempTourMatchingEdgeCounter <= tourMatchingEdgeCounter)
+                        continue;
+                }
+                if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && (lastChild != j || lastChildEndpoint != i)) {
                     // Update the demands of the previous path
                     pathDemands[progressCounter] += pV->demand;
 
@@ -643,6 +639,8 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                         cout << "pV becomes: " << pV->vid << endl;
                     lastChild = j;
                     lastChildEndpoint = i;
+                    if (isDepot(childEndpoints[j][i]->A) && isDepot(childEndpoints[j][i]->B))
+                        ++tourMatchingEdgeCounter;
 
                     // Update the sub paths of the current (main) path
                     pathList[progressCounter].push_back(make_pair(j, i));
@@ -657,7 +655,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         if (noBreak) {
             // noBreak = true; // Uhh, yeah, doh, if noBreak wasn't true, we wouldn't reach this bit of code right?
             for (int i=0; i<edgeList.size(); ++i) {
-                if (edgeList[i]->IsIncidentTo(pV) && lastEdge != i) { // The depot vertex might make this an infinite loop, pay attention here - TODO
+                if (edgeList[i]->IsIncidentTo(pV) && lastEdge != i) {
                     // Update loop variables
                     pV = edgeList[i]->Other(*pV);
                     lastEdge = i;

@@ -54,7 +54,7 @@ inline bool concatenatePaths(int i, int j, bool frontI, bool frontJ, vector<pair
 
 int savings(Graph& rGraph) {
     // Calculate a set of tours using the savings heuristic, and add the edges to the graph
-    bool debug = true;
+    bool debug = false;
 
     // Precompute all edge costs (0, i)
     vector<int> costDepot2i = vector<int>(rGraph.vertices.size());
