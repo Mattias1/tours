@@ -358,6 +358,30 @@ string dbg(const vector<pair<int, list<int>>*> paths) {
     }
     return result;
 }
+string dbg(const vector<bool> v) {
+    // Output the boolean vector
+    string result = "[";
+    for (int i=0; i<v.size(); ++i) {
+        result += v[i] ? "true" : "false";
+        if (i != v.size() - 1)
+            result += ",";
+    }
+    return result + "]";
+}
+string dbg(const vector<vector<bool>>& v) {
+    // Output the vector of bool vectors
+    string result = "[";
+    for (int i=0; i<v.size(); ++i) {
+        for (int j=0; j<v[i].size(); ++j) {
+            result += v[i][j] ? "true" : "false";
+            if (j != v[i].size() - 1)
+                result += ",";
+        }
+        if (i != v.size() - 1)
+            result += " - ";
+    }
+    return result + "]";
+}
 
 
 //

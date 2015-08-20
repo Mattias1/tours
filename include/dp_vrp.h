@@ -34,7 +34,7 @@ void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int dem
 
 void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector<vector<MatchingEdge>>& rLoop, int pathIndex, const vector<vector<MatchingEdge*>>& childEndpoints, const vector<vector<pair<int, int>>>& pathList, const vector<vector<vector<int>>>& allSubPathDemands);
 
-int singleCityTourSpecialCaseManager(const Graph& graph, vector<int>& rDegrees);
+int singleCityTourSpecialCaseManager(const Graph& graph, const Bag& Xi, vector<int>& rDegrees);
 
 //
 // Some helper functions

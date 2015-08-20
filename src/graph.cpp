@@ -21,7 +21,7 @@ bool comp(const string& line, const string& firstPart) {
     return line.substr(0, firstPart.size()) == firstPart;
 }
 
-// This is a small function (used in graph and in savings).
+// This is a small function (used in graph, savings and use_lkh).
 int calculateEuclidean(const Vertex* const pA, const Vertex* const pB) {
     int x = pA->x - pB->x;
     int y = pA->y - pB->y;

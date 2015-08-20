@@ -91,6 +91,8 @@ string dbg(const vector<Edge*>& edges);
 string dbg(const vector<Edge*>* const pEdges);
 string dbg(const vector<Vertex*>& vertices);
 string dbg(const vector<pair<int, list<int>>*> paths);
+string dbg(const vector<bool> v);
+string dbg(const vector<vector<bool>>& v);
 
 
 //

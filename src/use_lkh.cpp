@@ -4,6 +4,7 @@
 #include <fstream>
 #include <memory>
 
+#include "graph.h"
 #include "utils.h"
 
 // The header for the renamed main and run functions (for LKH)
@@ -82,6 +83,7 @@ pair<int, vector<int>> readTourFile(string path, int startVid) {
         vids.push_back(stoi(line) - startVid);
     }
     // Complete the cycle
+    int test = vids.size();
     vids.push_back(vids[0]);
     return make_pair(tourLength, vids);
 }
@@ -94,7 +96,7 @@ void generateLKHFiles(const Graph& graph, const vector<int>& tourVids, string te
 
     // Create a string with the graph info in it
     int startVid = 1;
-    string s = "DIMENSION : " + to_string(graph.vertices.size()) + "\n";
+    string s = "DIMENSION : " + to_string(tourVids.size()) + "\n";
     s += "NAME : TEMP_LKH\n";
     s += "TYPE : TSP\n";
     s += "EDGE_WEIGHT_TYPE : EUC_2D\n";
@@ -114,21 +116,33 @@ void generateLKHFiles(const Graph& graph, const vector<int>& tourVids, string te
     ofstream out2(parameterFile);
     out2 << "PROBLEM_FILE = " + problemFile + "\nMOVE_TYPE = 5\nPATCHING_C = 3\nPATCHING_A = 2\nRUNS = " + to_string(runs) + "\nTOUR_FILE = " + tourFile + "\nTRACE_LEVEL = 0\n";
     out2.close();
+
+    // Write the (empty) tour file
+    ofstream out3(tourFile);
+    out3 << " ";
+    out3.close();
 }
 
 pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, int runs /*=3*/) {
+    // Return the cost vertices (in order) of this TSP tour as calculated by LKH.
+
+    // Special case
+    if (tourVids.size() == 2)
+        return make_pair(2 * calculateEuclidean(graph.vertices[tourVids[0]].get(), graph.vertices[tourVids[1]].get()), vector<int>(tourVids));
+
     // Some constants
     string tempDir = "vrp-files/temp/";
     string name = "temp";
 
     // Solve the TSP on a subset of tour vids
     string parameterFile = tempDir + name + ".par";
+    string tourFile = tempDir + name + ".tour";
     generateLKHFiles(graph, tourVids, tempDir, name, runs);
     mainWrapper({ "", parameterFile });
 
     // Read from file
     int startVid = 1;
-    pair<int, vector<int>> result = readTourFile(parameterFile, startVid);
+    pair<int, vector<int>> result = readTourFile(tourFile, startVid);
     vector<int> vids;
     for (int i=0; i<result.second.size(); ++i)
         vids.push_back(tourVids[result.second[i]]); // Correct the 'wrong' vids

@@ -31,7 +31,7 @@ int sweep(Graph& rGraph, int startVid /*=-1*/) {
     sort(angles.begin(), angles.end(), sortLambda);
 
     // Group all vertices (determine which vertex belongs to which tour)
-    vector<vector<int>> vids;
+    vector<vector<int>> vids = {{ 0 }};
     int totalDemand = 0;
     for (int i=1; i<rGraph.vertices.size(); ++i) {
         if (totalDemand + rGraph.vertices[i]->demand > rGraph.capacity) {

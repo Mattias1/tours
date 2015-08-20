@@ -30,15 +30,18 @@ vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=t
     unordered_map<string, int> hashlist;
     vector<int> degrees = vector<int>(pXroot->vertices.size(), 2);
     degrees[0] = TRUCKS * 2;
-    int singleCityTourCost = singleCityTourSpecialCaseManager(*TD.getOriginalGraph(), degrees);
+    for (int i=0; i<TD.getOriginalGraph()->vertices.size(); ++i) {
+        Vertex* pV = TD.getOriginalGraph()->vertices[i].get();
+        if (pV->edges.size() < 2)
+            degrees[0] -= 2;
+        assert(degrees[0] >= 0 && "ERROR (VRP-DP): too many single city tour exceptions (more than there are trucks)");
+    }
     vector<MatchingEdge> endpointsMemoryManager = vector<MatchingEdge>(degrees[0] / 2);
     for (int i=0; i<endpointsMemoryManager.size(); ++i) {
         endpointsMemoryManager[i] = MatchingEdge(0, 0, CAPACITY);
     }
     string S = toTableEntry(*pXroot, degrees, pointerize(endpointsMemoryManager));
     int value = vrpTable(*TD.getOriginalGraph(), hashlist, S, *pXroot);
-    if (value != numeric_limits<int>::max())
-        value += singleCityTourCost;
     if (consoleOutput)
         cout << "VRP cost: " << value << endl;
     if (debug) {
@@ -87,9 +90,17 @@ int vrpTable(const Graph& graph, unordered_map<string, int>& rHashlist, const st
         childEndpoints[i] = vector<MatchingEdge*>();
         childDegrees[i] = vector<int>(degrees.size(), 0);
     }
+    int singleCityTourCost = singleCityTourSpecialCaseManager(graph, Xi, degrees);
     // Recursively find all possible combinations that satisfy the parameter arrays
-    rHashlist[S] = vrpRecurse(graph, rHashlist, Xi, Yi, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
-    return rHashlist.at(S);
+    int value = vrpRecurse(graph, rHashlist, Xi, Yi, 0, 0, degrees, childDegrees, endpoints, childEndpoints);
+    if (value < numeric_limits<int>::max()) {
+        if (singleCityTourCost < numeric_limits<int>::max())
+            value += singleCityTourCost;
+        else
+            value = numeric_limits<int>::max();
+    }
+    rHashlist[S] = value;
+    return value;
 }
 
 vector<vector<Edge*>> vrpReconstruct(const Graph& graph, unordered_map<string, int>& rHashlist, const string& S, const Bag& Xi) {
@@ -111,7 +122,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = false; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
+    bool debug = true; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
@@ -214,7 +225,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     // This method is the base case for the calculate vrp recurse method - it is the same as tspChildEval, except that it calls the vrpEdgeSelect and vrpTable [TODO?].
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     // This method is exactly the same as tspChildEvaluation, except that it calls the vrpEdgeSelect AND vrpTable
-    bool debug = false;
+    bool debug = true;
     if (debug) {
         cout << dbg("  ", Xi.vertices.size()) << "Child endpoints (child eval): " << dbg(rChildEndpoints) << endl;
     }
@@ -519,7 +530,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     //   Example: Path 0: Has matching 0 and 2 from child 0, and matching 2 from child 2
     //            So pathList[0] = ((0,0), (0,2), (2,2);
     // - Then get all the combinations and store it in the vectors (recursive???)
-    bool debug = false;
+    bool debug = true;
 
     if (debug) {
         cout << endl << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl << endl;
@@ -530,18 +541,24 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
 
     // Inits
     vector<vector<pair<int, int>>> pathList = vector<vector<pair<int, int>>>(endpoints.size());
+    vector<int> pathDemands = vector<int>(endpoints.size()); // The demands left to distribute for the main paths (after the edge selection).
+    int progressCounter = -1;
+    vector<vector<bool>> freeEndpoints;
+    vector<bool> freeEdges;
+    Vertex* pV = nullptr;
+    int targetVid = -1;
+    for (int j=0; j<childEndpoints.size(); ++j) {
+        freeEndpoints.push_back(vector<bool>());
+        for (int i=0; i<childEndpoints[j].size(); ++i)
+            freeEndpoints[j].push_back(true);
+    }
+    for (int i=0; i<edgeList.size(); ++i) {
+        freeEdges.push_back(true);
+    }
     // pathList:
     //     vector, size = nr of paths
     //       vector, size = nr of subpaths for this path
     //         pair: (child-index, matching-index (in the child's matching list))
-    vector<int> pathDemands = vector<int>(endpoints.size()); // The demands left to distribute for the main paths (after the edge selection).
-    int progressCounter = -1;
-    int lastChild = -1;
-    int lastChildEndpoint = -1;
-    int tourMatchingEdgeCounter = 0;
-    int lastEdge = -1;
-    Vertex* pV = nullptr;
-    int targetVid = -1;
 
     //
     // Step 1: find all sub paths (paths in child bags) of all main paths (paths for the current bag)
@@ -550,7 +567,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         // Dump the state
         if (debug) {
             cout << "all child ep-possibilities dump:" << endl;
-            cout << "  endpoints: " << dbg(endpoints) << ", lastChild: " << lastChild << ", lastChildEp: " << lastChildEndpoint << ", lastEdge: " << lastEdge << endl;
+            cout << "  endpoints: " << dbg(endpoints) << ", freeEndpoints: " << dbg(freeEndpoints) << ", freeEdges: " << dbg(freeEdges) << endl;
             cout << "  targetVid: " << targetVid << ", progress: " << progressCounter << ", v: " << (pV==nullptr ? -1 : pV->vid ) << ", pathList: " << dbg(pathList) << endl << endl;
         }
 
@@ -623,13 +640,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         int tempTourMatchingEdgeCounter = 0;
         for (int j=0; j<childEndpoints.size(); ++j) {
             for (int i=0; i<childEndpoints[j].size(); ++i) {
-                if (isDepot(childEndpoints[j][i]->A) && isDepot(childEndpoints[j][i]->B)) {
-                    // Because there can be multiple matching edges {0, 0} this needs a special counter, to make sure we don't use the same one twice
-                    ++tempTourMatchingEdgeCounter;
-                    if (tempTourMatchingEdgeCounter <= tourMatchingEdgeCounter)
-                        continue;
-                }
-                if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && (lastChild != j || lastChildEndpoint != i)) {
+                if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && freeEndpoints[j][i]) {
                     // Update the demands of the previous path
                     pathDemands[progressCounter] += pV->demand;
 
@@ -637,10 +648,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
                     pV = graph.vertices[childEndpoints[j][i]->Other(pV->vid)].get();
                     if (debug)
                         cout << "pV becomes: " << pV->vid << endl;
-                    lastChild = j;
-                    lastChildEndpoint = i;
-                    if (isDepot(childEndpoints[j][i]->A) && isDepot(childEndpoints[j][i]->B))
-                        ++tourMatchingEdgeCounter;
+                    freeEndpoints[j][i] = false;
 
                     // Update the sub paths of the current (main) path
                     pathList[progressCounter].push_back(make_pair(j, i));
@@ -655,10 +663,10 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
         if (noBreak) {
             // noBreak = true; // Uhh, yeah, doh, if noBreak wasn't true, we wouldn't reach this bit of code right?
             for (int i=0; i<edgeList.size(); ++i) {
-                if (edgeList[i]->IsIncidentTo(pV) && lastEdge != i) {
+                if (edgeList[i]->IsIncidentTo(pV) && freeEdges[i]) {
                     // Update loop variables
                     pV = edgeList[i]->Other(*pV);
-                    lastEdge = i;
+                    freeEdges[i] = false;
 
                     // Update the demands of the current path
                     pathDemands[progressCounter] -= pV->demand;
@@ -761,18 +769,18 @@ void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector
     }
 }
 
-int singleCityTourSpecialCaseManager(const Graph& graph, vector<int>& rDegrees) {
+int singleCityTourSpecialCaseManager(const Graph& graph, const Bag& Xi, vector<int>& rDegrees) {
     // There is a special case for the tours with a single city. These cannot be solved by the DP, because it has as assumption that every city has at least two neighbours.
     // However, this case is trivial to manage up front, so we'll just exclude them from the DP and then add the cost for these tours afterwards.
     // In this method, we exclude them from the degrees list, and we give the cost for just these tours.
+    // Note that this method assumes that the starting amount of {0, 0} matching edges is corrected already.
     int totalWeight = 0;
-    for (int i=0; i<graph.vertices.size(); ++i) {
-        const Vertex& v = *graph.vertices[i];
-        if (v.edges.size() < 2) {
-            assert(v.edges.size() == 1 && v.IsConnectedTo(graph.vertices[0].get()) && "ERROR: There is a vertex with degree < 2 and it's not a single city-tour case.");
-            rDegrees[0] -= 2;
+    for (int i=0; i<Xi.vertices.size(); ++i) {
+        Vertex* pV = Xi.vertices[i];
+        if (pV->edges.size() < 2) {
+            assert(pV->edges.size() == 1 && pV->IsConnectedTo(graph.vertices[0].get()) && "ERROR: There is a vertex with degree < 2 and it's not a single city-tour case.");
             rDegrees[i] = 0;
-            totalWeight += v.edges[0]->Cost;
+            totalWeight += 2 * pV->edges[0]->Cost;
         }
     }
     return totalWeight;

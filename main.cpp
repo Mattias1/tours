@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
     else {
         vector<string> FILES = { "full-vrp-1" };
         int SAVINGS_RUNS = 1;
-        int SWEEP_RUNS = 0;
+        int SWEEP_RUNS = 4;
 
         return runVRP(FILES, SAVINGS_RUNS, SWEEP_RUNS);
     }
