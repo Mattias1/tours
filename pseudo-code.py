@@ -8,6 +8,7 @@ def vrpDP():
 
 
 def vrpTable(Xi, S):
+    # Look up a value in a table, or calculate it if it doesn't exist yet.
     if hashlist.contains(S):
         return hashlist[S]
     else:
@@ -24,19 +25,17 @@ def vrpTable(Xi, S):
 #  <('"')>
 #    " "
 def vrpRecurse(Xi, D, M, loopvars):
+    # Calculate the allowed entries for the table (degrees, matchings) (and the 'leftovers' for the children).
     if final_base_case(loopvars):
         return vrpChildEvaluation(Xi, D, M, loopvars)
-    if uninteresting_base_case(loopvars):
+    if uninteresting_base_cases(loopvars):
         return vrpRecurse(Xi, D, M, next(loopvars))
 
-    if isDepot(loopvars):
+    if D >= 2 and isDepot(loopvars):
         for e in range(depot_to_depot_edges(M)):
             vrpRecurse(Xi, D-2, M, next(loopvars + 2 + {0, 0}))
-    if D >= 2:
-        if isDepot:
-            vrpRecurse(Xi, D, M+{0,0}, next(loopvars+2))
-        else:
-            vrpRecurse(Xi, D-2, M, next(loopvars+2))
+    if D >= 2 and not isDepot(loopvars):
+        vrpRecurse(Xi, D-2, M, next(loopvars+2))
     if D >= 1:
         for k in range(current, end):
             D -= 1+1
@@ -45,9 +44,11 @@ def vrpRecurse(Xi, D, M, loopvars):
             vrpRecurse(Xi, D, M, next(loopvars))
     if D >= 0:
         vrpRecurse(Xi, D, M, next(loopvars))
+    return bestResultOfAllRecurses
 
 
 def vrpChildEvaluation(Xi, D, M, childDs, childMs):
+    # This function is basically the base case of the recurse function.
     if obviousCycle(M) and Xi != Xroot:
         return infinity
 
@@ -56,10 +57,7 @@ def vrpChildEvaluation(Xi, D, M, childDs, childMs):
     resultValue = infinity
     for edgeValue, edgeList, demands in possibleEdgelists:
         if isLeafBag(Xi):
-            if isValid(demands): # TODO: isValidDemands is not yet in the code!!! (TODO: add it in edgeSelect? (currently removed there))
-                return edgeValue
-            else:
-                continue;
+            return edgeValue
         possibleMatchings = allChildMatchings(edgeList)
         for kidM in possibleMatchings:
             value = edgeValue
@@ -71,15 +69,13 @@ def vrpChildEvaluation(Xi, D, M, childDs, childMs):
 
 
 def vrpEdgeSelect(Yi, target, childTargets, loopvars):
+    # Calculate the tour-edges used in this bag.
     if satisfied(target):
         # The cycle check contains the TSP exception for the root bag (not interesting for VRP, but good to know anyway).
         # For the VRP this also contains the check if the paths don't exceed the demand limit.
         if not cycleCheck(loopvars.edges, target.M, childTargets.Ms):
             return []
-        demandMatching = pathDemands(Xi, loopvars.edges, target.M, childTargets.Ms)
-        if not_valid(demandMatching) and not rootbag:
-            return []
-        return (value, loopvars.edgeBits, demandMatching)
+        return (value, loopvars.edgeBits)
 
     if fail_base_case(target, loopvars):
         return []
@@ -97,6 +93,7 @@ def allChildMatchings(Xi, paths):
     # This one first groups all the subpaths for all the main paths,
     # and then starts looping all possible ways of dividing the demands over them.
     # It's a rather precise method and annoying to get right, but not so important for the main overview.
+    # Note that the second part is located inside an if in the first part.
     return [
         len(Xi.children) * [
             nrOfPossibilities * [

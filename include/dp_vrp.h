@@ -7,7 +7,6 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include <tuple>
 using namespace std;
 
 //
@@ -24,9 +23,7 @@ vector<vector<Edge*>> vrpRecurseVector(const Graph& graph, unordered_map<string,
 int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints);
 vector<Edge*>* vrpLookback(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<MatchingEdge*>& rEndpoints, vector<vector<MatchingEdge*>>& rChildEndpoints);
 
-vector<tuple<int, int, vector<MatchingEdge>>> vrpEdgeSelect(int cost, int minimum, int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& Yi, const vector<int>& degrees, vector<MatchingEdge*>& rEndpoints, vector<MatchingEdge*>& rAllChildEndpoints, int edgeListBits = 0);
-
-vector<MatchingEdge> pathDemands(const Graph& graph, const Bag& Xi, const vector<Edge*>& edgeList, const vector<MatchingEdge*>& endpoints, const vector<MatchingEdge*>& allChildEndpoints);
+vector<pair<int, int>> vrpEdgeSelect(int cost, int minimum, int index, const Graph& graph, const Bag& Xi, const vector<Edge*>& Yi, const vector<int>& degrees, vector<MatchingEdge*>& rEndpoints, vector<MatchingEdge*>& rAllChildEndpoints, int edgeListBits = 0);
 
 vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const Bag& Xi, const vector<Edge*>& Yi, const vector<Edge*>& edgeList, const vector<MatchingEdge*>& endpoints, const vector<vector<MatchingEdge*>>& childEndpoints);
 
@@ -35,6 +32,8 @@ void distributeDemands(vector<vector<int>>& rResult, vector<int>& rLoop, int dem
 void fillAllChildMatchings(vector<vector<vector<MatchingEdge>>>& rResult, vector<vector<MatchingEdge>>& rLoop, int pathIndex, const vector<vector<MatchingEdge*>>& childEndpoints, const vector<vector<pair<int, int>>>& pathList, const vector<vector<vector<int>>>& allSubPathDemands);
 
 int singleCityTourSpecialCaseManager(const Graph& graph, const Bag& Xi, vector<int>& rDegrees);
+
+bool vrpCycleCheck(const Graph& graph, const vector<MatchingEdge*>& endpoints, vector<Edge*>* pEdgeList, vector<MatchingEdge*>& rAllChildEndpoints);
 
 //
 // Some helper functions

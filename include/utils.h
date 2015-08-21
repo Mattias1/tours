@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <tuple>
 using namespace std;
 
 
@@ -36,7 +35,7 @@ vector<MatchingEdge*> flatten(const vector<vector<MatchingEdge*>>& lst);
 // Push back an entire list
 //
 void pushBackList(vector<Edge*>* pOriginalList, const vector<Edge*>& listToAdd);
-void pushBackList(vector<tuple<int, int, vector<MatchingEdge>>>* pOriginalList, const vector<tuple<int, int, vector<MatchingEdge>>>& listToAdd);
+void pushBackList(vector<pair<int, int>>* pOriginalList, const vector<pair<int, int>>& listToAdd);
 
 
 //

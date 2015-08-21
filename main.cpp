@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
     // The main entry-point for this application. Here we load the graph (they should only contain vertices),
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
     vector<string> args(argv, argv + argc); // Currently not used
-    bool TSP = true;
+    bool TSP = false;
 
     // DEBUG
     assert(unitTests());
@@ -374,3 +374,4 @@ int main(int argc, char *argv[])
 // TODO: 'exactly k' or 'at most k' trucks? (savings does 'at most k' right now, and algorithm does exaclty k - it doesn't matter really)
 
 // TODO: check demands in vrp edge select (!)
+// TODO: variate sweep
