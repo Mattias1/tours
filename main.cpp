@@ -285,22 +285,22 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
             tourLength = savings(*pG);
             if (tourLength != -1) {
                 graphsToFile(*pG, tempFile + "_0.txt");
-                cout << "Added saving tours (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
+                cout << "  Added saving tours (" << tempFile << "_0.txt - " << tourLength << ")" << endl;
                 ++mergedTours;
             }
             else {
-                cout << "Savings could not find a solution" << endl; // This is possible if TRUCKS is very strict (or just too small)
+                cout << "  Savings could not find a solution" << endl; // This is possible if TRUCKS is very strict (or just too small)
             }
         }
         for (int r=1; r<=SWEEP_RUNS; ++r) {
             tourLength = sweep(*pG);
             if (tourLength != -1) {
                 graphsToFile(*pG, tempFile + "_" + to_string(r) + ".txt");
-                cout << "Added sweep tours  (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
+                cout << "  Added sweep tours  (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
                 ++mergedTours;
             }
             else {
-                cout << "Sweep found no new edges" << endl;
+                cout << "  Sweep found no new edges" << endl;
             }
         }
         cout << "----------------------------" << endl << "Done heuristics; merged " << mergedTours << " tours" << endl;
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
     // The main entry-point for this application. Here we load the graph (they should only contain vertices),
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
     vector<string> args(argv, argv + argc); // Currently not used
-    bool TSP = false;
+    bool TSP = true;
 
     // DEBUG
     assert(unitTests());
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
     // Run TSP algorithms
     if (TSP) {
         vector<string> FILES = { "mod502" };
-        int LKH_RUNS = 5;
+        int LKH_RUNS = 35;
 
         return runTSP(FILES, LKH_RUNS);
     }
@@ -365,4 +365,3 @@ int main(int argc, char *argv[])
 // TODO: does the for loop in the main functions (tsp) actually work? It might crash LKH, as it's initialized in the for loops body...
 // TODO: lkh optimization in savings
 // TODO: check demands in vrp edge select (!)
-// TODO: check minimum degree heuristic

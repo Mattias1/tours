@@ -122,7 +122,7 @@ int vrpRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = true; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
+    bool debug = false; //i==Xi.vertices.size() && Xi.vid==0; // bool debug = true;
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
@@ -225,7 +225,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     // This method is the base case for the calculate vrp recurse method - it is the same as tspChildEval, except that it calls the vrpEdgeSelect and vrpTable [TODO?].
     // If we analyzed the degrees of all vertices (i.e. we have a complete combination), return the sum of B values of all children.
     // This method is exactly the same as tspChildEvaluation, except that it calls the vrpEdgeSelect AND vrpTable
-    bool debug = true;
+    bool debug = false;
     if (debug) {
         cout << dbg("  ", Xi.vertices.size()) << "Child endpoints (child eval): " << dbg(rChildEndpoints) << endl;
     }
@@ -530,7 +530,7 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     //   Example: Path 0: Has matching 0 and 2 from child 0, and matching 2 from child 2
     //            So pathList[0] = ((0,0), (0,2), (2,2);
     // - Then get all the combinations and store it in the vectors (recursive???)
-    bool debug = true;
+    bool debug = false;
 
     if (debug) {
         cout << endl << "X" << Xi.vid << ", edgeList: " << dbg(edgeList) << ", endpoints: " << dbg(endpoints) << ", childEndpoints: " << dbg(childEndpoints) << endl << endl;
@@ -544,17 +544,11 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
     vector<int> pathDemands = vector<int>(endpoints.size()); // The demands left to distribute for the main paths (after the edge selection).
     int progressCounter = -1;
     vector<vector<bool>> freeEndpoints;
-    vector<bool> freeEdges;
+    for (int j=0; j<childEndpoints.size(); ++j)
+        freeEndpoints.push_back(vector<bool>(childEndpoints[j].size(), true));
+    vector<bool> freeEdges = vector<bool>(edgeList.size(), true);
     Vertex* pV = nullptr;
     int targetVid = -1;
-    for (int j=0; j<childEndpoints.size(); ++j) {
-        freeEndpoints.push_back(vector<bool>());
-        for (int i=0; i<childEndpoints[j].size(); ++i)
-            freeEndpoints[j].push_back(true);
-    }
-    for (int i=0; i<edgeList.size(); ++i) {
-        freeEdges.push_back(true);
-    }
     // pathList:
     //     vector, size = nr of paths
     //       vector, size = nr of subpaths for this path
@@ -637,7 +631,6 @@ vector<vector<vector<MatchingEdge>>> allChildMatchings(const Graph& graph, const
 
         // Find the next vertex
         bool noBreak = true;
-        int tempTourMatchingEdgeCounter = 0;
         for (int j=0; j<childEndpoints.size(); ++j) {
             for (int i=0; i<childEndpoints[j].size(); ++i) {
                 if (childEndpoints[j][i]->IsIncidentTo(pV->vid) && freeEndpoints[j][i]) {

@@ -182,9 +182,11 @@ unique_ptr<Graph> Graph::DeepCopy() const {
         Vertex* pA = pGraph->vertices[i].get();
         for (int j=0; j<v.edges.size(); ++j) {
             Vertex* pB = pGraph->vertices[ v.edges[j]->Other(v)->vid ].get();
-            shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
-            pA->edges.push_back(pE);
-            pB->edges.push_back(pE);
+            if (pA->vid < pB->vid) {
+                shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
+                pA->edges.push_back(pE);
+                pB->edges.push_back(pE);
+            }
         }
     }
 

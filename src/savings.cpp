@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <iostream>
 
+#include "use_lkh.h"
 #include "utils.h"
 
 //
@@ -150,10 +151,19 @@ int savings(Graph& rGraph) {
         return -1;
     }
     int totalValue = 0;
+    bool somethingNew = false;
     for (int i=0; i<vids.size(); ++i) {
-        // TODO: LKH optimization?
-        rGraph.AddTourFromFile(vids[i]);
+        // Optimize the tour using LKH
+        pair<int, vector<int>> result = lkh_tsp(rGraph, vids[i]);
+        if (result.first == -1)
+            return -1;
+        totalValue += result.first;
+        if (rGraph.AddTourFromFile(result.second))
+            somethingNew = true;
     }
 
-    return 0; // TODO: return tour value?
+    if (somethingNew)
+        return totalValue;
+    else
+        return -1;
 }

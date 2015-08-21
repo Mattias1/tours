@@ -123,41 +123,12 @@ bool TreeDecomposition::CreateRoot(Bag* pRoot, bool adjustCoordinates) {
 void TreeDecomposition::MinimumDegree(bool depotInAllBags /*= false*/) {
     // Check if the treedecompoistion is empty
     if (this->vertices.size() != 0 || this->pRoot != nullptr) {
-        cout << "ERROR!!! - MinimumDegree called on a non empty tree decomposition" << endl;
+        cout << "ERROR (Minimum degree): MinimumDegree called on a non empty tree decomposition" << endl;
         return;
     }
-    // Prepare to create the tree decomposition
-    const Graph& graph = *this->pOriginalGraph;
-    vector<int> vertexList = vector<int>(graph.vertices.size());
-    for (int i=0; i<vertexList.size(); ++i) {
-        vertexList[i] = i;
-    }
-    auto sortLambda = [&](int vidA, int vidB) {
-        // Compare the degrees of the vertices
-        return graph.vertices[vidA]->edges.size() < graph.vertices[vidB]->edges.size(); // TODO: n log n to n^2
-    };
-    sort(vertexList.begin(), vertexList.end(), sortLambda);
-    vector<int> edgeList = vector<int>();
 
     // Create a tree decomposition (with wrong vids)
-    this->permutationToTreeDecomposition(vertexList, edgeList, depotInAllBags);
-
-    // Add edges
-    Vertex* pA;
-    Vertex* pB;
-    for (int i=0; i<edgeList.size(); i+=2) {
-        for (int j=0; j<this->vertices.size(); ++j) {
-            Vertex* pBag = this->vertices[j].get();
-            if (pBag->vid == edgeList[i])
-                pA = pBag;
-            if (pBag->vid == edgeList[i + 1])
-                pB = pBag;
-        }
-        assert(pA != pB || "(error in Minimum Degree Heuristic: pA == pB)"); // What happends here is that it doesn't find pA or pB, so it just uses the old one - which happends to be equal...
-        shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pA, pB));
-        pA->edges.push_back(pE);
-        pB->edges.push_back(pE);
-    }
+    this->permutationToTreeDecomposition(depotInAllBags);
 
     // Root the tree and give the bags some nice coordinates so that it actually draws like a tree with the root on top.
     this->CreateRoot(true);
@@ -173,40 +144,56 @@ void TreeDecomposition::MinimumDegree(bool depotInAllBags /*= false*/) {
     }
 }
 
-void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList, bool depotInAllBags) {
-    // vertexList:   The vid's sorted in order of smallest degree,
+void TreeDecomposition::permutationToTreeDecomposition(bool depotInAllBags) {
     // rEdgeList:    This list will be filled with int-pairs that should become the edges in the final tree decomposition
     //               (but the bags might not be created yet) - provide it with an empty list.
     // Note: correct the vid's from each bag later; once the edges in the edge list are added
     unique_ptr<Graph> pGraphCopy = this->pOriginalGraph->DeepCopy();
+    vector<bool> freeVertices = vector<bool>(this->pOriginalGraph->vertices.size(), true);
+    vector<Vertex*> pendingEdges;
 
-    for (int i = 0; i<vertexList.size(); ++i) {
-        Vertex* pV = this->pOriginalGraph->vertices[vertexList[i]].get();
+    for (int i=0; i<this->pOriginalGraph->vertices.size(); ++i) {
+        Vertex* pV = nullptr;
+        int minDegree = numeric_limits<int>::max();
+        for (int j=0; j<this->pOriginalGraph->vertices.size(); ++j) {
+            if (freeVertices[j]) {
+                Vertex* pCurrentCopy = pGraphCopy->vertices[j].get();
+                int degree = 0;
+                for (int k=0; k<pCurrentCopy->edges.size(); ++k)
+                    if (freeVertices[pCurrentCopy->edges[k]->Other(*pCurrentCopy)->vid])
+                        ++degree;
+                if (degree < minDegree) {
+                    pV = this->pOriginalGraph->vertices[j].get();
+                    minDegree = degree;
+                }
+            }
+        }
+        assert(pV != nullptr && "ERROR (MinDegree): Can't find a vertex with minimum degree");
+        freeVertices[pV->vid] = false;
         Vertex* pVCopy = pGraphCopy->vertices[pV->vid].get();
-        unique_ptr<Bag> pUniqueBag = unique_ptr<Bag>(new Bag(pV->vid, 240, 60 + 120 * i));
-        Bag* pBag = pUniqueBag.get();
+        unique_ptr<Bag> pBagMemoryManager = unique_ptr<Bag>(new Bag(pV->vid, 240, 60 + 120 * i));
+        Bag* pBag = pBagMemoryManager.get();
 
-        // Add the neighbourhood (in vertexList) of pV to the bag (and, when solving the VRP, the depot as first one)
+        // Add the (free) neighbourhood of pV to the bag (and, when solving the VRP, make sure we add the depot (as first one))
         if (depotInAllBags && !isDepot(pV))
             pBag->vertices.push_back(this->pOriginalGraph->vertices[0].get());
         pBag->vertices.push_back(pV);
-        for (int j=i + 1; j<vertexList.size(); ++j) {
-            for (int k=0; k<pVCopy->edges.size(); ++k)
-                if (pVCopy->edges[k]->Other(*pVCopy)->vid == vertexList[j]) {
-                    // We found a vertex that is both a 'neighbour' of pV and still in the vertex list - so add it
-                    if (!depotInAllBags || !isDepot(pVCopy->edges[k]->Other(*pVCopy)))
-                        pBag->vertices.push_back(this->pOriginalGraph->vertices[ pVCopy->edges[k]->Other(*pVCopy)->vid ].get());
-                    break;
-                }
+        for (int j=0; j<pVCopy->edges.size(); ++j) {
+            Vertex* pNeighbourCopy = pVCopy->edges[j]->Other(*pVCopy);
+            if (freeVertices[pNeighbourCopy->vid]) {
+                // We found a vertex that is both a 'neighbour' of pV and still in the vertex list - so add it
+                if (!depotInAllBags || !isDepot(pNeighbourCopy))
+                    pBag->vertices.push_back(this->pOriginalGraph->vertices[pNeighbourCopy->vid].get());
+            }
         }
 
-        // Only use this bag if there are at least two vertices inside (otherwise it's a bit useless - and the DP can't handle this :P)
-        this->vertices.push_back(move(pUniqueBag));
+        // Add the bag to the tree decomposition
+        this->vertices.push_back(move(pBagMemoryManager));
 
         // Clique-ify the neighbourhood of this vertex.
-        for (int a=0; a<pBag->vertices.size(); ++a) {
+        for (int a=0; a<pBag->vertices.size() - 1; ++a) {
             Vertex* pACopy = pGraphCopy->vertices[pBag->vertices[a]->vid].get();
-            for (int b=a; b<pBag->vertices.size(); ++b) {
+            for (int b=a + 1; b<pBag->vertices.size(); ++b) {
                 Vertex* pBCopy = pGraphCopy->vertices[pBag->vertices[b]->vid].get();
                 if (!pACopy->IsConnectedTo(pBCopy)) {
                     // Ok, a and b are not connected - add the edge (to the copied graph of course - we're not modding the original graph)
@@ -218,17 +205,22 @@ void TreeDecomposition::permutationToTreeDecomposition(const vector<int>& vertex
         }
 
         // And find the right edge for in the tree decomposition (an edge to the first next neighbour of v in the vertex list)
-        for (int j=i + 1; j<vertexList.size(); ++j) {
-            for (int k=0; k<pVCopy->edges.size(); ++k)
-                if (pVCopy->edges[k]->Other(*pVCopy)->vid == vertexList[j]) {
-                    // We found the (future?) bag that our new bag should connect to - save it to add the edge later
-                    rEdgeList.push_back(pV->vid);
-                    rEdgeList.push_back(vertexList[j]);
-                    // Break both for loops
-                    j = vertexList.size();
-                    break;
-                }
+        for (int j=pendingEdges.size() - 1; j>=0; --j) {
+            if (pVCopy->IsConnectedTo(pendingEdges[j])) {
+                Vertex* pBagOther = nullptr;
+                for (int k=0; k<this->vertices.size(); ++k)
+                    if (this->vertices[k]->vid == pendingEdges[j]->vid) {
+                        pBagOther = this->vertices[k].get();
+                        break;
+                    }
+                assert(pBagOther != nullptr && "ERROR (MinDegree): Can't find a bag with correct vid");
+                shared_ptr<Edge> pE = shared_ptr<Edge>(new Edge(pBag, pBagOther));
+                pBag->edges.push_back(pE);
+                pBagOther->edges.push_back(pE);
+                pendingEdges.erase(pendingEdges.begin() + j);
+            }
         }
+        pendingEdges.push_back(pVCopy);
     }
 }
 
@@ -346,6 +338,8 @@ vector<Edge*> Bag::GetBagEdges() const {
     vector<Edge*> Yi;
     for (int i=0; i<this->vertices.size(); ++i) {
         Vertex* pV = this->vertices[i];
+        int test = pV->vid;
+        int bagId = this->vid;
         for (int j=0; j<pV->edges.size(); ++j) {
             Edge* pE = pV->edges[j].get();
             if (!this->ContainsEdge(pE))

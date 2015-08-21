@@ -47,12 +47,19 @@ int sweep(Graph& rGraph, int startVid /*=-1*/) {
     if (vids.size() > rGraph.trucks)
         return -1;
     int totalValue = 0;
+    bool somethingNew = false;
     for (int i=0; i<vids.size(); ++i) {
         // Optimize the tour using LKH
         pair<int, vector<int>> result = lkh_tsp(rGraph, vids[i]);
+        if (result.first == -1)
+            return -1;
         totalValue += result.first;
-        rGraph.AddTourFromFile(result.second);
+        if (rGraph.AddTourFromFile(result.second))
+            somethingNew = true;
     }
 
-    return totalValue;
+    if (somethingNew)
+        return totalValue;
+    else
+        return -1;
 }

@@ -56,7 +56,7 @@ class TreeDecomposition : public Graph
         Bag* pRoot;
         unique_ptr<Graph> pOriginalGraph;
 
-        void permutationToTreeDecomposition(const vector<int>& vertexList, vector<int>& rEdgeList, bool depotInAllBags);
+        void permutationToTreeDecomposition(bool depotInAllBags);
 };
 
 #endif // TREEDECOMPOSITION_H

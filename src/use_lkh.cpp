@@ -3,6 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#endif // defined
 
 #include "graph.h"
 #include "utils.h"
@@ -52,6 +55,14 @@ void runWrapper() {
     WriteTour(TourFileName, BestTour, cost);
 }
 
+int syscall(string arg) {
+    #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+        return WinExec("\"LKH-2.0.7\" \"" + arg + "\"", 0);
+    #else
+        return system(("\"LKH-2.0.7/LKH\" \"" + arg + "\"").c_str());
+    #endif // defined
+}
+
 pair<int, vector<int>> readTourFile(string path, int startVid) {
     // Read tour integers from file, add them to the graph and return the length of the found tour (or -1 if it didn't add any edges).
     ifstream in(path);
@@ -83,7 +94,8 @@ pair<int, vector<int>> readTourFile(string path, int startVid) {
         vids.push_back(stoi(line) - startVid);
     }
     // Complete the cycle
-    int test = vids.size();
+    if (vids.size() == 0)
+        return make_pair(-1, vids);
     vids.push_back(vids[0]);
     return make_pair(tourLength, vids);
 }
@@ -133,12 +145,13 @@ pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, 
     // Some constants
     string tempDir = "vrp-files/temp/";
     string name = "temp";
-
-    // Solve the TSP on a subset of tour vids
     string parameterFile = tempDir + name + ".par";
     string tourFile = tempDir + name + ".tour";
+
+    // Solve the TSP on a subset of tour vids
     generateLKHFiles(graph, tourVids, tempDir, name, runs);
-    mainWrapper({ "", parameterFile });
+    // mainWrapper({ "", parameterFile });
+    syscall(parameterFile);
 
     // Read from file
     int startVid = 1;
