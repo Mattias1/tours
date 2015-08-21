@@ -265,6 +265,10 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
     // Calculate a set of routes for each of the files
     cout << "Running VRP experiments." << endl;
     for (int i=0; i<FILES.size(); ++i) {
+        if (i > 0) {
+            cout << "Currently we can only manage 1 tour per run. Just start again with the next file please." << endl;
+            return 0;
+        }
         string file = "vrp-files/" + FILES[i];
         string tempFile = "vrp-files/temp/" + FILES[i];
 
@@ -361,7 +365,6 @@ int main(int argc, char *argv[])
 // RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
 // TODO: save in a bag the total demand of all vertices in that bag and below, so that we can return early in bad cases
 //       (well, this might not work. What if vertices also appear above, and are used (partially?) above)
-// TODO: 'exactly k' or 'at most k' trucks? (savings does 'at most k' right now)
-// TODO: does the for loop in the main functions (tsp) actually work? It might crash LKH, as it's initialized in the for loops body...
-// TODO: lkh optimization in savings
+// TODO: 'exactly k' or 'at most k' trucks? (savings does 'at most k' right now, and algorithm does exaclty k - it doesn't matter really)
+
 // TODO: check demands in vrp edge select (!)
