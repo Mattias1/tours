@@ -338,8 +338,6 @@ vector<Edge*> Bag::GetBagEdges() const {
     vector<Edge*> Yi;
     for (int i=0; i<this->vertices.size(); ++i) {
         Vertex* pV = this->vertices[i];
-        int test = pV->vid;
-        int bagId = this->vid;
         for (int j=0; j<pV->edges.size(); ++j) {
             Edge* pE = pV->edges[j].get();
             if (!this->ContainsEdge(pE))

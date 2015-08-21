@@ -50,12 +50,10 @@ vector<vector<Edge*>> vrpDP(const TreeDecomposition& TD, bool consoleOutput /*=t
     }
 
     // Reconstruct the tour
-    if (false && value < numeric_limits<int>::max()) { // TODO DEBUG false
+    if (false && value < numeric_limits<int>::max()) { // REMOVE THE FALSE HERE TO MAKE IT CALCULATE THE FOUND TOUR (well, you'd also need to implement the vrp recurse for edges)
         vector<vector<Edge*>> tours = vrpReconstruct(*TD.getOriginalGraph(), hashlist, S, *pXroot);
         for (int i=0; i<tours.size(); ++i)
             tours[i] = removeDoubles(tours[i], TD.getOriginalGraph()->vertices.size());
-        // vector<int> allChildEndpointsParameter;
-        // cycleCheck(*TD.getOriginalGraph(), vector<int>(), &tour, allChildEndpointsParameter, 3); // Sort the tour - TODO - ERROR, IT DOESN'T ACTUALLY SORT IT
         if (debug) {
             cout << "\nDP-TSP:\n  Length: " << value << endl;
             for (int i=0; i<tours.size(); ++i) {
@@ -253,8 +251,6 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
         cout << dbg("  ", Xi.vertices.size()) << "Nr of edge selections: " << edgeSelectEps.size() << endl;
     }
 
-    // TODO: filter edge selections to remove overrated demands (is it that nescessary?)
-
     // Loop all possible edge selctions
     int resultT = 0;
     int resultValue = numeric_limits<int>::max();
@@ -270,24 +266,7 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                 cout << "Leaf bag, Local edge selection cost: " << edgeValue << ", Yi: " << dbg(Yi);
                 cout << ", degrees: " << dbg(rTargetDegrees) << ", endpoints: " << dbg(rEndpoints) << endl;
             }
-            if (true)
-                // TODO: I haven't actually checked the demands. This will always return the cheapest edge selection value, even if the demands are NOT ok.
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // TODO TODO TODO ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-                // TODO: there's another problem: I also need to check main paths that have no subpaths, but are not in leaf bags (because another main path goes to leaf bags)
-                // Solution: check in edgeSelect (or more precise: vrpCycleCheck)
-                return edgeValue;
-            else
-                continue;
+            return edgeValue;
         }
 
         vector<Edge*> edgeList;
@@ -333,7 +312,6 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                                 cout << dbg("  ", Xi.vertices.size()) << "value for this child is int::max" << endl;
                             value = numeric_limits<int>::max();
                             break;
-                            // TODO: OK, returning is not a good iea, because we just caught this inside an edgeselect size for...
                         }
                         value += tableVal;
                     }
@@ -357,7 +335,8 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
 }
 
 vector<Edge*>* vrpLookback(const Graph& graph, unordered_map<string, int>& rHashlist, const Bag& Xi, const vector<Edge*>& Yi, vector<int>& rTargetDegrees, vector<vector<int>>& rChildDegrees, vector<int>& rEndpoints, vector<vector<int>>& rChildEndpoints) {
-    // TODO
+    // Not impllemented as I don't actually use it anyway.
+    // It's isabled for the TSP as well as it's just very slow. Not worth the time to optimize.
     return nullptr;
 }
 

@@ -254,9 +254,12 @@ int runTSP(vector<string> FILES, int LKH_RUNS) {
         cout << "Done DP for TSP" << endl;
 
         // Write the result graph with decomposition to file
-        unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
-        graphsToFile(*pResultingTourGraph, tempFile + "_result.txt");
-        cout << "Done result graph to file" << endl << "----------------------------" << endl;
+        if (tourEdges.size() > 0) {
+            unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
+            graphsToFile(*pResultingTourGraph, tempFile + "_result.txt");
+            cout << "Done result graph to file" << endl;
+        }
+        cout << "----------------------------" << endl;
     }
     return 0;
 }
@@ -328,9 +331,12 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
         cout << "Done DP for VRP" << endl;
 
         // Write the result graph with decomposition to file
-        unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
-        graphsToFile(*pResultingTourGraph, tempFile + "_result.txt");
-        cout << "Done result graph to file" << endl << "----------------------------" << endl;
+        if (tourEdges.size() > 0) {
+            unique_ptr<Graph> pResultingTourGraph = pG->CreateTourGraph(tourEdges);
+            graphsToFile(*pResultingTourGraph, tempFile + "_result.txt");
+            cout << "Done result graph to file" << endl;
+        }
+        cout << "----------------------------" << endl;
     }
     return 0;
 }
