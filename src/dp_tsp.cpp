@@ -120,7 +120,7 @@ vector<Edge*> tspDP(const TreeDecomposition& TD, bool consoleOutput /*=true*/) {
     }
 
     // Reconstruct the tour
-    if (value < numeric_limits<int>::max()) {
+    if (false && value < numeric_limits<int>::max()) {
         vector<Edge*> tour = removeDoubles(tspReconstruct(*TD.getOriginalGraph(), hashlist, S, *pXroot), TD.getOriginalGraph()->vertices.size());
         // vector<int> allChildEndpointsParameter;
         // cycleCheck(*TD.getOriginalGraph(), vector<int>(), &tour, allChildEndpointsParameter); // Sort the tour - TODO - ERROR, IT DOESN'T ACTUALLY SORT IT
