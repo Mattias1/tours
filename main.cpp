@@ -286,6 +286,10 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
         cout << "Done graph from file (" << FILES[i] << ")" << endl << "----------------------------" << endl;
 
         // Run heuristics and merge the tours
+        int sweepRatio = pG->vertices.size() / SWEEP_RUNS;
+        sweepRatio = max(1, sweepRatio);
+        cout << "Sweep step size: " << sweepRatio << endl;
+
         int mergedTours = 0;
         int tourLength = -1;
         if (SAVINGS_RUNS > 0) {
@@ -299,8 +303,8 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
                 cout << "  Savings could not find a solution" << endl; // This is possible if TRUCKS is very strict (or just too small)
             }
         }
-        for (int r=1; r<=SWEEP_RUNS; ++r) {
-            tourLength = sweep(*pG);
+        for (int r=1; r<=SWEEP_RUNS && r<=pG->vertices.size(); ++r) {
+            tourLength = sweep(*pG, (r-1) * sweepRatio);
             if (tourLength != -1) {
                 graphsToFile(*pG, tempFile + "_" + to_string(r) + ".txt");
                 cout << "  Added sweep tours  (" << tempFile << "_" << r << ".txt - " << tourLength << ")" << endl;
@@ -345,33 +349,45 @@ int main(int argc, char *argv[])
 {
     // The main entry-point for this application. Here we load the graph (they should only contain vertices),
     // then run LKH, merge the tours, create a tree decomposition and finally calculate the optimal tour on this decomposition using DP.
-    vector<string> args(argv, argv + argc); // Currently not used
-    bool TSP = false;
+    vector<string> args(argv, argv + argc);
+    // assert(unitTests());
 
-    // DEBUG
-    assert(unitTests());
+    // The input parameters defaults
+    bool TSP = false;
+    vector<string> FILES;
+    if (TSP)
+        FILES = { "mod502" };
+    else
+        FILES = { "full-vrp-1" };
+    int LKH_RUNS = 10;
+    int SAVINGS_RUNS = 1;
+    int SWEEP_RUNS = 9;
+
+    // Read from arguments
+    if (args.size() > 1) {
+        if (args[1] == "-h" || args[1] == "-help") {
+            cout << "The arguments are: [-tsp/-vrp] [file] [LKH-runs / Saving-runs] [Sweep-runs]" << endl;
+            cout << "For example: 'tours -tsp path/file.par 10' or 'tours -vrp path/file.vrp 1 9'" << endl;
+            return 0;
+        }
+        if (args[1] == "-tsp")
+            TSP = true;
+        if (args[1] == "-vrp")
+            TSP = false;
+    }
+    if (args.size() > 2)
+        FILES = { args[2] };
+    if (args.size() > 3 && isInt(args[3]) && TSP)
+        LKH_RUNS = stoi(args[3]);
+    if (args.size() > 3 && isInt(args[3]) && !TSP)
+        SAVINGS_RUNS = stoi(args[3]);
+    if (args.size() > 4 && isInt(args[4]) && !TSP)
+        SWEEP_RUNS = stoi(args[4]);
 
     // Run TSP algorithms
-    if (TSP) {
-        vector<string> FILES = { "mod502" };
-        int LKH_RUNS = 35;
-
+    if (TSP)
         return runTSP(FILES, LKH_RUNS);
-    }
     // Run VRP algorithms
-    else {
-        vector<string> FILES = { "full-vrp-1" };
-        int SAVINGS_RUNS = 1;
-        int SWEEP_RUNS = 4;
-
+    else
         return runVRP(FILES, SAVINGS_RUNS, SWEEP_RUNS);
-    }
 }
-
-// RANDOM IDEA: a possible optimization might be to fill sub-tables if not all demand is used... somewhere...
-// TODO: save in a bag the total demand of all vertices in that bag and below, so that we can return early in bad cases
-//       (well, this might not work. What if vertices also appear above, and are used (partially?) above)
-// TODO: 'exactly k' or 'at most k' trucks? (savings does 'at most k' right now, and algorithm does exaclty k - it doesn't matter really)
-
-// TODO: check demands in vrp edge select (!)
-// TODO: variate sweep

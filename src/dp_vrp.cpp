@@ -253,7 +253,6 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     }
 
     // Loop all possible edge selctions
-    int resultT = 0;
     int resultValue = numeric_limits<int>::max();
     for (int t=0; t<edgeSelectEps.size(); ++t) {
         int edgeValue = edgeSelectEps[t].first;
@@ -319,7 +318,6 @@ int vrpChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                     cout << dbg("  ", Xi.vertices.size()) << "Min cost for X" << Xi.vid << " with these child-degrees: " << value << endl;
                 }
                 if (value < resultValue) {
-                    resultT = t; // TODO: Return this one later as well for the optimiztion later on???
                     resultValue = value;
                 }
             }

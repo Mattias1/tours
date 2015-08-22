@@ -8,6 +8,7 @@
 #include "utils.h"
 
 inline float vertexAngle(const Graph& graph, int vid) {
+    int test = graph.vertices.size();
     return atan2(graph.vertices[vid]->y - graph.vertices[0]->y, graph.vertices[vid]->x - graph.vertices[0]->x);
 }
 
@@ -33,14 +34,14 @@ int sweep(Graph& rGraph, int startVid /*=-1*/) {
     // Group all vertices (determine which vertex belongs to which tour)
     vector<vector<int>> vids = {{ 0 }};
     int totalDemand = 0;
-    for (int i=1; i<rGraph.vertices.size(); ++i) {
-        if (totalDemand + rGraph.vertices[i]->demand > rGraph.capacity) {
+    for (int i=0; i<angles.size(); ++i) {
+        if (totalDemand + rGraph.vertices[angles[i].first]->demand > rGraph.capacity) {
             // Start a new tour (for a new truck)
             vids.push_back({ 0 });
             totalDemand = 0;
         }
-        vids.back().push_back(i);
-        totalDemand += rGraph.vertices[i]->demand;
+        vids.back().push_back(angles[i].first);
+        totalDemand += rGraph.vertices[angles[i].first]->demand;
     }
 
     // Create a good solution for each of the vertex groups (in other words: solve the TSP for each of the groups)
