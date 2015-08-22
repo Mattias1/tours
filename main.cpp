@@ -205,13 +205,17 @@ int runTSP(vector<string> FILES, int LKH_RUNS) {
     // Calculate the tour for each of the files
     cout << "Running TSP experiments." << endl;
     for (int i=0; i<FILES.size(); ++i) {
-        string file = "tsp-files/" + FILES[i];
-        string tempFile = "tsp-files/temp/" + FILES[i];
+        string file = "./tsp-files/" + FILES[i];
+        string tempFile = "./tsp-files/temp/" + FILES[i];
 
         // Load the graph
         Graph* pG = new Graph(); // pTD will be the owner of pG.
         unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
         graphsFromFile(*pG, *pTD, file + ".tsp");
+        if (pG->vertices.size() <= 0) {
+            cout << "ERROR: NO VERTICES LOADED" << endl;
+            return -1;
+        }
         cout << "Done graph from file (" << FILES[i] << ")" << endl << "----------------------------" << endl;
 
         // Run LKH and merge the tours
@@ -272,8 +276,8 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
             cout << "Currently we can only manage 1 tour per run. Just start again with the next file please." << endl;
             return 0;
         }
-        string file = "vrp-files/" + FILES[i];
-        string tempFile = "vrp-files/temp/" + FILES[i];
+        string file = "./vrp-files/" + FILES[i];
+        string tempFile = "./vrp-files/temp/" + FILES[i];
 
         // Load the graph
         Graph* pG = new Graph(); // pTD will be the owner of pG.
@@ -282,6 +286,10 @@ int runVRP(vector<string> FILES, int SAVINGS_RUNS, int SWEEP_RUNS) {
         if (pG->trucks == 0 || pG->capacity == 0) {
             cout << "ERROR in file " << file << ".vrp: TRUCKS = " << pG->trucks << " and CAPACITY = " << pG->capacity << endl;
             continue;
+        }
+        if (pG->vertices.size() <= 0) {
+            cout << "ERROR: NO VERTICES LOADED" << endl;
+            return -1;
         }
         cout << "Done graph from file (" << FILES[i] << ")" << endl << "----------------------------" << endl;
 
@@ -366,8 +374,8 @@ int main(int argc, char *argv[])
     // Read from arguments
     if (args.size() > 1) {
         if (args[1] == "-h" || args[1] == "-help") {
-            cout << "The arguments are: [-tsp/-vrp] [file] [LKH-runs / Saving-runs] [Sweep-runs]" << endl;
-            cout << "For example: 'tours -tsp path/file.par 10' or 'tours -vrp path/file.vrp 1 9'" << endl;
+            cout << "The arguments are: [-tsp/-vrp] [name] [LKH-runs / Saving-runs] [Sweep-runs]" << endl;
+            cout << "For example: 'tours -tsp instancename 10' or 'tours -vrp instancename 1 9'" << endl;
             return 0;
         }
         if (args[1] == "-tsp")
