@@ -8,7 +8,6 @@
 #include "utils.h"
 
 inline float vertexAngle(const Graph& graph, int vid) {
-    int test = graph.vertices.size();
     return atan2(graph.vertices[vid]->y - graph.vertices[0]->y, graph.vertices[vid]->x - graph.vertices[0]->x);
 }
 
