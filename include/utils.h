@@ -70,8 +70,11 @@ string &trim(string &rS);
 //
 // Check if string is an integer number
 // (Thank you SO: http://stackoverflow.com/questions/4654636/how-to-determine-if-a-string-is-a-number-with-c)
+// (and: http://stackoverflow.com/questions/5932391/determining-if-a-string-is-a-double)
 //
 bool isInt(const string& s, bool allowNegative=false);
+
+double isDouble(const string& s);
 
 
 //

@@ -186,7 +186,7 @@ string &trim(string &rS) {
 }
 
 //
-// Check if string is an integer number
+// Check if string is an integer (or double) number
 //
 bool isInt(const string& s, bool allowNegative /*=false*/)
 {
@@ -196,6 +196,16 @@ bool isInt(const string& s, bool allowNegative /*=false*/)
     while (it != s.end() && isdigit(*it))
         ++it;
     return !s.empty() && it == s.end();
+}
+
+double isDouble(const string& s)
+{
+    istringstream iss(s);
+    double d;
+    char c;
+    if (iss >> d && !(iss >> c));
+        return d;
+    return -1;
 }
 
 

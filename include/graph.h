@@ -44,9 +44,11 @@ class Vertex
 
     public:
         int vid, x, y, demand;
+        double doubleX, doubleY;
         vector<shared_ptr<Edge>> edges;
 
         Vertex(int vid, int x, int y, int demand = 0);
+        Vertex(int vid, string x, string y, int demand = 0);
         virtual ~Vertex();
 
         bool IsConnectedTo(Vertex* pOther) const;

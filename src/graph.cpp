@@ -23,9 +23,10 @@ bool comp(const string& line, const string& firstPart) {
 
 // This is a small function (used in graph, savings and use_lkh).
 int calculateEuclidean(const Vertex* const pA, const Vertex* const pB) {
-    int x = pA->x - pB->x;
-    int y = pA->y - pB->y;
-    return sqrt(x*x + y*y);
+    double x = pA->doubleX - pB->doubleX;
+    double y = pA->doubleY - pB->doubleY;
+    double result = sqrt(x*x + y*y);
+    return floor(result);
 }
 
 bool Graph::ReadFileLine(int& rState, string line) {
@@ -77,7 +78,7 @@ bool Graph::ReadFileLine(int& rState, string line) {
             cout << "ERROR: The Graph ReadFileLine expects a vertex, but it doesn't get three or four strings in the first place." << endl;
         // Add the vertex to the graph
         int demand = l.size() == 4? stoi(l[3]) : 0;
-        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]) - startVid, stoi(l[1]), stoi(l[2]), demand)));
+        this->vertices.push_back(unique_ptr<Vertex>(new Vertex(stoi(l[0]) - startVid, l[1], l[2], demand)));
         return true;
     }
     if (rState == 2) {
@@ -246,7 +247,17 @@ Vertex::Vertex(int vid, int x, int y, int demand /*=0*/)
     :vid(vid),
     x(x),
     y(y),
-    demand(demand)
+    demand(demand),
+    doubleX(x),
+    doubleY(y)
+{ }
+Vertex::Vertex(int vid, string x, string y, int demand /*=0*/)
+    :vid(vid),
+    x(stoi(x)),
+    y(stoi(y)),
+    demand(demand),
+    doubleX(stod(x)),
+    doubleY(stod(y))
 { }
 Vertex::~Vertex()
 { }

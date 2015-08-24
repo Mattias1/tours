@@ -18,6 +18,6 @@ pair<int, vector<int>> readTourFile(string path, int startVid);
 
 void generateLKHFiles(const Graph& graph, const vector<int>& tourVids, string tempDir, string name, int runs);
 
-pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, int runs = 3);
+pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, int runs = 10);
 
 #endif // USE_LKH_H

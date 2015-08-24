@@ -176,7 +176,7 @@ int tspRecurse(const Graph& graph, unordered_map<string, int>& rHashlist, const 
     // Select all possible mixes of degrees for all vertices and evaluate them
     //   i = the vertex we currently analyze, j = the child-bag we currently analyze
     //   rTargetDegrees goes from full to empty, rChildDegrees from empty to full, endpoints are the endpoints for each child path
-    bool debug = false;
+    bool debug = false; //i==Xi.vertices.size();
     if (debug) {
         // tree-of-childDegrees          (Xi: i, j)   targetDegrees|endpoints
         cout << dbg("  ", i) << dbg(rChildDegrees) << dbg("  ", Xi.vertices.size() + 9 - i);
@@ -326,6 +326,7 @@ int tspChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
     if (pResultingEdgeList != nullptr)
         addToEdgeListFromBits(Yi, pResultingEdgeList, edgeListBits);
     if (val < numeric_limits<int>::max()) {
+        assert(val >= 0);
         if (debug) {
             cout << dbg("  ", Xi.vertices.size()) << "Local edge selection cost: " << val << ", Yi: " << dbg(Yi) << ", degrees: " << dbg(rTargetDegrees);
             cout << ", endpoints: " << dbg(rEndpoints) << ", edgeList: " << dbg(pResultingEdgeList) << endl;
@@ -349,8 +350,9 @@ int tspChildEvaluation(const Graph& graph, unordered_map<string, int>& rHashlist
                 }
                 // Add to that base cost the cost of hamiltonian paths nescessary to satisfy the degrees.
                 int tableVal = tspTable(graph, rHashlist, S, Xkid);
-                if (tableVal == numeric_limits<int>::max())
-                    return tableVal;
+                assert(tableVal >= 0);
+                if (tableVal >= numeric_limits<int>::max())
+                    return numeric_limits<int>::max();
                 val += tableVal;
             }
         }

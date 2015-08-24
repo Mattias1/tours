@@ -2,10 +2,13 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <assert.h>
+#include <chrono>
+#include <ctime>
 
 #include "graph.h"
 #include "treedecomposition.h"
@@ -208,6 +211,11 @@ int runTSP(vector<string> FILES, int LKH_RUNS) {
         string file = "./tsp-files/" + FILES[i];
         string tempFile = "./tsp-files/temp/" + FILES[i];
 
+        // Write the LKH parameter file
+        ofstream outPar(file + ".par");
+        outPar << "PROBLEM_FILE = " + file + ".tsp\nMOVE_TYPE = 5\nPATCHING_C = 3\nPATCHING_A = 2\nRUNS = 1\nTOUR_FILE = " + tempFile + ".tour\nTRACE_LEVEL = 0\nMAX_TRIALS = 100\n";
+        outPar.close();
+
         // Load the graph
         Graph* pG = new Graph(); // pTD will be the owner of pG.
         unique_ptr<TreeDecomposition> pTD = unique_ptr<TreeDecomposition>(new TreeDecomposition(pG));
@@ -238,6 +246,9 @@ int runTSP(vector<string> FILES, int LKH_RUNS) {
                 cout << "LKH found no new edges" << endl;
             }
         }
+        time_t time_now = chrono::system_clock::to_time_t(chrono::system_clock::now());
+        struct tm * now = localtime(&time_now);
+        cout << "Time: " << (now->tm_hour) << ':' << (now->tm_min) << ':' << now->tm_sec << endl;
         cout << "----------------------------" << endl << "Done LKH; merged " << mergedTours << " tours" << endl;
 
         // Create the tree decomposition
@@ -361,12 +372,12 @@ int main(int argc, char *argv[])
     // assert(unitTests());
 
     // The input parameters defaults
-    bool TSP = false;
+    bool TSP = true;
     vector<string> FILES;
     if (TSP)
-        FILES = { "mod502" };
+        FILES = { "d1291" };
     else
-        FILES = { "full-vrp-1" };
+        FILES = { "A-n32-k5-low" };
     int LKH_RUNS = 10;
     int SAVINGS_RUNS = 1;
     int SWEEP_RUNS = 9;

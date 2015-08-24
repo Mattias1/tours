@@ -57,7 +57,8 @@ void runWrapper() {
 
 int syscall(string arg) {
     #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-        return WinExec("\"LKH-2.0.7\" \"" + arg + "\"", 0);
+        //return WinExec("\"LKH-2.0.7\" \"" + arg + "\"", 0);
+        return -1;
     #else
         return system(("\"LKH-2.0.7/LKH\" \"" + arg + "\"").c_str());
     #endif // defined
@@ -126,7 +127,8 @@ void generateLKHFiles(const Graph& graph, const vector<int>& tourVids, string te
 
     // Write the parameter file
     ofstream out2(parameterFile);
-    out2 << "PROBLEM_FILE = " + problemFile + "\nMOVE_TYPE = 5\nPATCHING_C = 3\nPATCHING_A = 2\nRUNS = " + to_string(runs) + "\nTOUR_FILE = " + tourFile + "\nTRACE_LEVEL = 0\n";
+    //out2 << "PROBLEM_FILE = " + problemFile + "\nMOVE_TYPE = 5\nPATCHING_C = 3\nPATCHING_A = 2\nRUNS = " + to_string(runs) + "\nTOUR_FILE = " + tourFile + "\nTRACE_LEVEL = 0\n";
+    out2 << "PROBLEM_FILE = " + problemFile + "\nMOVE_TYPE = 5\nPATCHING_C = 3\nPATCHING_A = 2\nTOUR_FILE = " + tourFile + "\nTRACE_LEVEL = 0\n";
     out2.close();
 
     // Write the (empty) tour file
@@ -135,7 +137,7 @@ void generateLKHFiles(const Graph& graph, const vector<int>& tourVids, string te
     out3.close();
 }
 
-pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, int runs /*=3*/) {
+pair<int, vector<int>> lkh_tsp(const Graph& graph, const vector<int>& tourVids, int runs /*=10*/) {
     // Return the cost vertices (in order) of this TSP tour as calculated by LKH.
 
     // Special case
