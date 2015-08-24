@@ -12,10 +12,12 @@ heuristics and exact solutions for the TSP and VRP.}}
 \usepackage{algpseudocode}
 \usepackage[margin=1.5in]{geometry}
 \usepackage{hyperref}
+\usepackage{caption}
 
 \newcommand{\ee}[1]{\ensuremath{\times 10^{#1}}}
 \newcommand{\ccP}[0]{\textsc{P}}
 \newcommand{\ccNP}[0]{\textsc{NP}}
+\newcommand{\cpp}[0]{C\texttt{++}}
 
 
 \begin{document}
@@ -40,6 +42,7 @@ heuristics and exact solutions for the TSP and VRP.}}
 % - A tour SATISFIES a demand; it doesn't HAVE a demand.
 % - Use of the dash (i.e. The Lin-Kernighan-Helsgaun heuristic)
 % - Don't say this PAPER, but say this THESIS
+% - It's until, not untill
 % - The word Section with a capital letter
 % - Don't use the word treewidth when you mean 'width of the decomposition'.
 % - DefInition, not defEnition.
@@ -52,6 +55,12 @@ heuristics and exact solutions for the TSP and VRP.}}
 % TODO: "A guide to VR heurs" (page 5 of 12): in practice parallel savings heurs (meaning best
 %       feasable merge) works better than sequential.
 %       Same for "classical and modern heurs for the VRP" (page 3 of 16).
+%
+% TODO: a set of VRP tour-vertices do not nescessarily have degree >= 2.
+%
+% TODO: All edge values are rounded down to integer values. This is important to mention.
+%
+% TODO: Note how we choose the next sweep angle (well, vertex)
 %
 % Plot graphs with MathPlotLib: http://matplotlib.org/ (possibly ask Chiel for example).
 %
@@ -84,16 +93,12 @@ discarding all but the best solution, possibly valuable information is lost. Hen
 to merge all the found solution tours in a single graph and calculate the optimal solution on the
 branch-decomposition of that graph.
 
-% TODO: is this really at the time of publishing?????
-% (1-2 years before - sept 2001), while publish date is 2002 or (2003 according to google scholar)
-% TODO: find reference
-                                                                                    % TODO TODO TODO TODO TODO TODO TODO TODO
-At the time of publishing, the solutions found by Cook and Seymour improved on the best known
-results for instances with almost 25000 vertices~\cite{the sweden instance}. Since then other
-heuristics have improved massively and outperform the approach by Cook and Seymour~\cite{lkh2}. In
-this thesis, we will try if the strategy for TSP by Cook and Seymour can still improve current
-heuristics even more. Furthermore, we will try to extend it to work for the Vehicle Routing Problem
-(VRP).
+At the time of writing, the solutions found by Cook and Seymour improved on the best known
+results, sometimes even getting optimal solutions, for instances with 15000 and 18000
+vertices~\cite{cook-seymour}. Since then other heuristics have improved massively and outperform the
+approach by Cook and Seymour~\cite{lkh2}. In this thesis, we will try if the strategy for TSP by
+Cook and Seymour can still improve current heuristics even more. Furthermore, we will try to extend
+it to work for the Vehicle Routing Problem (VRP).
 
 % TSP and VRP; desription and definition
 The Traveling Salesman Problem (TSP) is one of the most well studied NP-hard problems, where a
@@ -128,9 +133,9 @@ solutions of the heuristic (TODO: OR NOT, WAIT FOR RESULTS!).
 % Our contribution
 
 % Structure
-The paper is organised as follows: in Section~\ref{sec:heuristics} we will discuss the heuristics
-used to generate the initial tours and routes. In Section~\ref{sec:td} we will discuss how the
-solutions are merged and how the treedecomposition is calculated and in Section~\ref{sec:dp} we will
+The rest of this thesis is organised as follows: in Section~\ref{sec:heuristics} we will discuss the
+heuristics used to generate the initial tours and routes. In Section~\ref{sec:td} we will discuss how
+the solutions are merged and how the treedecomposition is calculated and in Section~\ref{sec:dp} we will
 show the dynamic programming algorithms on the computed decompositions. In Section~\ref{sec:results}
 we will discuss the result and finally we conclude in Section~\ref{sec:conclusion}.
 
@@ -155,25 +160,27 @@ we will discuss the result and finally we conclude in Section~\ref{sec:conclusio
 \section{Heuristics}
 \label{sec:heuristics}
 Although many different heuristics have been tried to solve the Traveling Salesman Problem, there
-are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lkh1,
-CITE SOMETHING ABOUT THE COMPETING PART HERE}, most notably the implementation of
-Helsgaun~\cite{lkh2}.
+are few that can compete with (variants of) the Lin-Kernighan heuristic~\cite{lkh1, vrp-summary-1},
+most notably the implementation of Helsgaun~\cite{lkh2}.
+One relatively new family of algorithms are the Stem-and-cycle algorithms~\cite{stem-cycle-1,
+stem-cycle-2, tsp-summary}, which perform better than the basic Lin-kernighan
+implementations~\cite{tsp-summary}, but cannot beat the advanced implementations like the one from
+Helsgaun.
 To find initial solutions for the TSP we chose to use the Lin-Kernighan-Helsgaun heuristic
 because it is one of the best heuristics available and its source code is available for academic
 use~\cite{lkh-url}. We will discuss the original Lin-Kernighan heuristic in Section~\ref{sec:lk} and
-the modifications on the original algorithm by Helsgaun's implementation in Section~\ref{sec:lkh}.
+the modifications on the original algorithm in Helsgaun's implementation in Section~\ref{sec:lkh}.
 
-For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms \cite{TODO:
-assuming this is even true, the other one}. Unfortunately they often require to finetune a lot of
+For the Vehicle Routing Problem the currently best heuristics are tabu search algorithms
+\cite{vrp-summary-1, vrp-summary-2}. Unfortunately they often require to finetune a lot of
 parameters and are focussed on specific instances of VRP, rather than giving consistent solutions
-for all versions \cite{hmmz, where to find a good citation for this one}. Other heuristics like the
-classic savings heuristic or the sweep heuristic do give good solutions for all variants of VRP, but
-they can't get the results one gets with the tabu heuristics.
+for all versions \cite{vrp-summary-1}. Other heuristics like the classic savings heuristic or the
+sweep heuristic do give good solutions for all variants of VRP, but they can't get the results one
+gets with the tabu heuristics.
 For the VRP we chose to use one run of the savings heuristic and multiple runs of the sweep
 heuristic, because of their fast running times, reasonable quality of solutions and ease of
 implementation. We will discuss these heuristics in Section~\ref{sec:savings} and
 Section~\ref{sec:sweep}.
-% TODO: With possibly an optimization using LKH - and possibly multiple pertubated runs of savings.
 
     \subsection{Lin Kernighan}
     \label{sec:lk}
@@ -242,7 +249,7 @@ Section~\ref{sec:sweep}.
     highest gain. For $y_i$ we look ahead and choose the edge where $x_{i+1} - y_i$ is largest.
     For $x_{i+1}$ we choose the edge with the largest weight. Other choices are ignored at first,
     but may be examined via backtracking.
-    We keep adding edges $y_i$ and $x_{i+1}$ to the sets, untill either the complete sequence
+    We keep adding edges $y_i$ and $x_{i+1}$ to the sets, until either the complete sequence
     (including the last edge $y_{i+1}$ that will close the tour) is shorter than the previous tour
     (in which case we succeeded) or that there is no edge $y_i$ to find that improves the tour even
     if the closing edge $y_{i+1}$ would have weight 0 (in which case we failed).
@@ -466,8 +473,6 @@ Section~\ref{sec:sweep}.
     % TODO: COMMENT: needs another picture (with 3 dashed lines)
 
 
-    % What is this todo below doing here???
-    % TODO: double bridge move
     % - Basic move no longer 2- (or 3-) opt move, but a 5-opt move (but stopped as soon as it
     %   improves, so it can also do just a 2-opt move for example. Also backtracking removed.
     %   5-opt as basic step adds quite a lot, as observed by \cite{2-5-opt}.
@@ -495,32 +500,131 @@ Section~\ref{sec:sweep}.
     the general $k$-opt submoves again. This time he uses larger value of $k$, which he can do
     because the graph is sparse. We disable this option in our experiments, as we perform this
     calculation ourselves.
-    There are some more additions, for which we refer to Helsgaun's paper~\cite{lkh2}.
-    % TODO: possibly write about these additions, that they are not LK improvements, but general
-    % improvements.
+    There are some more additions, not specifically related to the Lin-Kernighan algorithm, but more
+    general applicable to the TSP, for which we refer to Helsgaun's paper~\cite{lkh2}.
 
-    % % Original text of me
-    % % Partitioning
-    % The Lin-Kernighan-Helsgaun algorithm also adds the possibility of partitioning the original
-    % graph into multiple subsets that are solved seperately and then used to improve a given overall
-    % tour. Six schemes are allowed: Tour segment, Karp, Delaunay, Rohe, K-means and Space-filling
-    % Curve partitioning~\cite{TODO}.
 
-    % % Tour merging
-    % The heuristic also tries to merge tours. Unlike what we do in this thesis he doesn't solve the
-    % merged problem to optimality, but applies the general $k$-opt submoves again, but this time with
-    % a larger value of $k$, because the graph is sparse. For this thesis this option is disabled.
+    \subsection{Savings}
+    \label{sec:savings}
+    The savings heuristic~\cite{savings} is a simple but relatively effective construction heuristic
+    for the VRP\@. A construction heuristic is a heuristic that it creates a set of tours without
+    relying on anything except the data on the vertices and truck capacity. It consists of the
+    following steps:
+    \begin{enumerate}
+        \itemsep 0em
+        \item
+            Initially we create $n - 1$ tours, one for each non-depot vertex. Each tour starts at
+            the depot, goes to the associated vertex and then goes back to the depot.
+        \item
+            For every pair of vertices $i, j$ we then calculate the saving $S_{i, j} =
+            c_{(0, i)} + c_{(0, j)} - c_{(i, j)}$. This represents the gain in cost we get by
+            removing the two edges $(0, i)$ and $(0, j)$, and adding the edge $(i, j)$.
+        \item
+        \label{enum:savings-merge}
+            We now take the saving $S_{i, j}$ with the highest gain and check if we can apply it.
+            With applying $S_{i, j}$ we mean that we try to find two tours, one of which ends with
+            the edge $(0, i)$ and one of which begins with the edge $(0, j)$ (or the other way
+            around). We then connect the two tours together by removing these edges and adding the
+            edge $(i, j)$.
+            This is of course only possible if there are two tours that begin or end with these
+            edges and if the demand of both tours together does not exceed the capacity of a truck.
+        \item
+            We continue to repeat step~\ref{enum:savings-merge} until no more savings can be
+            applied. If the total amount of tours is less or equal than the allowed amount of
+            trucks, we are done. If it exceeds the limit, we failed.
+        \item
+            If the heuristic has successfully found a set of tours, we optimize each tour seperately
+            using the Lin-Kernighan-Helsgaun heuristic as described in Section~\ref{sec:lkh}.
+    \end{enumerate}
 
-    % % Iterative partial transcription
-    % Another technique used to inmprove the tour is Iterative partial transcription. This attempts to
-    % find subchains of different solutions with the same endpoints and replace them with the shorter
-    % one. The algorithm used to find these chains is a simplified version of the algorithm by Mobius
-    % et al.~\cite{TODO - 29 of LKH2 paper}.
+    We decided not to make an exception for the savings that have a negative gain (i.e.\ savings
+    that make the total cost worse). This means that we apply them just like we apply the positive
+    savings.
+    The reasoning behind this is that it's better to have a slightly worse solution than an invalid
+    solution. Applying the negative savings means we use one less truck, which is a hard constraint
+    on the problem and thus more important.
+    Note that this situation occurs very little (if ever) because the negative savings are tried
+    last, so this is not likely to have a big impact on the solution of the tours.
 
-    % % Backbone-guided search
-    % Lastly the Lin-Kernighan-Helsgaun algorithm implements a simplified version of the algorithm by
-    % Zhang and Looks~\cite{TODO - 34 of LKH2 paper} for a backbone-guided search. This means that
-    % edges of a fixed number of initial tours are used as candidate edges in later tours.
+    The characteristic behaviour for the savings algorithm is to put a lot of effort into getting a
+    set of tours with low cost. This produces good tours, which is nice, but it also has a negative
+    side effect. This disadvantage is that it does not pay much effort into making sure the capacity
+    of a truck is used optimally. This means that sometimes it generates solutions that need more
+    trucks than it is allowed to use, which makes the given set of tours an invalid solution. A
+    possible workaround would be to allow solutions that use more tours than strictly allowed in the
+    hope that the edges would be of use in creating the final tour after the merging step from
+    Section~\ref{sec:td}. We decided against this because that would be cheating - after all, the
+    goal is not to finetune heuristics for the merging process but the other way around.
+    Another disadvantage of this heuristic is that it is deterministic, and can therefore
+    only produce a single solution. To get more solutions we use the sweep heuristic in
+    Section~\ref{sec:sweep}.
+
+
+    \subsection{Sweep}
+    \label{sec:sweep}
+    The sweep heuristic is another heuristic for the VRP\@.  It is most commenly attributed to
+    Gillett and Miller in 1974~\cite{sweep}, but can be found earlier in a book from
+    Wren~\cite{sweep-orig-1} or a paper from Wren and Holliday~\cite{sweep-orig-2} in 1971 and 1972
+    respectively.
+    It depends on the geometry of the vertices and is only applicable for the euclidean VRP, not in
+    general. This is not a problem for us because we aim to solve the euclidean VRP anyway. Unlike
+    the savings heuristic, the sweep heuristic is an non-deterministic algorithm in the sense that
+    it depends on the starting vertex (or starting angle) and can produce different sets of tours
+    for the same instance.
+    Note that a starting angle and a starting vertex correspond one on one with eachother. If you
+    begin with a starting angle the starting vertex is the first vertex that it will hit when
+    rotating clockwise. If a starting vertex is given, all angles between the angle through the
+    starting vertex and the angle through the first vertex counter clockwise of the starting vertex
+    create the same set of tours.
+
+    The sweep heuristic is a two-phase algorithm. That means that it splits up the task of creating
+    a set of tours by first clustering the vertices into groups that can be served by a single
+    truck, and then deciding for each cluster of vertices seperately in which order the truck should
+    visit the vertices. The first stage of clustering the vertices is what the sweep algorithm is
+    designed to solve. The second stage is essentially a set of TSP problems, which can be solved
+    using a dedicated algorithm. We solve this second step using the Lin-Kernighan-Helsgaun
+    heuristic from Section~\ref{sec:lkh}.
+
+    Because of its geometric nature, the sweep heuristic can be best explained by picturing a
+    drawing of the vertices on a plane. The algorithm then consists of the following steps:
+    \begin{enumerate}
+        \itemsep 0em
+        \item
+            We start by drawing a ray from the depot through the starting vertex. We add these two
+            vertices to the first tour; the tour we are currently building.
+        \item
+        \label{enum:sweep-add}
+            We then rotate the line clockwise until it hits a vertex. If the vertex can still be
+            added to the previous tour (i.e.\ the total demand of the vertices in the tour does not
+            exceed the capacity of a truck), we add it to the tour.
+        \item
+            We repeat step~\ref{enum:sweep-add} until adding the next vertex will exceed the
+            capacity limit (or until there are no vertices left, in which case we are finished and
+            go to step~\ref{enum:sweep-end}).
+        \item
+            Once the capacity limit is reached, we add the next vertex and the depot to a new tour,
+            and we repeat from step~\ref{enum:sweep-add} until there are no vertices left.
+        \item
+        \label{enum:sweep-end}
+            Once we are finished with the sweep part, we solve each tour seperately using LKH.
+    \end{enumerate}
+
+    The tours created by this heuristic are not nescessarily bad, but they are very clustered. This
+    means that it will never explore a large part of the solution space. To make for a bit more of a
+    variety of edges, we use the savings heuristic as described in Section~\ref{sec:savings}.
+
+    One thing left to discuss is the choice of the vertex to start with. For the choice of the
+    starting vertex, given the start vertex for the previous set of tours, there are basically two
+    options.
+    One option is to start with the first vertex that comes next with respect to clockwise
+    rotation, this would create a sequence of tours that look a lot like each other. The other
+    choice would be to spread out the start vertices evenly, causing the set of tours to be move
+    diverse but less related.
+    We chose the second option to choose the starting vertices uniformly. One reason is that the
+    first option is basically a disguised version of the String Relocation heuristic, which is an
+    improvement heuristic that removes a sequence of vertices from one tour and places it in the
+    neighbouring tour. The second option however should add a diverse set of edges to the final
+    tour, which should allow for broader viewpoint.
 
 
 
@@ -583,7 +687,7 @@ the definition of a tree decomposition in Section!\ref{sec:td-definition}.
     \path[edge] (0) to (2);
     \path[edge] (2) to (3);
     \end{tikzpicture}
-    \caption{An example of a graph $G$ and its tree decomposition.}
+    \caption{An example of a graph and its tree decomposition.}
     \label{fig:td}
     \end{figure}
 
@@ -595,11 +699,11 @@ the definition of a tree decomposition in Section!\ref{sec:td-definition}.
     % Minimum Degree Heuristic
     \subsection{Minimum Degree Heuristic}
     \label{sec:td-heuristic}
-    Calculating the optimal treewidth or the optimal tree decomposition is an \ccNP-Hard problem
-    \cite{find ref}, so finding an optimal decomposition in reasonable time is infeasable unless
-    \ccP=\ccNP\@. We do not nescessarily need a tree decomposition of optimal width, we just need the
-    width to be sufficiently small so that our DP algorithm runs fast enough. Therefore, we compute
-    our tree decomposition with a heuristic.
+    Calculating the optimal treewidth or the optimal tree decomposition for unknown treewidth is an
+    \ccNP-Hard problem \cite{tw-hardness}, so finding an optimal decomposition in reasonable time is
+    infeasable unless \ccP=\ccNP\@. We do not nescessarily need a tree decomposition of optimal
+    width, we just need the width to be sufficiently small so that our DP algorithm runs fast
+    enough. Therefore, we compute our tree decomposition with a heuristic.
 
     Bodlaender and Koster~\cite{tw-upper-bounds} evaluated a number of construction heuristics. We
     chose to use the Minimum Degree Heuristic, originally designed by Markowitz~\cite{min-degree},
@@ -617,28 +721,30 @@ the definition of a tree decomposition in Section!\ref{sec:td-definition}.
             The reason to give it the same name is that it allows us to add edges ahead of time in
             step~\ref{enum:min-degree-add-edge}.
         \item
+        \label{enum:min-degree-add-to-bag}
             Create a bag $X_v$ with $v$ and all its neighbours in $G$.
         \item
         \label{enum:min-degree-add-edge}
             Add an edge $(v, w)$ to $H$, where $w$ is the neighbour of $v$ in $G$ with the smallest
-            degree. Note that $w$ is not yet added to $W$, but will be added in the future.
+            degree (so the first neighbour to be processed). Note that $w$ is not yet added to $W$,
+            but will be added in the future.
         \item
         \label{enum:min-degree-end}
             Modify $G$ by turning all the neighbours of $v$ into a clique and removing $v$ from
             $V$ (and its incident edges from $E$).
         \item
-            Repeat step~\ref{enum:min-degree-begin} to~\ref{enum:min-degree-end} untill all vertices
+            Repeat step~\ref{enum:min-degree-begin} to~\ref{enum:min-degree-end} until all vertices
             are processed (i.e.\ $V = \emptyset$).
     \end{enumerate}
-    To complete the tree decomposition we choose the first vertex of $W$ to be the root of the tree.
+    To complete the tree decomposition we choose the first vertex of $W$ to be the root of the tree,
+    and, when we are solving the VRP, we also add the depot vertex to every bag.
 
-    As a small optimization step specific to the TSP and VRP we remove the last two vertices from
-    $W$. The corresponding bags only contain 1 or 2 vertices and are subsets of another bag. We can
-    do this because the graph $G$ is obtained by merging a set of tours, and therefore every vertex
-    is guaranteed to have at least two neighbours. % TODO: CHANGED!!!!!!!!!
-    When we are solving the VRP, we also add the depot vertex to every bag.
-
-    % TODO: the depot vertex causes G to be not 2-connected! - Make sure this doesn't cause any trouble!
+    As a small optimization step we remove any bag that is fully contained in it's parent. This
+    happends quite often in this algorithm, because in step~\ref{enum:min-degree-add-to-bag} we add
+    all the neighbours of a vertex $v$ to a bag, and then connect all these neighbours to each other
+    in step~\ref{enum:min-degree-end}. Once one of these next vertices gets processed while it
+    doesn't have any neighbours that $v$ did not have, it will add all the neighbours of $v$ again,
+    but this time without $v$ itself. Hence the duplication.
 
     % TODO: trick of that other students paper to not merge all graphs?
 
@@ -931,9 +1037,9 @@ following sections we explain the details of the algorithms.
     % TODO: wording: demand or capacity?
 
 
-    \subsection{Speed}
-    Although DP running time upperbounds of $O(n 3^k 2^{k^2}) - TODO$??? and $O(M n 3^k 2^{\dots})$
-    are terrible, in practice these limits are never reached. This is because edges\dots TODO
+    % \subsection{Speed}
+    % Although DP running time upperbounds of $O(n 3^k 2^{k^2}) - TODO$??? and $O(M n 3^k 2^{\dots})$
+    % are terrible, in practice these limits are never reached. This is because edges\dots TODO.
 
     % Variations:
     % - Why this variation? (because easy)
@@ -947,8 +1053,153 @@ following sections we explain the details of the algorithms.
 %
 \section{Results}
 \label{sec:results}
-Todo
+We implemented the algorithms described in this thesis in \cpp using the GNU GCC compiler on both
+Linux and windows (using Cygwin in the latter case). We used both the source code and the binary for
+the Lin-Kernighan-Helsgaun algorithm, which is available for academic use on the website of
+Helsgaun~\cite{lkh-url}.
+All experiments ran on a laptop with an Intel i5-4210U CPU, with a clock rate of 1.70GHz.
 % Dutch: "Test opstelling en resultaten" - dus welke grafen getest, waarvandaan, waarom die grafen?
+
+    \subsection{Traveling Salesman Problem}
+    In our test we considered some of the TSPLIB instances provided by the 8th DIMACS Implementation
+    challange~\cite{tsp-instances}. Specifically we tested the ones that have 1000 to 2500 vertices.
+    The LKH algorithm was limited to 100 trials and 10 runs each. This means that every tour was
+    generated by evaluating 100 different starting vertices $t_0$ (see also Section~\ref{sec:lk}),
+    and that we ran the algorithm 10 times.
+
+    The results of our experiments with the LKH heuristic are displayed in
+    table~\ref{table:tsp-heuristics}. The name of the tour represents, apart from the TSPLIB name,
+    also the number of vertices in the input graph.  In the width column the width of the
+    decomposition on the merged graph is given. The tours column lists the number of LKH runs that
+    added edges that where not in the merged graph already.  The best and average columns represent
+    the best and average values found by the LKH tours. The time displays the time it took for the
+    heuristic to run. Note that the minimum degree heuristic is always done in much less than a
+    second, and does not influence the results.
+    Note that in two cases our program had a problem reading the input graph and quitted with an
+    exception.
+
+    \begin{table}
+    \label{table:tsp-heuristics}
+    \begin{tabular}{l l l l l l}
+        Name    & width & \#tours   & best      & avg.      & time \\ \hline
+        d1291   & 7     & 7         & 50801     & 50884     & 45s \\
+        d1655   & 5     & 8         & 62128     & 62130     & 48s \\
+        d2103   & 8     & 10        & 80460     & 80493     & 1m 58s \\
+        dsj1000 & 4     & 3         & 18660188  & 18667688  & 1m 31s \\
+        fl1400  & 14    & 10        & 20164     & 20167     & 50m 19s \\
+        fl1577  & 6     & 10        & 22263     & 22266     & 20m 24s \\
+        nrw1379 & -     & -         & -         & -         & - \\
+        pcb1173 & 5     & 4         & 56892     & 56898     & 10s \\
+        pr1002  & 7     & 5         & 259045    & 259152    & 10s \\
+        pr2392  & 3     & 8         & 378032    & 378032    & 20s \\
+        rl1304  & 7     & 5         & 252948    & 253227    & 29s \\
+        rl1323  & 10    & 5         & 270199    & 270552    & 26s \\
+        rl1889  & 10    & 8         & 316549    & 316747    & 1m 20s \\
+        si1032  & -     & -         & -         & -         & - \\
+        u1060   & 8     & 10        & 224094    & 224136    & 1m 33s \\
+        u1432   & 16    & 10        & 152970    & 152970    & 47s \\
+        u1817   & 12    & 10        & 57259     & 57277     & 59s \\
+        u2152   & 11    & 10        & 64253     & 64308     & 1m \\
+        u2318   & 66    & 10        & 234256    & 234256    & 3m 21s \\
+        vm1084  & 8     & 5         & 239303    & 239407    & 36s \\
+        vm1748  & 12    & 8         & 336739    & 336758    & 35s \\
+    \end{tabular}
+    \caption{The results of the LKH algorithm}
+    \end{table}
+
+    The results of the experiments with the dynamic program algorithm are displayed in
+    table~\ref{table:tsp-dp}. The name, width and tours column are the same as before. The cost
+    column displays the cost of the optimal tour through the merged graph. The time displays the
+    time it took for the dynamic programming algorithm to run.
+    Note that in the cases where the width of the decomposition was larger than 10, we aborted the
+    algorithm, as it would exceed the available running time.
+    Another thing to note is that even though our program has double precision for the coordinates
+    of the vertices, it truncates the cost of an edge to be an integer. There are different
+    conventions about what type should be used for the computations~\cite{vrp-summary-1}. In this
+    case the LKH algorithm uses double precision for his edge costs. This causes the differences
+    between the tours found by LKH and the cost as calculated by the dynamic programming to be
+    larger than it actually is. The new tours found by the dynamic programming do improve the LKH
+    tours in most cases, but the difference is somewhat less as that it seems.
+
+    \begin{table}
+    \label{table:tsp-dp}
+    \begin{tabular}{l l l l l}
+        Name    & width & \#tours   & cost      & time \\ \hline
+        d1291   & 7     & 7         & 50658     & 6s \\
+        d1655   & 5     & 8         & 61748     & 0s \\
+        d2103   & 8     & 10        & 79310     & 2m 39s \\
+        dsj1000 & 4     & 3         & 18659188  & 0s \\
+        fl1400  & 14    & 10        & -         & - \\
+        fl1577  & 6     & 10        & 21298     & 0s \\
+        nrw1379 & -     & -         & -         & - \\
+        pcb1173 & 5     & 4         & 56699     & 0s \\
+        pr1002  & 7     & 5         & 258829    & 0s \\
+        pr2392  & 3     & 8         & 377553    & 0s \\
+        rl1304  & 7     & 5         & 252774    & 1s \\
+        rl1323  & 10    & 5         & 270012    & 30m 18s \\
+        rl1889  & 10    & 8         & 316240    & 1m 25s \\
+        si1032  & -     & -         & -         & - \\
+        u1060   & 8     & 10        & 223581    & 26s \\
+        u1432   & 16    & 10        & -         & - \\
+        u1817   & 12    & 10        & -         & - \\
+        u2152   & 11    & 10        & -         & - \\
+        u2318   & 66    & 10        & -         & - \\
+        vm1084  & 8     & 5         & 239019    & 27s \\
+        vm1748  & 12    & 8         & -         & - \\
+    \end{tabular}
+    \caption{The results of the dynaming algorithm}
+    \end{table}
+
+
+    \subsection{Vehicle Routing Problem}
+    To test how the tour merging approach works for the VRP, we downloaded several instances
+    for the Capacitated VRP from the website of the NEO research group~\cite{vrp-instances}.
+    The instances vary from having 32 vertices to 80 vertices in total. The number of trucks vary
+    from 5 to 10 trucks. The capacity of a truck is equal for all the instances and is set to 100.
+    Even though these where amoung the smallest instances available, even the smallest ones were
+    aborted due to too long running times.
+
+    Because of the limited timeframe and computing power we decided to modify the instances, in
+    search of what our algorithm can handle.
+    First we decided to limit the number of vertices (and accordingly the number of trucks
+    nescessary for the demand of the cities).
+
+    TODO: the savings, sweep and minimum degree heuristics all ran in less than a second.
+
+    \begin{table}
+    \label{table:vrp-heuristics}
+    \begin{tabular}{l l l l l l l}
+        Name        & n     & width & \#savings & \#sweep   & best  & avg. \\ \hline
+        A-n32-k5    & 32    & 6     & 1         & 9         & 832   & 973 \\
+        A-n32-k5    & 19    & 6     & 0         & 6         & 535   & 656 \\
+        A-n32-k5    & 12    & 4     & 0         & 8         & 460   & 478 \\
+        A-n33-k5    & 33    & 5     & 0         & 9         & 715   & 757 \\
+        A-n33-k5    & 13    & 4     & 0         & 6         & 413   & 435 \\
+        A-n33-k6    & 14    & 5     & 1         & 4         & 330   & 450 \\
+        A-n32-k5(c) & 13    & 4     & 0         & 8         & 444   & 474 \\
+        A-n32-k5(c) & 14    & 5     & 0         & 8         & 448   & 485 \\
+        A-n32-k5(c) & 15    & 5     & 0         & 7         & 448   & 500 \\
+    \end{tabular}
+    \caption{The results of the savings and sweep algorithms}
+    \end{table}
+
+    \begin{table}
+    \label{table:vrp-dp}
+    \begin{tabular}{l l l l l l l l}
+        Name        & n     & width & \#tours   & best  & avg. & cost   & time \\ \hline
+        A-n32-k5    & 32    & 6     & 10        & 832   & 973  & -      & aborted after 8h \\
+        A-n32-k5    & 19    & 6     & 6         & 535   & 757  & -      & aborted after 4h \\
+        A-n32-k5    & 12    & 4     & 8         & 460   & 478  & 406    & 2m 26s \\
+        A-n33-k5    & 33    & 5     & 9         & 715   & 656  & -      & aborted after 8h \\
+        A-n33-k5    & 13    & 4     & 6         & 413   & 435  & 406    & 19m 4s \\
+        A-n33-k6    & 14    & 5     & 5         & 330   & 450  & -      & aborted after 8h \\
+        A-n32-k5(c) & 13    & 4     & 8         & 444   & 474  & 436    & 2s \\
+        A-n32-k5(c) & 14    & 5     & 8         & 448   & 485  & 441    & 6s \\
+        A-n32-k5(c) & 15    & 5     & 7         & 448   & 500  & 441    & 19m 56s \\
+    \end{tabular}
+    \caption{The results of the dynamic programming algorithm}
+    \end{table}
+
 
 
 
@@ -970,6 +1221,22 @@ Todo
         Cook, W., \& Seymour, P. (2003).
         \emph{Tour merging via branch-decomposition.}
         INFORMS Journal on Computing, 15(3), 233-248.
+
+    % TSP heuristics
+    \bibitem{tsp-summary}
+        Rego, C., Gamboa, D., Glover, F., \& Osterman, C. (2011).
+        \emph{Traveling salesman problem heuristics: leading methods, implementations and latest advances.}
+        European Journal of Operational Research, 211(3), 427-441.
+
+    \bibitem{stem-cycle-1}
+        Pesch E., Glover, F. (1997).
+        \emph{TSP ejection chains.}
+        Discrete Applied Mathematics, 76(1), 165-181.
+
+    \bibitem{stem-cycle-2}
+        Rego, C. (1998).
+        \emph{Relaxed tours and path ejections for the traveling salesman problem.}
+        European Journal of Operational Research, 106(2), 522-538.
 
     \bibitem{2-opt}
         Croes, G. A. (1958).
@@ -993,12 +1260,12 @@ Todo
 
     \bibitem{lkh1}
         Helsgaun, K. (2000).
-        \emph{An effective implementation of the Lin–Kernighan traveling salesman heuristic.}
+        \emph{An effective implementation of the Lin-Kernighan traveling salesman heuristic.}
         European Journal of Operational Research, 126(1), 106-130.
 
     \bibitem{lkh2}
         Helsgaun, K. (2009).
-        \emph{General k-opt submoves for the Lin–Kernighan TSP heuristic.}
+        \emph{General k-opt submoves for the Lin-Kernighan TSP heuristic.}
         Mathematical Programming Computation, 1(2-3), 119-163.
 
     \bibitem{lkh-url}
@@ -1006,6 +1273,38 @@ Todo
         \emph{LKH}
         \url{http://www.akira.ruc.dk/~keld/research/LKH/}
 
+    % VRP heuristics
+    \bibitem{vrp-summary-1}
+        Laporte, G., Gendreau, M., Potvin, J. Y., \& Semet, F. (2000).
+        \emph{Classical and modern heuristics for the vehicle routing problem.}
+        International transactions in operational research, 7(4-5), 285-300.
+
+    \bibitem{vrp-summary-2}
+        Cordeau, J. F., Gendreau, M., Laporte, G., Potvin, J. Y., \& Semet, F. (2002).
+        \emph{A guide to vehicle routing heuristics.}
+        Journal of the Operational Research society, 512-522.
+
+    \bibitem{savings}
+        Clarke, G. U., \& Wright, J. W. (1964).
+        \emph{Scheduling of vehicles from a central depot to a number of delivery points.}
+        Operations research, 12(4), 568-581.
+
+    \bibitem{sweep-orig-1}
+        Wren, A., (1971).
+        \emph{Computers in Transport Planning and Operation.}
+        Ian Allan, London.
+
+    \bibitem{sweep-orig-2}
+        Wren, A., Holliday, A., (1972).
+        \emph{Computer scheduling of vehicles form one or more depots to a number of delivery points.}
+        Operational Research Quarterly 23, 333-344.
+
+    \bibitem{sweep}
+        Gillett, B. E., \& Miller, L. R. (1974).
+        \emph{A heuristic algorithm for the vehicle-dispatch problem.}
+        Operations research, 22(2), 340-349.
+
+    % Treewidth heuristics
     \bibitem{tw-upper-bounds}
         Bodlaender, H. L., \& Koster, A. M. (2010).
         \emph{Treewidth computations I. Upper bounds.}
@@ -1015,6 +1314,23 @@ Todo
         Markowitz, H. M. (1957).
         \emph{The elimination form of the inverse and its application to linear programming.}
         Management Science, 3(3), 255-269.
+
+    \bibitem{tw-hardness}
+        Arnborg, S., Corneil, D. G., \& Proskurowski, A. (1987).
+        \emph{Complexity of finding embeddings in ak-tree.}
+        SIAM Journal on Algebraic Discrete Methods, 8(2), 277-284.
+
+    % Instances
+    \bibitem{tsp-instances}
+        Johnson, D., McGeoch, L., Glover, F. \& Rego, C.
+        \emph{8th DIMACS Implementation Challenge: The Traveling Salesman Problem}
+        \url{http://dimacs.rutgers.edu/Challenges/TSP/download.html}
+
+    \bibitem{vrp-instances}
+        NEO research group
+        \emph{Vehicle Routing Problem}
+        \url{http://neo.lcc.uma.es/vrp/solution-methods/}
+
 
 \end{thebibliography}
 
